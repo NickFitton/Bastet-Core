@@ -1,0 +1,4 @@
+storage.location: "/media/nick/KINGSTON/lakePhotos/"
+spring:
+  profiles:
+    active: h2
