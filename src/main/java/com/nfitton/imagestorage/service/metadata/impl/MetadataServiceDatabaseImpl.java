@@ -4,15 +4,16 @@ import com.nfitton.imagestorage.entity.ImageMetadata;
 import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.repository.FileMetadataRepository;
 import com.nfitton.imagestorage.service.metadata.FileMetadataService;
+
+import java.time.ZonedDateTime;
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.time.ZonedDateTime;
-import java.util.UUID;
 
 @Service
 public class MetadataServiceDatabaseImpl implements FileMetadataService {
@@ -45,9 +46,8 @@ public class MetadataServiceDatabaseImpl implements FileMetadataService {
   @Override public Mono<ImageMetadata> findById(UUID metadataId) {
     return Mono.fromCallable(() -> repository
         .findById(metadataId)
-        .orElseThrow(() -> new NotFoundException(String.format(
-            "File not found for id %s",
-            metadataId))));
+        .orElseThrow(() -> new NotFoundException(String.format("File not found for id %s",
+                                                               metadataId))));
   }
 
   @Override public Flux<ImageMetadata> findAllExistedAt(ZonedDateTime time) {

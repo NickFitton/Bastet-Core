@@ -1,5 +1,7 @@
 package com.nfitton.imagestorage.configuration;
 
+import java.util.Arrays;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -8,9 +10,6 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 @EnableWebFluxSecurity
 class SecurityConfiguration {
@@ -22,8 +21,7 @@ class SecurityConfiguration {
   /**
    * CORS config allow all origins in dev.
    */
-  @Bean
-  public CorsWebFilter corsWebFilter(
+  @Bean public CorsWebFilter corsWebFilter(
       @Value("${idaas.endpoints.cors.allowed-origins:*}") String[] origins,
       @Value("${idaas.endpoints.cors.allowed-methods:GET,OPTIONS,POST,PATCH}") String[] methods,
       @Value("${idaas.endpoints.cors.allowed-headers:*}") String[] headers) {

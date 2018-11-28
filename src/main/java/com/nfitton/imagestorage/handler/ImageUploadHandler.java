@@ -5,6 +5,10 @@ import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.mapper.ImageMetadataMapper;
 import com.nfitton.imagestorage.service.metadata.FileMetadataService;
 import com.nfitton.imagestorage.service.upload.FileUploadService;
+
+import java.time.ZonedDateTime;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,9 +20,6 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.time.ZonedDateTime;
-import java.util.UUID;
 
 @Component
 public class ImageUploadHandler {

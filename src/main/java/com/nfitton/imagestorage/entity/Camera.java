@@ -9,41 +9,31 @@ import java.util.UUID;
 import org.hibernate.annotations.GenericGenerator;
 
 @Entity
-public class Account {
+public class Camera {
 
   @Id
   @GeneratedValue(generator = "UUID")
   @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
   private UUID id;
   private String name;
-  private String email;
-  private String password;
-  private String salt;
   private ZonedDateTime createdAt;
   private ZonedDateTime updatedAt;
-  private ZonedDateTime lastActive;
+  private ZonedDateTime lastUpload;
 
-  private Account(
+  public Camera(
       UUID id,
       String name,
-      String email,
-      String password,
-      String salt,
       ZonedDateTime createdAt,
       ZonedDateTime updatedAt,
-      ZonedDateTime lastActive) {
+      ZonedDateTime lastUpload) {
     this.id = id;
     this.name = name;
-    this.email = email;
-    this.password = password;
-    this.salt = salt;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
-    this.lastActive = lastActive;
+    this.lastUpload = lastUpload;
   }
 
-  public Account() {
-  }
+  private Camera() {}
 
   public UUID getId() {
     return id;
@@ -51,18 +41,6 @@ public class Account {
 
   public String getName() {
     return name;
-  }
-
-  public String getEmail() {
-    return email;
-  }
-
-  public String getPassword() {
-    return password;
-  }
-
-  public String getSalt() {
-    return salt;
   }
 
   public ZonedDateTime getCreatedAt() {
@@ -73,20 +51,17 @@ public class Account {
     return updatedAt;
   }
 
-  public ZonedDateTime getLastActive() {
-    return lastActive;
+  public ZonedDateTime getLastUpload() {
+    return lastUpload;
   }
 
   public static final class Builder {
 
     private UUID id;
     private String name;
-    private String email;
-    private String password;
-    private String salt;
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
-    private ZonedDateTime lastActive;
+    private ZonedDateTime lastUpload;
 
     private Builder() {
     }
@@ -95,15 +70,13 @@ public class Account {
       return new Builder();
     }
 
-    public static Builder clone(Account account) {
+    public static Builder clone(Camera camera) {
       return new Builder()
-          .withId(account.id)
-          .withName(account.name)
-          .withEmail(account.email)
-          .withPassword(account.password)
-          .withCreatedAt(account.createdAt)
-          .withUpdatedAt(ZonedDateTime.now())
-          .withLastActive(account.lastActive);
+          .withId(camera.getId())
+          .withName(camera.getName())
+          .withCreatedAt(camera.getCreatedAt())
+          .withUpdatedAt(camera.getUpdatedAt())
+          .withLastUpload(camera.getLastUpload());
     }
 
     public Builder withId(UUID val) {
@@ -113,21 +86,6 @@ public class Account {
 
     public Builder withName(String val) {
       name = val;
-      return this;
-    }
-
-    public Builder withEmail(String val) {
-      email = val;
-      return this;
-    }
-
-    public Builder withPassword(String val) {
-      password = val;
-      return this;
-    }
-
-    public Builder withSalt(String val) {
-      salt = val;
       return this;
     }
 
@@ -141,13 +99,14 @@ public class Account {
       return this;
     }
 
-    public Builder withLastActive(ZonedDateTime val) {
-      lastActive = val;
+    public Builder withLastUpload(ZonedDateTime val) {
+      lastUpload = val;
       return this;
     }
 
-    public Account build() {
-      return new Account(id, name, email, password, salt, createdAt, updatedAt, lastActive);
+    public Camera build() {
+      return new Camera(id, name, createdAt, updatedAt, lastUpload);
     }
+
   }
 }

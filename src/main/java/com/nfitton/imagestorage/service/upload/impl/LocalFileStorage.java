@@ -2,13 +2,6 @@ package com.nfitton.imagestorage.service.upload.impl;
 
 import com.nfitton.imagestorage.configuration.PathConfiguration;
 import com.nfitton.imagestorage.service.upload.FileUploadService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
-import org.springframework.http.codec.multipart.FilePart;
-import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.io.Closeable;
 import java.io.File;
@@ -23,6 +16,14 @@ import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 @Profile("local")

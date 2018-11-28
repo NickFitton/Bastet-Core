@@ -4,11 +4,12 @@ import com.nfitton.imagestorage.entity.Account;
 import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.repository.AccountRepository;
 import com.nfitton.imagestorage.service.authentication.UserService;
+
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-
-import java.util.UUID;
 
 @Service
 public class DatabaseUserService implements UserService {

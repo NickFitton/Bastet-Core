@@ -2,9 +2,10 @@ package com.nfitton.imagestorage.mapper;
 
 import com.nfitton.imagestorage.api.AccountV1;
 import com.nfitton.imagestorage.entity.Account;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import java.time.ZonedDateTime;
+
+import org.springframework.security.crypto.bcrypt.BCrypt;
 
 public class AccountMapper {
 

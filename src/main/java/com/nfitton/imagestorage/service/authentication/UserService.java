@@ -1,9 +1,10 @@
 package com.nfitton.imagestorage.service.authentication;
 
 import com.nfitton.imagestorage.entity.Account;
-import reactor.core.publisher.Mono;
 
 import java.util.UUID;
+
+import reactor.core.publisher.Mono;
 
 public interface UserService {
 

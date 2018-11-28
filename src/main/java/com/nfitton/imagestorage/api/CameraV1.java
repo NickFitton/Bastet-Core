@@ -6,30 +6,24 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class AccountV1 {
+public class CameraV1 {
   private UUID id;
   private String name;
-  private String email;
-  private String password;
   private ZonedDateTime createdAt;
   private ZonedDateTime updatedAt;
-  private ZonedDateTime lastActive;
+  private ZonedDateTime lastUpload;
 
-  @JsonCreator public AccountV1(
+  @JsonCreator public CameraV1(
       @JsonProperty("id") UUID id,
       @JsonProperty("name") String name,
-      @JsonProperty("email") String email,
-      @JsonProperty("password") String password,
       @JsonProperty("createdAt") ZonedDateTime createdAt,
       @JsonProperty("updatedAt") ZonedDateTime updatedAt,
-      @JsonProperty("lastActive") ZonedDateTime lastActive) {
+      @JsonProperty("lastUpload") ZonedDateTime lastUpload) {
     this.id = id;
     this.name = name;
-    this.email = email;
-    this.password = password;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
-    this.lastActive = lastActive;
+    this.lastUpload = lastUpload;
   }
 
   public UUID getId() {
@@ -40,14 +34,6 @@ public class AccountV1 {
     return name;
   }
 
-  public String getEmail() {
-    return email;
-  }
-
-  public String getPassword() {
-    return password;
-  }
-
   public ZonedDateTime getCreatedAt() {
     return createdAt;
   }
@@ -56,7 +42,7 @@ public class AccountV1 {
     return updatedAt;
   }
 
-  public ZonedDateTime getLastActive() {
-    return lastActive;
+  public ZonedDateTime getLastUpload() {
+    return lastUpload;
   }
 }

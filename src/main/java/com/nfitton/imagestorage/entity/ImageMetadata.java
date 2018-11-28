@@ -1,12 +1,12 @@
 package com.nfitton.imagestorage.entity;
 
-import org.hibernate.annotations.GenericGenerator;
-
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.time.ZonedDateTime;
 import java.util.UUID;
+
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 public class ImageMetadata {
@@ -134,14 +134,13 @@ public class ImageMetadata {
     }
 
     public ImageMetadata build() {
-      return new ImageMetadata(
-          id,
-          entryTime,
-          exitTime,
-          imageTime,
-          createdAt,
-          updatedAt,
-          fileExists);
+      return new ImageMetadata(id,
+                               entryTime,
+                               exitTime,
+                               imageTime,
+                               createdAt,
+                               updatedAt,
+                               fileExists);
     }
   }
 }
