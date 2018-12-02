@@ -1,6 +1,8 @@
 package com.nfitton.imagestorage.service.metadata;
 
 import com.nfitton.imagestorage.entity.ImageMetadata;
+import com.nfitton.imagestorage.model.TallyPoint;
+import com.nfitton.imagestorage.model.TimeFrame;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -21,6 +23,8 @@ public interface FileMetadataService {
   Flux<ImageMetadata> findAllExistedAt(ZonedDateTime time);
 
   Flux<ImageMetadata> findAllExistedAt(ZonedDateTime from, ZonedDateTime to);
+
+  Flux<TallyPoint> countAllExistedAt(ZonedDateTime start, ZonedDateTime end, TimeFrame measurement);
 
   Flux<ImageMetadata> findAll();
 }

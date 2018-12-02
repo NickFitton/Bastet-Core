@@ -12,4 +12,8 @@ public interface FileMetadataRepository extends JpaRepository<ImageMetadata, UUI
 
   List<ImageMetadata> findAllByEntryTimeAfterAndExitTimeBefore(
       ZonedDateTime timeAfterEntry, ZonedDateTime timeBeforeExit);
+
+  long countAllByEntryTimeAfterAndExitTimeBefore(
+      ZonedDateTime timeAfterEntry,
+      ZonedDateTime timeBeforeExit);
 }

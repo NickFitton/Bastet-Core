@@ -1,12 +1,15 @@
 package com.nfitton.imagestorage.handler;
 
 import com.nfitton.imagestorage.api.ImageMetadataV1;
+import com.nfitton.imagestorage.api.TallyPointV1;
 import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.mapper.ImageMetadataMapper;
+import com.nfitton.imagestorage.model.TimeFrame;
 import com.nfitton.imagestorage.service.metadata.FileMetadataService;
 import com.nfitton.imagestorage.service.upload.FileUploadService;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +101,28 @@ public class ImageUploadHandler {
         .findById(imageId)
         .map(ImageMetadataMapper::toV1)
         .flatMap(metadata -> ServerResponse.ok().syncBody(metadata));
+  }
+
+  public Mono<ServerResponse> getMetadataCount(ServerRequest request) {
+    ZonedDateTime start = request
+        .queryParam("start")
+        .map(ZonedDateTime::parse)
+        .orElse(ZonedDateTime.now().minusDays(1));
+
+    ZonedDateTime end =
+        request.queryParam("end").map(ZonedDateTime::parse).orElse(ZonedDateTime.now());
+
+    Optional<String> timeframe = request.queryParam("measurement");
+    TimeFrame measurement = TimeFrame.HOUR;
+    if (timeframe.isPresent()) {
+      measurement = TimeFrame.valueOf(timeframe.get());
+    }
+
+    Flux<TallyPointV1> map = fileMetadataService
+        .countAllExistedAt(start, end, measurement)
+        .map(ImageMetadataMapper::toV1);
+
+    return ServerResponse.ok().body(map, TallyPointV1.class);
   }
 
   public Mono<ServerResponse> deleteFileData(ServerRequest request) {

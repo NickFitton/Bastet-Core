@@ -16,6 +16,16 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 @Configuration
 public class RouterConfiguration {
 
+  /*
+  POST
+  /entity
+  GET
+  /entity
+  GET
+  /entity/count
+
+   */
+
   @Bean RouterFunction<ServerResponse> routerFunction(
       ImageUploadHandler imageUploadHandler,
       AuthenticationHandler authenticationHandler,
@@ -31,6 +41,10 @@ public class RouterConfiguration {
         .andRoute(POST("/login"), authenticationHandler::login)
         .andRoute(POST("/account"), authenticationHandler::createAccount)
         .andNest(path("/camera"), route(POST("/"), cameraHandler::register)
-        .andRoute(GET("/"), cameraHandler::getAll));
+        .andRoute(GET("/"), cameraHandler::getAll))
+        .andNest(path("/entity"),
+                 route(POST("/"), imageUploadHandler::uploadMetadata)
+        .andRoute(GET("/"), imageUploadHandler::getMetadataInTimeframe)
+        .andRoute(GET("/count"), imageUploadHandler::getMetadataCount));
   }
 }
