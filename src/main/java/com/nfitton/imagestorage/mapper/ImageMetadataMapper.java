@@ -1,7 +1,9 @@
 package com.nfitton.imagestorage.mapper;
 
 import com.nfitton.imagestorage.api.ImageMetadataV1;
+import com.nfitton.imagestorage.api.TallyPointV1;
 import com.nfitton.imagestorage.entity.ImageMetadata;
+import com.nfitton.imagestorage.model.TallyPoint;
 
 import java.time.ZonedDateTime;
 
@@ -28,5 +30,9 @@ public class ImageMetadataMapper {
         metadata.getCreatedAt(),
         metadata.getUpdatedAt(),
         metadata.fileExists());
+  }
+
+  public static TallyPointV1 toV1(TallyPoint point) {
+    return new TallyPointV1(point.getTime(), point.getCount());
   }
 }
