@@ -1,4 +1,4 @@
-package com.nfitton.imagestorage.service.upload;
+package com.nfitton.imagestorage.service;
 
 import java.util.UUID;
 

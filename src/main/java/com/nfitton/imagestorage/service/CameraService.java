@@ -1,4 +1,4 @@
-package com.nfitton.imagestorage.service.camera;
+package com.nfitton.imagestorage.service;
 
 import com.nfitton.imagestorage.entity.Camera;
 
@@ -24,7 +24,7 @@ public interface CameraService {
    * @param devicePublicKey the public key of the device
    * @return the public key of the backend encoded with the devices public key
    */
-  Mono<String> attachKey(UUID cameraId, String devicePublicKey);
+  Mono<String> startHandshake(UUID cameraId, String devicePublicKey);
 
   /**
    * Receives the cameras id encrypted with the backend public key, if the backend can decrypt and

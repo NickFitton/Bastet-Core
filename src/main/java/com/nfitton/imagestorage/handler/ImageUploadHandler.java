@@ -5,8 +5,8 @@ import com.nfitton.imagestorage.api.TallyPointV1;
 import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.mapper.ImageMetadataMapper;
 import com.nfitton.imagestorage.model.TimeFrame;
-import com.nfitton.imagestorage.service.metadata.FileMetadataService;
-import com.nfitton.imagestorage.service.upload.FileUploadService;
+import com.nfitton.imagestorage.service.FileMetadataService;
+import com.nfitton.imagestorage.service.FileUploadService;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;

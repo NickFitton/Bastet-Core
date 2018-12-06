@@ -1,7 +1,7 @@
 package com.nfitton.imagestorage.utility;
 
 import static com.nfitton.imagestorage.utility.KeyUtils.*;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import javax.crypto.*;
 import javax.crypto.interfaces.DHPublicKey;
@@ -15,14 +15,15 @@ import org.junit.Test;
 
 public class KeyGeneration {
 
-  @Test
-  public void keySharingIsSuccessful()
+  /**
+   * Diffie-Hellman implementation from https://docs.oracle.com/javase/7/docs/technotes/guides/security/crypto/CryptoSpec.html#DH2Ex
+   */
+  @Test public void keySharingIsSuccessful()
       throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException,
              InvalidAlgorithmParameterException, NoSuchPaddingException, BadPaddingException,
-             IllegalBlockSizeException, IOException {
-    /*
-     * Alice creates her own DH key pair with 2048-bit key size
-     */
+             IllegalBlockSizeException, IOException, ShortBufferException {
+
+    // Alice creates her own DH key pair with 2048-bit key size
     KeyPair keyPairA = generateDHKeyPair();
 
     // Alice creates and initializes her DH KeyAgreement object
@@ -36,20 +37,20 @@ public class KeyGeneration {
      * in encoded format.
      * He instantiates a DH public key from the encoded key material.
      */
-    PublicKey alicePubKey = parseEncodedKey(encodedKeyA);
+    DHPublicKey decodedPublicKeyA = parseEncodedKey(encodedKeyA);
 
     /*
      * Bob gets the DH parameters associated with Alice's public key.
      * He must use the same parameters when he generates his own key
      * pair.
      */
-    DHParameterSpec dhParamFromAlicePubKey = ((DHPublicKey) alicePubKey).getParams();
+    DHParameterSpec dhParamFromAlicePubKey = decodedPublicKeyA.getParams();
 
     // Bob creates his own DH key pair
     KeyPair keyPairB = keyPairFromSpec(dhParamFromAlicePubKey);
 
     // Bob creates and initializes his DH KeyAgreement object
-    KeyAgreement bobKeyAgree = createKeyAgreement(keyPairB);
+    KeyAgreement keyAgreementB = createKeyAgreement(keyPairB);
 
     // Bob encodes his public key, and sends it over to Alice.
     byte[] encodedKeyB = keyPairB.getPublic().getEncoded();
@@ -69,7 +70,7 @@ public class KeyGeneration {
      * of his version of the DH
      * protocol.
      */
-    bobKeyAgree.doPhase(alicePubKey, true);
+    keyAgreementB.doPhase(decodedPublicKeyA, true);
 
     /*
      * At this stage, both Alice and Bob have completed the DH key
@@ -79,7 +80,8 @@ public class KeyGeneration {
     byte[] aliceSharedSecret = keyAgreementA.generateSecret();
     int aliceLen = aliceSharedSecret.length;
     byte[] bobSharedSecret = new byte[aliceLen];
-
+    keyAgreementB.generateSecret(bobSharedSecret, 0);
+    assertTrue(java.util.Arrays.equals(aliceSharedSecret, bobSharedSecret));
 
     /*
      * Now let's create a SecretKey object using the shared secret
@@ -104,13 +106,22 @@ public class KeyGeneration {
     SecretKeySpec aesKeyB = new SecretKeySpec(bobSharedSecret, 0, 16, "AES");
     SecretKeySpec aesKeyA = new SecretKeySpec(aliceSharedSecret, 0, 16, "AES");
 
+    testEncrypting(aesKeyB, aesKeyA);
+    testEncrypting(aesKeyA, aesKeyB);
+
+  }
+
+  private void testEncrypting(SecretKeySpec encryptor, SecretKeySpec aesKeyA)
+      throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException,
+             IllegalBlockSizeException, BadPaddingException, IOException,
+             InvalidAlgorithmParameterException {
     /*
      * Bob encrypts, using AES in CBC mode
      */
     Cipher cipherB = Cipher.getInstance("AES/CBC/PKCS5Padding");
-    cipherB.init(Cipher.ENCRYPT_MODE, aesKeyB);
-    byte[] cleartext = "This is just an example".getBytes();
-    byte[] ciphertext = cipherB.doFinal(cleartext);
+    cipherB.init(Cipher.ENCRYPT_MODE, encryptor);
+    byte[] clearText = "This is just an example".getBytes();
+    byte[] cipherText = cipherB.doFinal(clearText);
 
     // Retrieve the parameter that was used, and transfer it to Alice in
     // encoded format
@@ -126,7 +137,53 @@ public class KeyGeneration {
     aesParams.init(encodedParams);
     Cipher aliceCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
     aliceCipher.init(Cipher.DECRYPT_MODE, aesKeyA, aesParams);
-    byte[] recovered = aliceCipher.doFinal(ciphertext);
-    assertTrue(java.util.Arrays.equals(cleartext, recovered));
+    byte[] recovered = aliceCipher.doFinal(cipherText);
+    assertTrue(java.util.Arrays.equals(clearText, recovered));
+  }
+
+  @Test public void byteConversion() {
+    byte dud = 0x1a;
+    byte input = 0x6f;
+    byte output = hex2byte(byte2hex(input));
+
+    assertEquals(input, output);
+    assertNotEquals(dud, output);
+  }
+
+  @Test public void keyConversion() throws NoSuchAlgorithmException {
+    KeyPair keyPair = generateDHKeyPair();
+    byte[] input = keyPair.getPrivate().getEncoded();
+    byte[] output = fromHexString(toHexString(input));
+    byte[] minOutput = fromMinHexString(toMinHexString(input));
+
+    System.out.println(toMinHexString(keyPair.getPublic().getEncoded()));
+
+    assertEquals(input.length, output.length);
+    for (int i = 0; i < input.length; i++) {
+      assertEquals(input[i], output[i], minOutput[i]);
+    }
+  }
+
+  @Test public void keyAgreementPersistence()
+      throws NoSuchAlgorithmException, InvalidKeyException, InvalidAlgorithmParameterException,
+             InvalidKeySpecException {
+    // Bob creates his own DH key pair
+    KeyPair keyPairA = generateDHKeyPair();
+
+    KeyPair keyPairB =
+        keyPairFromSpec(parseEncodedKey(keyPairA.getPublic().getEncoded()).getParams());
+
+    // Bob creates and initializes his DH KeyAgreement object
+    KeyAgreement keyAgreement1 = createKeyAgreement(keyPairA);
+    KeyAgreement keyAgreement2 = createKeyAgreement(keyPairA);
+    keyAgreement1.doPhase(keyPairB.getPublic(), true);
+    keyAgreement2.doPhase(keyPairB.getPublic(), true);
+    byte[] bytes1 = keyAgreement1.generateSecret();
+    byte[] bytes2 = keyAgreement2.generateSecret();
+
+    assertEquals(bytes1.length, bytes2.length);
+    for (int i = 0; i < bytes1.length; i++) {
+      assertEquals(bytes1[i], bytes2[i]);
+    }
   }
 }

@@ -30,21 +30,28 @@ public class RouterConfiguration {
       ImageUploadHandler imageUploadHandler,
       AuthenticationHandler authenticationHandler,
       CameraHandler cameraHandler) {
-    return nest(path("/image"),
-                route(POST("/"), imageUploadHandler::uploadMetadata)
-                    .andRoute(GET("/"), imageUploadHandler::getMetadataInTimeframe)
-                    .andNest(
-                        path("/{imageId}"),
-                        route(PATCH("/"), imageUploadHandler::uploadFile)
-                            .andRoute(GET("/"), imageUploadHandler::getMetadata)
-                            .andRoute(GET("/image"), imageUploadHandler::getFile)))
+    return nest(
+        path("/image"),
+        route(POST("/"), imageUploadHandler::uploadMetadata)
+            .andRoute(GET("/"), imageUploadHandler::getMetadataInTimeframe)
+            .andNest(
+                path("/{imageId}"),
+                route(PATCH("/"), imageUploadHandler::uploadFile)
+                    .andRoute(GET("/"), imageUploadHandler::getMetadata)
+                    .andRoute(GET("/image"), imageUploadHandler::getFile)))
         .andRoute(POST("/login"), authenticationHandler::login)
         .andRoute(POST("/account"), authenticationHandler::createAccount)
-        .andNest(path("/camera"), route(POST("/"), cameraHandler::register)
-        .andRoute(GET("/"), cameraHandler::getAll))
-        .andNest(path("/entity"),
-                 route(POST("/"), imageUploadHandler::uploadMetadata)
-        .andRoute(GET("/"), imageUploadHandler::getMetadataInTimeframe)
-        .andRoute(GET("/count"), imageUploadHandler::getMetadataCount));
+        .andNest(
+            path("/camera"),
+            route(POST("/"), cameraHandler::register)
+                .andRoute(GET("/"), cameraHandler::getAll)
+                .andNest(
+                    path("/{cameraId}"),
+                    route(POST("/register"), cameraHandler::handshake)))
+        .andNest(
+            path("/entity"),
+            route(POST("/"), imageUploadHandler::uploadMetadata)
+                .andRoute(GET("/"), imageUploadHandler::getMetadataInTimeframe)
+                .andRoute(GET("/count"), imageUploadHandler::getMetadataCount));
   }
 }

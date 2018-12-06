@@ -1,9 +1,9 @@
-package com.nfitton.imagestorage.service.authentication.impl;
+package com.nfitton.imagestorage.service.impl;
 
 import com.nfitton.imagestorage.entity.Account;
 import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.repository.AccountRepository;
-import com.nfitton.imagestorage.service.authentication.UserService;
+import com.nfitton.imagestorage.service.UserService;
 
 import java.util.UUID;
 

@@ -1,11 +1,11 @@
-package com.nfitton.imagestorage.service.metadata.impl;
+package com.nfitton.imagestorage.service.impl;
 
 import com.nfitton.imagestorage.entity.ImageMetadata;
 import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.model.TallyPoint;
 import com.nfitton.imagestorage.model.TimeFrame;
 import com.nfitton.imagestorage.repository.FileMetadataRepository;
-import com.nfitton.imagestorage.service.metadata.FileMetadataService;
+import com.nfitton.imagestorage.service.FileMetadataService;
 
 import java.time.ZonedDateTime;
 import java.util.LinkedList;
@@ -20,13 +20,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
-public class MetadataServiceDatabaseImpl implements FileMetadataService {
+public class DatabaseMetadataService implements FileMetadataService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(MetadataServiceDatabaseImpl.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseMetadataService.class);
 
   private final FileMetadataRepository repository;
 
-  @Autowired public MetadataServiceDatabaseImpl(FileMetadataRepository repository) {
+  @Autowired public DatabaseMetadataService(FileMetadataRepository repository) {
     this.repository = repository;
   }
 

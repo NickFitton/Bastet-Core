@@ -1,7 +1,7 @@
-package com.nfitton.imagestorage.service.upload.impl;
+package com.nfitton.imagestorage.service.impl;
 
 import com.nfitton.imagestorage.configuration.PathConfiguration;
-import com.nfitton.imagestorage.service.upload.FileUploadService;
+import com.nfitton.imagestorage.service.FileUploadService;
 
 import java.io.Closeable;
 import java.io.File;

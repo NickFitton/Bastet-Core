@@ -1,4 +1,4 @@
-package com.nfitton.imagestorage.service.authentication;
+package com.nfitton.imagestorage.service;
 
 import com.nfitton.imagestorage.entity.Account;
 

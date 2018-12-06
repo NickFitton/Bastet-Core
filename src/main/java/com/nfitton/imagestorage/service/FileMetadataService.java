@@ -1,4 +1,4 @@
-package com.nfitton.imagestorage.service.metadata;
+package com.nfitton.imagestorage.service;
 
 import com.nfitton.imagestorage.entity.ImageMetadata;
 import com.nfitton.imagestorage.model.TallyPoint;
