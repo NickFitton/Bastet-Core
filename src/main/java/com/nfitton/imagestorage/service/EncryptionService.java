@@ -6,7 +6,7 @@ import reactor.core.publisher.Mono;
 
 public interface EncryptionService {
 
-  <T> Mono<T> decryptObject(UUID cameraId, String encryptedObject, Class<T> objectClass);
+  <T> Mono<T> decryptObject(UUID cameraId, String encryptedObject, String parameters, Class<T> objectClass);
 
   <T> Mono<String> encryptObject(UUID cameraId, T object, Class<T> objectClass);
 }

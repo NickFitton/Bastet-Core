@@ -138,6 +138,7 @@ public class KeyGeneration {
     Cipher aliceCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
     aliceCipher.init(Cipher.DECRYPT_MODE, aesKeyA, aesParams);
     byte[] recovered = aliceCipher.doFinal(cipherText);
+    assertEquals("This is just an example", new String(recovered));
     assertTrue(java.util.Arrays.equals(clearText, recovered));
   }
 

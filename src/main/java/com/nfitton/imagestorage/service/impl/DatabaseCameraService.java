@@ -84,14 +84,14 @@ public class DatabaseCameraService implements CameraService {
             .withKeyType(KeyType.SECRET)
             .withCameraId(cameraId)
             .build();
-        return saveKey(backendKey);
+        return saveKey(backendKey).then(Mono.just(KeyUtils.toMinHexString(keyPair.getPublic().getEncoded())));
       } catch (NoSuchAlgorithmException | InvalidKeyException | ShortBufferException e) {
         return Mono.error(new InternalServerException(e));
       } catch (InvalidKeySpecException | InvalidAlgorithmParameterException e) {
         return Mono.error(new BadRequestException(
             "Given key did not hold a valid key specification."));
       }
-    }).map(DHKey::getPublicKey);
+    });
   }
 
   @Override public Mono<String> validate(String encryptedId) {

@@ -4,6 +4,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.hibernate.annotations.GenericGenerator;
@@ -33,7 +34,26 @@ public class Camera {
     this.lastUpload = lastUpload;
   }
 
-  private Camera() {}
+  private Camera() {
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Camera camera = (Camera) o;
+    return Objects.equals(id, camera.id) && Objects.equals(name, camera.name) &&
+           Objects.equals(createdAt, camera.createdAt) &&
+           Objects.equals(updatedAt, camera.updatedAt) &&
+           Objects.equals(lastUpload, camera.lastUpload);
+  }
+
+  @Override public int hashCode() {
+    return Objects.hash(id, name, createdAt, updatedAt, lastUpload);
+  }
 
   public UUID getId() {
     return id;
