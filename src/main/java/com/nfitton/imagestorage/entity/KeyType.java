@@ -1,7 +1,5 @@
 package com.nfitton.imagestorage.entity;
 
 public enum KeyType {
-  DH,
-  DEVICE,
-  BACKEND
+  DH, DEVICE, SECRET
 }

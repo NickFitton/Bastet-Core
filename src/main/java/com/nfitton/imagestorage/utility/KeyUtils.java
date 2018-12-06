@@ -15,7 +15,7 @@ public class KeyUtils {
     return generator.generateKeyPair();
   }
 
-  static KeyAgreement createKeyAgreement(KeyPair keyPair)
+  public static KeyAgreement createKeyAgreement(KeyPair keyPair)
       throws NoSuchAlgorithmException, InvalidKeyException {
     KeyAgreement keyAgreement = KeyAgreement.getInstance("DH");
     keyAgreement.init(keyPair.getPrivate());

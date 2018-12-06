@@ -186,4 +186,68 @@ public class KeyGeneration {
       assertEquals(bytes1[i], bytes2[i]);
     }
   }
+
+  @Test public void secretlength()
+      throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException,
+             InvalidAlgorithmParameterException {
+    for (int i = 0; i < 100; i++) {
+      // Alice creates her own DH key pair with 2048-bit key size
+      KeyPair keyPairA = generateDHKeyPair();
+
+      // Alice creates and initializes her DH KeyAgreement object
+      KeyAgreement keyAgreementA = createKeyAgreement(keyPairA);
+
+      // Alice encodes her public key, and sends it over to Bob.
+      byte[] encodedKeyA = keyPairA.getPublic().getEncoded();
+
+      /*
+       * Let's turn over to Bob. Bob has received Alice's public key
+       * in encoded format.
+       * He instantiates a DH public key from the encoded key material.
+       */
+      DHPublicKey decodedPublicKeyA = parseEncodedKey(encodedKeyA);
+
+      /*
+       * Bob gets the DH parameters associated with Alice's public key.
+       * He must use the same parameters when he generates his own key
+       * pair.
+       */
+      DHParameterSpec dhParamFromAlicePubKey = decodedPublicKeyA.getParams();
+
+      // Bob creates his own DH key pair
+      KeyPair keyPairB = keyPairFromSpec(dhParamFromAlicePubKey);
+
+      // Bob creates and initializes his DH KeyAgreement object
+      KeyAgreement keyAgreementB = createKeyAgreement(keyPairB);
+
+      // Bob encodes his public key, and sends it over to Alice.
+      byte[] encodedKeyB = keyPairB.getPublic().getEncoded();
+
+      /*
+       * Alice uses Bob's public key for the first (and only) phase
+       * of her version of the DH
+       * protocol.
+       * Before she can do so, she has to instantiate a DH public key
+       * from Bob's encoded key material.
+       */
+      PublicKey publicKeyB = parseEncodedKey(encodedKeyB);
+      keyAgreementA.doPhase(publicKeyB, true);
+
+      /*
+       * Bob uses Alice's public key for the first (and only) phase
+       * of his version of the DH
+       * protocol.
+       */
+      keyAgreementB.doPhase(decodedPublicKeyA, true);
+
+      /*
+       * At this stage, both Alice and Bob have completed the DH key
+       * agreement protocol.
+       * Both generate the (same) shared secret.
+       */
+      byte[] aliceSharedSecret = keyAgreementA.generateSecret();
+      System.out.print(aliceSharedSecret.length + ", ");
+    }
+    System.out.println();
+  }
 }

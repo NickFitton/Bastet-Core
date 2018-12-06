@@ -9,11 +9,15 @@ import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.repository.CameraKeyRepository;
 import com.nfitton.imagestorage.repository.CameraRepository;
 import com.nfitton.imagestorage.service.CameraService;
+import com.nfitton.imagestorage.utility.KeyUtils;
 
 import static com.nfitton.imagestorage.utility.KeyUtils.*;
 
+import javax.crypto.KeyAgreement;
+import javax.crypto.ShortBufferException;
 import javax.crypto.interfaces.DHPublicKey;
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -69,15 +73,19 @@ public class DatabaseCameraService implements CameraService {
       try {
         DHPublicKey dhPublicKey = parseEncodedKey(savedDevicePublicKey);
         KeyPair keyPair = keyPairFromSpec(dhPublicKey.getParams());
+        KeyAgreement keyAgreement = createKeyAgreement(keyPair);
+        keyAgreement.doPhase(dhPublicKey, true);
+        byte[] secret = new byte[256];
+        keyAgreement.generateSecret(secret, 0);
 
         DHKey backendKey = DHKey.Builder
             .newBuilder()
-            .withKeys(keyPair)
-            .withKeyType(KeyType.DH)
+            .withPublic(KeyUtils.toMinHexString(secret))
+            .withKeyType(KeyType.SECRET)
             .withCameraId(cameraId)
             .build();
         return saveKey(backendKey);
-      } catch (NoSuchAlgorithmException e) {
+      } catch (NoSuchAlgorithmException | InvalidKeyException | ShortBufferException e) {
         return Mono.error(new InternalServerException(e));
       } catch (InvalidKeySpecException | InvalidAlgorithmParameterException e) {
         return Mono.error(new BadRequestException(
