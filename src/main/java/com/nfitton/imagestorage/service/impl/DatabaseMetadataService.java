@@ -30,6 +30,25 @@ public class DatabaseMetadataService implements FileMetadataService {
     this.repository = repository;
   }
 
+  private static ZonedDateTime advance(ZonedDateTime time, TimeFrame measurement) {
+    switch (measurement) {
+      case MINUTE:
+        return time.plusMinutes(1);
+      case HOUR:
+        return time.plusHours(1);
+      case DAY:
+        return time.plusDays(1);
+      case WEEK:
+        return time.plusDays(7);
+      case MONTH:
+        return time.plusMonths(1);
+      case YEAR:
+        return time.plusYears(1);
+      default:
+        return time.plusHours(1);
+    }
+  }
+
   @Override public Mono<ImageMetadata> save(ImageMetadata metadata) {
     LOGGER.info("Saving metadata for id: {}", metadata.getId());
     return Mono.fromCallable(() -> repository.save(metadata));
@@ -81,24 +100,5 @@ public class DatabaseMetadataService implements FileMetadataService {
 
   @Override public Flux<ImageMetadata> findAll() {
     return Mono.fromCallable(repository::findAll).flatMapMany(Flux::fromIterable);
-  }
-
-  private static ZonedDateTime advance(ZonedDateTime time, TimeFrame measurement) {
-    switch (measurement) {
-      case MINUTE:
-        return time.plusMinutes(1);
-      case HOUR:
-        return time.plusHours(1);
-      case DAY:
-        return time.plusDays(1);
-      case WEEK:
-        return time.plusDays(7);
-      case MONTH:
-        return time.plusMonths(1);
-      case YEAR:
-        return time.plusYears(1);
-      default:
-        return time.plusHours(1);
-    }
   }
 }

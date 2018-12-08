@@ -30,6 +30,7 @@ public class CameraV1 {
 
   /**
    * Formats the time to be UTC, workaround to Jackson giving the incorrect zone.
+   *
    * @param time the time to parse
    * @return null if time is null, else return the given time with a zone of "UTC"
    */

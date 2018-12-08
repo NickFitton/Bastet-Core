@@ -18,15 +18,6 @@ public interface CameraService {
   Mono<Camera> register(Camera camera);
 
   /**
-   * Receive the cameras public key and the camera id, saves the key to a file and uses the key to
-   * encrypt the backend public key for the camera to decrypt.
-   *
-   * @param devicePublicKey the public key of the device
-   * @return the public key of the backend encoded with the devices public key
-   */
-  Mono<String> startHandshake(UUID cameraId, String devicePublicKey);
-
-  /**
    * Receives the cameras id encrypted with the backend public key, if the backend can decrypt and
    * read the camera id successfully then it returns an access token.
    *

@@ -1,1 +1,4 @@
-storage.location: "/media/nick/KINGSTON/lakePhotos/"
+#storage.location: "/media/nick/KINGSTON/lakePhotos/"
+storage:
+  location: "/tmp/cameraPhotos/"
+  create: true

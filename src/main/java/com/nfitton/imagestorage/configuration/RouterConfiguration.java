@@ -43,11 +43,7 @@ public class RouterConfiguration {
         .andRoute(POST("/account"), authenticationHandler::createAccount)
         .andNest(
             path("/camera"),
-            route(POST("/"), cameraHandler::register)
-                .andRoute(GET("/"), cameraHandler::getAll)
-                .andNest(
-                    path("/{cameraId}"),
-                    route(POST("/register"), cameraHandler::handshake)))
+            route(POST("/"), cameraHandler::register).andRoute(GET("/"), cameraHandler::getAll))
         .andNest(
             path("/entity"),
             route(POST("/"), imageUploadHandler::uploadMetadata)

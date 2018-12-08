@@ -10,8 +10,7 @@ public class TallyPointV1 {
   private long count;
 
   @JsonCreator public TallyPointV1(
-      @JsonProperty("time") ZonedDateTime time,
-      @JsonProperty("count") long count) {
+      @JsonProperty("time") ZonedDateTime time, @JsonProperty("count") long count) {
     this.time = time;
     this.count = count;
   }
