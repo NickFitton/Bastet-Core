@@ -1,5 +1,7 @@
 package com.nfitton.imagestorage.utility;
 
+import com.nfitton.imagestorage.configuration.CryptoConfiguration;
+
 import javax.crypto.KeyAgreement;
 import javax.crypto.interfaces.DHPublicKey;
 import javax.crypto.spec.DHParameterSpec;
@@ -8,43 +10,41 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 
 public class KeyUtils {
+  private static final char[] HEX_CHARS =
+      {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
-  public static KeyPair generateDHKeyPair() throws NoSuchAlgorithmException {
-    KeyPairGenerator generator = KeyPairGenerator.getInstance("DH");
+  public static KeyPair generateDHKeyPair() {
+    KeyPairGenerator generator = CryptoConfiguration.getDHKeyPairGenerator();
     generator.initialize(2048);
     return generator.generateKeyPair();
   }
 
-  public static KeyAgreement createKeyAgreement(KeyPair keyPair)
-      throws NoSuchAlgorithmException, InvalidKeyException {
-    KeyAgreement keyAgreement = KeyAgreement.getInstance("DH");
+  public static KeyAgreement createKeyAgreement(KeyPair keyPair) throws InvalidKeyException {
+    KeyAgreement keyAgreement = CryptoConfiguration.getDHKeyAgreement();
     keyAgreement.init(keyPair.getPrivate());
     return keyAgreement;
   }
 
-  public static DHPublicKey parseEncodedKey(byte[] encodedKey)
-      throws NoSuchAlgorithmException, InvalidKeySpecException {
-    KeyFactory keyFactory = KeyFactory.getInstance("DH");
+  public static DHPublicKey parseEncodedKey(byte[] encodedKey) throws InvalidKeySpecException {
+    KeyFactory keyFactory = CryptoConfiguration.getDHKeyFactory();
     X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(encodedKey);
     return (DHPublicKey) keyFactory.generatePublic(x509KeySpec);
   }
 
   public static KeyPair keyPairFromSpec(DHParameterSpec spec)
-      throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
-    KeyPairGenerator bobKpairGen = KeyPairGenerator.getInstance("DH");
-    bobKpairGen.initialize(spec);
-    return bobKpairGen.generateKeyPair();
+      throws InvalidAlgorithmParameterException {
+    KeyPairGenerator keyPairGenerator = CryptoConfiguration.getDHKeyPairGenerator();
+    keyPairGenerator.initialize(spec);
+    return keyPairGenerator.generateKeyPair();
   }
-  
+
   /*
    * Converts a byte to hex digit and writes to the supplied buffer
    */
   static String byte2hex(byte b) {
-    char[] hexChars = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
     int high = ((b & 0xf0) >> 4);
     int low = (b & 0x0f);
-    return String.format("%c%c", hexChars[high], hexChars[low]);
+    return String.format("%c%c", HEX_CHARS[high], HEX_CHARS[low]);
   }
 
   static byte hex2byte(String str) {

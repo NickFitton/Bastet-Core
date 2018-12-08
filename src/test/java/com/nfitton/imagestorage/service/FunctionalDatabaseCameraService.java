@@ -1,29 +1,28 @@
 package com.nfitton.imagestorage.service;
 
 import com.nfitton.imagestorage.api.CameraV1;
+import com.nfitton.imagestorage.configuration.CryptoConfiguration;
 import com.nfitton.imagestorage.entity.Camera;
 import com.nfitton.imagestorage.mapper.CameraMapper;
 import com.nfitton.imagestorage.service.impl.DatabaseCameraService;
 import com.nfitton.imagestorage.service.impl.DatabaseEncryptionService;
 import com.nfitton.imagestorage.utility.KeyUtils;
 
-import static com.nfitton.imagestorage.utility.KeyUtils.createKeyAgreement;
-import static com.nfitton.imagestorage.utility.KeyUtils.parseEncodedKey;
-import static com.nfitton.imagestorage.utility.KeyUtils.toMinHexString;
+import static com.nfitton.imagestorage.utility.KeyUtils.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
-import javax.crypto.*;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyAgreement;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.UUID;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -36,7 +35,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@ActiveProfiles({"local", "h2"})
+@ActiveProfiles( {"local", "h2"})
 @SpringBootTest
 public class FunctionalDatabaseCameraService {
 
@@ -47,8 +46,8 @@ public class FunctionalDatabaseCameraService {
   DatabaseEncryptionService encryptionService;
 
   @Test public void handshakingIsSuccessful()
-      throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException, IOException,
-             NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException {
+      throws InvalidKeyException, InvalidKeySpecException, IOException, BadPaddingException,
+             IllegalBlockSizeException {
     Camera testCamera = Camera.Builder.newBuilder().withName("Test Camera").build();
     Camera savedCamera = service.register(testCamera).block();
     assertNotNull(savedCamera);
@@ -58,15 +57,14 @@ public class FunctionalDatabaseCameraService {
     assertNotNull(savedCamera);
     UUID cameraId = savedCamera.getId();
     KeyPair keyPair = KeyUtils.generateDHKeyPair();
-    KeyAgreement keyAgreement = createKeyAgreement(keyPair);
-    String publicKey =
-        toMinHexString(keyPair.getPublic().getEncoded());
+    String publicKey = toMinHexString(keyPair.getPublic().getEncoded());
 
     String backendPublicKey = service.startHandshake(cameraId, publicKey).block();
 
     assertNotNull(backendPublicKey);
     byte[] encodedBackendKey = KeyUtils.fromMinHexString(backendPublicKey);
 
+    KeyAgreement keyAgreement = createKeyAgreement(keyPair);
     keyAgreement.doPhase(parseEncodedKey(encodedBackendKey), true);
     byte[] deviceSecret = keyAgreement.generateSecret();
     SecretKeySpec deviceSecretKeySpec = new SecretKeySpec(deviceSecret, 0, 16, "AES");
@@ -77,7 +75,7 @@ public class FunctionalDatabaseCameraService {
         .registerModule(new JavaTimeModule());
     String jsonifiedCamera = mapper.writeValueAsString(apiCamera);
 
-    Cipher cipherB = Cipher.getInstance("AES/CBC/PKCS5Padding");
+    Cipher cipherB = CryptoConfiguration.getCipher();
     cipherB.init(Cipher.ENCRYPT_MODE, deviceSecretKeySpec);
     byte[] clearText = jsonifiedCamera.getBytes();
     byte[] cipherText = cipherB.doFinal(clearText);

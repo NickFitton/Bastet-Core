@@ -37,6 +37,7 @@ dependencies {
     compile "com.fasterxml.jackson.module:jackson-module-parameter-names:2.9.7"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.7"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.7"
+    compile "org.bouncycastle:bcprov-jdk16:1.45"
 
     compile 'org.flywaydb:flyway-core'
     runtimeOnly 'com.h2database:h2'

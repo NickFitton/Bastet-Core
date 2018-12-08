@@ -85,7 +85,7 @@ public class DatabaseCameraService implements CameraService {
             .withCameraId(cameraId)
             .build();
         return saveKey(backendKey).then(Mono.just(KeyUtils.toMinHexString(keyPair.getPublic().getEncoded())));
-      } catch (NoSuchAlgorithmException | InvalidKeyException | ShortBufferException e) {
+      } catch (InvalidKeyException | ShortBufferException e) {
         return Mono.error(new InternalServerException(e));
       } catch (InvalidKeySpecException | InvalidAlgorithmParameterException e) {
         return Mono.error(new BadRequestException(
