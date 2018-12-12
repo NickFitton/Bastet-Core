@@ -15,6 +15,7 @@ public class ImageMetadata {
   @GeneratedValue(generator = "UUID")
   @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
   private UUID id;
+  private UUID cameraId;
   private ZonedDateTime entryTime;
   private ZonedDateTime exitTime;
   private ZonedDateTime imageTime;
@@ -24,6 +25,7 @@ public class ImageMetadata {
 
   private ImageMetadata(
       UUID id,
+      UUID cameraId,
       ZonedDateTime entryTime,
       ZonedDateTime exitTime,
       ZonedDateTime imageTime,
@@ -31,6 +33,7 @@ public class ImageMetadata {
       ZonedDateTime updatedAt,
       boolean fileExists) {
     this.id = id;
+    this.cameraId = cameraId;
     this.entryTime = entryTime;
     this.exitTime = exitTime;
     this.imageTime = imageTime;
@@ -44,6 +47,10 @@ public class ImageMetadata {
 
   public UUID getId() {
     return id;
+  }
+
+  public UUID getCameraId() {
+    return cameraId;
   }
 
   public ZonedDateTime getEntryTime() {
@@ -73,6 +80,7 @@ public class ImageMetadata {
   public static final class Builder {
 
     private UUID id;
+    private UUID cameraId;
     private ZonedDateTime entryTime;
     private ZonedDateTime exitTime;
     private ZonedDateTime imageTime;
@@ -90,6 +98,7 @@ public class ImageMetadata {
     public static Builder clone(ImageMetadata metadata) {
       return new Builder()
           .withId(metadata.getId())
+          .withCameraId(metadata.getCameraId())
           .withEntryTime(metadata.entryTime)
           .withExitTime(metadata.exitTime)
           .withImageTime(metadata.imageTime)
@@ -100,6 +109,11 @@ public class ImageMetadata {
 
     public Builder withId(UUID val) {
       id = val;
+      return this;
+    }
+
+    public Builder withCameraId(UUID val) {
+      cameraId = val;
       return this;
     }
 
@@ -135,6 +149,7 @@ public class ImageMetadata {
 
     public ImageMetadata build() {
       return new ImageMetadata(id,
+                               cameraId,
                                entryTime,
                                exitTime,
                                imageTime,

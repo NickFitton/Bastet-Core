@@ -1,13 +1,16 @@
 package com.nfitton.imagestorage.configuration;
 
-import com.nfitton.imagestorage.handler.AuthenticationHandler;
-import com.nfitton.imagestorage.handler.CameraHandler;
-import com.nfitton.imagestorage.handler.ImageUploadHandler;
-
-import static org.springframework.web.reactive.function.server.RequestPredicates.*;
+import static org.springframework.web.reactive.function.server.RequestPredicates.DELETE;
+import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
+import static org.springframework.web.reactive.function.server.RequestPredicates.PATCH;
+import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
+import static org.springframework.web.reactive.function.server.RequestPredicates.path;
 import static org.springframework.web.reactive.function.server.RouterFunctions.nest;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
+import com.nfitton.imagestorage.handler.CameraHandlerV1;
+import com.nfitton.imagestorage.handler.LoginHandlerV1;
+import com.nfitton.imagestorage.handler.MotionHandlerV1;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -16,38 +19,27 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 @Configuration
 public class RouterConfiguration {
 
-  /*
-  POST
-  /entity
-  GET
-  /entity
-  GET
-  /entity/count
-
-   */
-
-  @Bean RouterFunction<ServerResponse> routerFunction(
-      ImageUploadHandler imageUploadHandler,
-      AuthenticationHandler authenticationHandler,
-      CameraHandler cameraHandler) {
+  @Bean
+  RouterFunction<ServerResponse> routerFunction(
+      CameraHandlerV1 cameraHandlerV1,
+      LoginHandlerV1 loginHandlerV1,
+      MotionHandlerV1 motionHandlerV1) {
     return nest(
-        path("/image"),
-        route(POST("/"), imageUploadHandler::uploadMetadata)
-            .andRoute(GET("/"), imageUploadHandler::getMetadataInTimeframe)
+        path("/v1"),
+        nest(
+            path("/cameras"), route(POST("/"), cameraHandlerV1::postCamera)
+                .andRoute(GET("/"), cameraHandlerV1::getCameras)
+                .andNest(path("/{cameraId}"), route(GET("/"), cameraHandlerV1::getCamera)
+                    .andRoute(DELETE("/"), cameraHandlerV1::deleteCamera)))
             .andNest(
-                path("/{imageId}"),
-                route(PATCH("/"), imageUploadHandler::uploadFile)
-                    .andRoute(GET("/"), imageUploadHandler::getMetadata)
-                    .andRoute(GET("/image"), imageUploadHandler::getFile)))
-        .andRoute(POST("/login"), authenticationHandler::login)
-        .andRoute(POST("/account"), authenticationHandler::createAccount)
-        .andNest(
-            path("/camera"),
-            route(POST("/"), cameraHandler::register).andRoute(GET("/"), cameraHandler::getAll))
-        .andNest(
-            path("/entity"),
-            route(POST("/"), imageUploadHandler::uploadMetadata)
-                .andRoute(GET("/"), imageUploadHandler::getMetadataInTimeframe)
-                .andRoute(GET("/count"), imageUploadHandler::getMetadataCount));
+                path("/login"), route(POST("/user"), loginHandlerV1::userLogin)
+                    .andRoute(POST("/camera"), loginHandlerV1::cameraLogin))
+            .andNest(path("/motion"), route(POST("/"), motionHandlerV1::postMotion)
+                .andRoute(GET("/"), motionHandlerV1::getMotion)
+                .andNest(
+                    path("/{motionId}"),
+                    route(PATCH("/"), motionHandlerV1::patchMotionPicture)
+                        .andRoute(GET("/"), motionHandlerV1::getMotionById)
+                        .andRoute(GET("/image"), motionHandlerV1::getMotionImageById))));
   }
 }
