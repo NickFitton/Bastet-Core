@@ -1,9 +1,15 @@
 package com.nfitton.imagestorage.handler;
 
+import static com.nfitton.imagestorage.entity.AccountType.BASIC;
+import static com.nfitton.imagestorage.entity.AccountType.CAMERA;
+
 import com.nfitton.imagestorage.api.OutgoingDataV1;
+import com.nfitton.imagestorage.entity.AccountType;
 import com.nfitton.imagestorage.exception.BadRequestException;
+import com.nfitton.imagestorage.service.AccountService;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.CameraService;
+import com.nfitton.imagestorage.service.UserService;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -18,30 +24,42 @@ import reactor.core.publisher.Mono;
 public class LoginHandlerV1 {
 
   private final CameraService cameraService;
+  private final UserService userService;
   private final AuthenticationService authenticationService;
 
   @Autowired
   LoginHandlerV1(
       CameraService cameraService,
+      UserService userService,
       AuthenticationService authenticationService) {
     this.cameraService = cameraService;
+    this.userService = userService;
     this.authenticationService = authenticationService;
   }
 
   public Mono<ServerResponse> cameraLogin(ServerRequest request) {
-    return parseAuthorization(request)
+    return authorizationAndTokenGeneration(request, cameraService, CAMERA);
+  }
+
+  public Mono<ServerResponse> userLogin(ServerRequest request) {
+    return authorizationAndTokenGeneration(request, userService, BASIC);
+  }
+
+  private <T> Mono<ServerResponse> authorizationAndTokenGeneration(
+      ServerRequest request,
+      AccountService<T, UUID> service,
+      AccountType type) {
+    return parseAuthorization(request, service, type)
         .flatMap(authenticationService::createAuthToken)
         .flatMap(token -> ServerResponse.ok().syncBody(new OutgoingDataV1(token, null)))
         .onErrorResume(e -> ServerResponse.status(HttpStatus.FORBIDDEN)
             .syncBody(new OutgoingDataV1(null, e.getMessage())));
   }
 
-  public Mono<ServerResponse> userLogin(ServerRequest request) {
-//    return ServerResponse.ok().body(authenticationService.getAll(), Authentication.class);
-    return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).build();
-  }
-
-  private Mono<UUID> parseAuthorization(ServerRequest request) throws BadRequestException {
+  private <T> Mono<UUID> parseAuthorization(
+      ServerRequest request,
+      AccountService<T, UUID> service,
+      AccountType type) throws BadRequestException {
     List<String> authorization = request.headers().header("authorization");
     if (authorization.size() != 1) {
       return Mono.error(new BadRequestException("login must have a single 'authorization' header"));
@@ -56,8 +74,8 @@ public class LoginHandlerV1 {
     String credentials = new String(Base64.getDecoder().decode(s[1]));
 
     try {
-      UUID cameraId = UUID.fromString(credentials.split(":")[0]);
-      return cameraService.authenticate(cameraId, credentials.split(":")[1]);
+      String cameraId = credentials.split(":")[0];
+      return service.authenticate(cameraId, credentials.split(":")[1], type);
     } catch (IllegalArgumentException e) {
       return Mono.error(new BadRequestException(
           "Malformed camera ID in authorization header, must be a valid UUID v4"));

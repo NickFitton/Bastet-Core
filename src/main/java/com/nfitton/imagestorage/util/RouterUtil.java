@@ -8,7 +8,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 
 public class RouterUtil {
 
-  public static UUID getUUIDParameter(String name, ServerRequest request) {
+  public static UUID getUUIDParameter(ServerRequest request, String name) {
     try {
       return UUID.fromString(request.pathVariable(name));
     } catch (IllegalArgumentException e) {

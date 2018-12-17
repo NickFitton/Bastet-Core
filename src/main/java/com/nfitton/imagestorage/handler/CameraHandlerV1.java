@@ -45,7 +45,7 @@ public class CameraHandlerV1 {
   }
 
   public Mono<ServerResponse> getCameras(ServerRequest request) {
-    Mono<OutgoingDataV1> outgoingData = service.getAll().collectList()
+    Mono<OutgoingDataV1> outgoingData = service.getAllIds().collectList()
         .map(cameraIds -> new OutgoingDataV1(cameraIds, null));
 
     return ServerResponse.ok().body(outgoingData, OutgoingDataV1.class);
@@ -67,6 +67,6 @@ public class CameraHandlerV1 {
   public Mono<ServerResponse> deleteCamera(ServerRequest request) {
     UUID cameraId = getCameraId(request);
 
-    return service.deleteCamera(cameraId).then(ServerResponse.noContent().build());
+    return service.deleteById(cameraId).then(ServerResponse.noContent().build());
   }
 }

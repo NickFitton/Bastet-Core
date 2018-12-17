@@ -1,9 +1,10 @@
 CREATE TABLE camera (
     id UUID PRIMARY KEY,
     password VARCHAR(64) NOT NULL,
+    type VARCHAR(32) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
-    last_upload TIMESTAMP
+    last_active TIMESTAMP
 );
 
 CREATE TABLE authentication (

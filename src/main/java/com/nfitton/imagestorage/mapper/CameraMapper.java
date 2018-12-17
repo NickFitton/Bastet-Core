@@ -13,7 +13,7 @@ public class CameraMapper {
         .withPassword(encoder.encode(v1.getPassword()))
         .withCreatedAt(v1.getCreatedAt())
         .withUpdatedAt(v1.getUpdatedAt())
-        .withLastUpload(v1.getLastUpload())
+        .withLastActive(v1.getLastUpload())
         .build();
   }
 
@@ -23,6 +23,6 @@ public class CameraMapper {
         null,
         camera.getCreatedAt(),
         camera.getUpdatedAt(),
-        camera.getLastUpload());
+        camera.getLastActive());
   }
 }

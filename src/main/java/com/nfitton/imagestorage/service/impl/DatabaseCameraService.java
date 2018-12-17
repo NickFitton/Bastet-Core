@@ -1,8 +1,12 @@
 package com.nfitton.imagestorage.service.impl;
 
+import static com.nfitton.imagestorage.entity.AccountType.CAMERA;
+
+import com.nfitton.imagestorage.entity.AccountType;
 import com.nfitton.imagestorage.entity.Camera;
-import com.nfitton.imagestorage.exception.BadRequestException;
+import com.nfitton.imagestorage.exception.InternalServerException;
 import com.nfitton.imagestorage.repository.CameraRepository;
+import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.CameraService;
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -11,7 +15,6 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,14 +25,14 @@ public class DatabaseCameraService implements CameraService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCameraService.class);
 
-  private final PasswordEncoder encoder;
+  private final AuthenticationService authenticationService;
   private CameraRepository cameraRepository;
 
   @Autowired
   public DatabaseCameraService(
-      CameraRepository cameraRepository, PasswordEncoder encoder) {
+      CameraRepository cameraRepository, AuthenticationService authenticationService) {
     this.cameraRepository = cameraRepository;
-    this.encoder = encoder;
+    this.authenticationService = authenticationService;
   }
 
   @Override
@@ -41,30 +44,22 @@ public class DatabaseCameraService implements CameraService {
         .withPassword(camera.getPassword())
         .withUpdatedAt(now)
         .withCreatedAt(now)
+        .withLastActive(now)
         .build();
 
     return this.saveCamera(cameraDetails);
   }
 
   @Override
-  public Mono<UUID> authenticate(UUID cameraId, String password) {
-    return Mono.fromCallable(() -> cameraRepository.findById(cameraId))
-        .flatMap(camera -> {
-          if (!camera.isPresent()) {
-            return Mono.error(new BadRequestException("Invalid username/password combination"));
-          }
-          boolean matches = encoder.matches(password, camera.get().getPassword());
-          if (matches) {
-            return Mono.just(camera.get().getId());
-          } else {
-            return Mono.error(new BadRequestException("Invalid username/password combination"));
-          }
-        });
-  }
-
-  @Override
-  public Mono<Boolean> cameraExists(UUID cameraId) {
-    return Mono.fromCallable(() -> cameraRepository.existsById(cameraId));
+  public Mono<UUID> authenticate(String id, String password, AccountType type) {
+    switch (type) {
+      case CAMERA:
+        return authenticationService
+            .authenticate(UUID.fromString(id), password, CAMERA, cameraRepository);
+      default:
+        throw new InternalServerException(
+            String.format("User service can't authenticate given type: %s", type));
+    }
   }
 
   @Override
@@ -80,19 +75,14 @@ public class DatabaseCameraService implements CameraService {
         })
         .filter(Objects::nonNull)
         .flatMap(camera -> {
-          camera.imageTaken();
+          camera.isActive();
 
           return saveCamera(camera);
         });
   }
 
   @Override
-  public Flux<UUID> getAll() {
-    return Flux.fromIterable(cameraRepository.findAllCamera());
-  }
-
-  @Override
-  public Mono<Boolean> deleteCamera(UUID cameraId) {
+  public Mono<Boolean> deleteById(UUID cameraId) {
     return Mono.fromCallable(() -> {
       cameraRepository.deleteById(cameraId);
       return true;
@@ -104,15 +94,12 @@ public class DatabaseCameraService implements CameraService {
     return Mono.fromCallable(() -> cameraRepository.findById(id));
   }
 
+  @Override
+  public Flux<UUID> getAllIds() {
+    return Flux.fromIterable(cameraRepository.findAllCamera());
+  }
+
   private Mono<Camera> saveCamera(Camera camera) {
     return Mono.fromCallable(() -> cameraRepository.save(camera)).subscribeOn(Schedulers.elastic());
-  }
-
-  private boolean existsById(UUID cameraId) {
-    return cameraRepository.existsById(cameraId);
-  }
-
-  private Flux<Camera> findAll() {
-    return Flux.fromIterable(cameraRepository.findAll());
   }
 }

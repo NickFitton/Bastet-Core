@@ -11,6 +11,7 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.r
 import com.nfitton.imagestorage.handler.CameraHandlerV1;
 import com.nfitton.imagestorage.handler.LoginHandlerV1;
 import com.nfitton.imagestorage.handler.MotionHandlerV1;
+import com.nfitton.imagestorage.handler.UserHandlerV1;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -23,7 +24,8 @@ public class RouterConfiguration {
   RouterFunction<ServerResponse> routerFunction(
       CameraHandlerV1 cameraHandlerV1,
       LoginHandlerV1 loginHandlerV1,
-      MotionHandlerV1 motionHandlerV1) {
+      MotionHandlerV1 motionHandlerV1,
+      UserHandlerV1 userHandlerV1) {
     return nest(
         path("/v1"),
         nest(
@@ -40,6 +42,11 @@ public class RouterConfiguration {
                     path("/{motionId}"),
                     route(PATCH("/"), motionHandlerV1::patchMotionPicture)
                         .andRoute(GET("/"), motionHandlerV1::getMotionById)
-                        .andRoute(GET("/image"), motionHandlerV1::getMotionImageById))));
+                        .andRoute(GET("/image"), motionHandlerV1::getMotionImageById)))
+            .andNest(path("/users"), route(POST("/"), userHandlerV1::createUser)
+            .andRoute(GET("/"), userHandlerV1::getUsers)
+            .andRoute(GET("/{userId}"), userHandlerV1::getUser)
+            .andRoute(DELETE("/{userId}"), userHandlerV1::deleteUser)
+            ));
   }
 }
