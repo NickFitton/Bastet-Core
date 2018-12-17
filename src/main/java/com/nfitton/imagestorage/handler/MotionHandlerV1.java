@@ -1,14 +1,14 @@
 package com.nfitton.imagestorage.handler;
 
+import static com.nfitton.imagestorage.util.RouterUtil.parseAuthenticationToken;
+
 import com.nfitton.imagestorage.api.ImageMetadataV1;
-import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.mapper.ImageMetadataMapper;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.CameraService;
 import com.nfitton.imagestorage.service.FileMetadataService;
 import com.nfitton.imagestorage.service.FileUploadService;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -42,7 +42,9 @@ public class MotionHandlerV1 {
 
   public Mono<ServerResponse> postMotion(ServerRequest request) {
     Mono<ImageMetadataV1> savedData = Mono
-        .zip(authenticatedCamera(request), request.bodyToMono(ImageMetadataV1.class))
+        .zip(
+            parseAuthenticationToken(request, authenticationService),
+            request.bodyToMono(ImageMetadataV1.class))
         .map(tuple -> ImageMetadataMapper.newMetadata(tuple.getT2(), tuple.getT1()))
         .flatMap(fileMetadataService::save)
         .map(ImageMetadataMapper::toV1);
@@ -52,7 +54,9 @@ public class MotionHandlerV1 {
   public Mono<ServerResponse> patchMotionPicture(ServerRequest request) {
     UUID imageId = UUID.fromString(request.pathVariable("motionId"));
     Mono<ImageMetadataV1> updatedMetadata = Mono
-        .zip(authenticatedCamera(request), fileMetadataService.exists(imageId))
+        .zip(
+            parseAuthenticationToken(request, authenticationService),
+            fileMetadataService.exists(imageId))
         .flatMap(tuple -> {
           if (!tuple.getT2()) {
             return Mono.error(new NotFoundException("Image does not exist by given image ID"));
@@ -79,21 +83,5 @@ public class MotionHandlerV1 {
 
   public Mono<ServerResponse> getMotionImageById(ServerRequest request) {
     return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).build();
-  }
-
-  private Mono<UUID> authenticatedCamera(ServerRequest request) {
-    List<String> authentication = request.headers().header("authorization");
-    if (authentication.size() != 1) {
-      return Mono.error(new BadRequestException("login must have a single 'authorization' header"));
-    }
-
-    String token = authentication.get(0);
-    String[] splitToken = token.split(" ");
-    if (!splitToken[0].toLowerCase().equals("token")) {
-      return Mono.error(new BadRequestException(
-          "Malformed authorization header, should follow format: 'Token {token}'"));
-    }
-
-    return authenticationService.parseAuthentication(splitToken[1]);
   }
 }

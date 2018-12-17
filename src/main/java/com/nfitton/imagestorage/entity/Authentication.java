@@ -11,8 +11,6 @@ import org.hibernate.annotations.GenericGenerator;
 public class Authentication {
 
   @Id
-  @GeneratedValue(generator = "UUID")
-  @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
   private UUID userId;
   private String randomString;
   private ZonedDateTime createdAt;

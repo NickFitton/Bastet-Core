@@ -11,7 +11,7 @@ CREATE TABLE image_metadata (
 CREATE TABLE user (
     id UUID PRIMARY KEY,
     name VARCHAR(64) NOT NULL,
-    email VARCHAR(128) NOT NULL,
+    email VARCHAR(128) NOT NULL UNIQUE,
     password VARCHAR(64) NOT NULL,
     type VARCHAR(32) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),

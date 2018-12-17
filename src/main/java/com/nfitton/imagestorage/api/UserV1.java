@@ -7,18 +7,22 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import javax.validation.constraints.NotNull;
 
 @JsonInclude(Include.NON_NULL)
-public class AccountV1 {
+public class UserV1 {
   private UUID id;
+  @NotNull(message = "A name must be given")
   private String name;
+  @NotNull(message = "An email must be given")
   private String email;
+  @NotNull(message = "A password must be given")
   private String password;
   private ZonedDateTime createdAt;
   private ZonedDateTime updatedAt;
   private ZonedDateTime lastActive;
 
-  @JsonCreator public AccountV1(
+  @JsonCreator public UserV1(
       @JsonProperty("id") UUID id,
       @JsonProperty("name") String name,
       @JsonProperty("email") String email,

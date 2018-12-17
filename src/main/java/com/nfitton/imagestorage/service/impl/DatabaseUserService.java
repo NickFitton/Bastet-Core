@@ -1,14 +1,19 @@
 package com.nfitton.imagestorage.service.impl;
 
+import static com.nfitton.imagestorage.entity.AccountType.ADMIN;
+
 import com.nfitton.imagestorage.entity.AccountType;
 import com.nfitton.imagestorage.entity.User;
+import com.nfitton.imagestorage.exception.ConflictException;
 import com.nfitton.imagestorage.exception.InternalServerException;
 import com.nfitton.imagestorage.repository.AccountRepository;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.UserService;
 import java.util.Optional;
 import java.util.UUID;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,7 +39,20 @@ public class DatabaseUserService implements UserService {
 
   @Override
   public Mono<User> save(User account) {
-    return Mono.fromCallable(() -> repository.save(account));
+    return Mono.fromCallable(() -> repository.save(account))
+        .onErrorResume(e -> {
+          if (e instanceof DataIntegrityViolationException) {
+            ConstraintViolationException exception = (ConstraintViolationException) e.getCause();
+            String sqlState = exception.getSQLException().getSQLState();
+
+            if (sqlState.equals("23505")) {
+              return Mono.error(new ConflictException(
+                  String.format("Email already in use: %s", account.getEmail())));
+            }
+            return Mono.error(e);
+          }
+          return Mono.error(e);
+        });
   }
 
   @Override
@@ -60,5 +78,11 @@ public class DatabaseUserService implements UserService {
       repository.deleteById(id);
       return true;
     });
+  }
+
+  @Override
+  public Mono<Boolean> idIsAdmin(UUID userId) {
+    return findById(userId)
+        .map(optionalUser -> optionalUser.map(user -> user.getType() == ADMIN).orElse(false));
   }
 }

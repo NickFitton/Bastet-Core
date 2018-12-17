@@ -2,15 +2,19 @@ package com.nfitton.imagestorage.mapper;
 
 import static com.nfitton.imagestorage.entity.AccountType.BASIC;
 
-import com.nfitton.imagestorage.api.AccountV1;
+import com.nfitton.imagestorage.api.UserV1;
 import com.nfitton.imagestorage.entity.User;
+import com.nfitton.imagestorage.util.ValidationUtil;
 import java.time.ZonedDateTime;
+import javax.validation.Validator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 public class AccountMapper {
 
-  public static User newAccount(AccountV1 v1, PasswordEncoder encoder) {
+  public static User newAccount(UserV1 v1, PasswordEncoder encoder, Validator validator) {
     ZonedDateTime now = ZonedDateTime.now();
+
+    ValidationUtil.validate(v1, validator);
 
     return User.Builder
         .newBuilder()
@@ -24,8 +28,8 @@ public class AccountMapper {
         .build();
   }
 
-  public static AccountV1 toV1(User user) {
-    return new AccountV1(
+  public static UserV1 toV1(User user) {
+    return new UserV1(
         user.getId(),
         user.getName(),
         user.getEmail(),

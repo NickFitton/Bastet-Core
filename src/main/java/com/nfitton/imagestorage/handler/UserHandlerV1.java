@@ -2,11 +2,18 @@ package com.nfitton.imagestorage.handler;
 
 import static com.nfitton.imagestorage.util.RouterUtil.getUUIDParameter;
 
-import com.nfitton.imagestorage.api.AccountV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
+import com.nfitton.imagestorage.api.UserV1;
+import com.nfitton.imagestorage.exception.NotFoundException;
+import com.nfitton.imagestorage.exception.VerificationException;
 import com.nfitton.imagestorage.mapper.AccountMapper;
+import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.UserService;
+import com.nfitton.imagestorage.util.RouterUtil;
 import java.util.UUID;
+import javax.validation.Validator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,39 +27,68 @@ public class UserHandlerV1 {
 
   private final PasswordEncoder encoder;
   private final UserService userService;
+  private final Validator validator;
+  private final AuthenticationService authenticationService;
 
   @Autowired
-  public UserHandlerV1(PasswordEncoder encoder, UserService userService) {
+  public UserHandlerV1(
+      Validator validator,
+      PasswordEncoder encoder, UserService userService,
+      AuthenticationService authenticationService) {
+    this.validator = validator;
     this.encoder = encoder;
     this.userService = userService;
+    this.authenticationService = authenticationService;
   }
 
   public Mono<ServerResponse> createUser(ServerRequest request) {
-    Mono<OutgoingDataV1> createdAccount = request.bodyToMono(AccountV1.class)
-        .map((AccountV1 v1) -> AccountMapper.newAccount(v1, encoder))
+    return request.bodyToMono(UserV1.class)
+        .map((UserV1 v1) -> AccountMapper.newAccount(v1, encoder, validator))
         .flatMap(userService::save)
         .map(AccountMapper::toV1)
-        .map(account -> new OutgoingDataV1(account, null));
-
-    return ServerResponse.status(HttpStatus.CREATED).body(createdAccount, OutgoingDataV1.class);
+        .map(account -> new OutgoingDataV1(account, null))
+        .flatMap(account -> ServerResponse.status(HttpStatus.CREATED).syncBody(account))
+        .onErrorResume(RouterUtil::handleErrors);
   }
 
   public Mono<ServerResponse> getUsers(ServerRequest request) {
+    return RouterUtil.parseAuthenticationToken(request, authenticationService)
+        .flatMap(userService::idIsAdmin)
+        .flatMap(isAdmin -> {
+          if (!isAdmin) {
+            return Mono.error(new VerificationException());
+          }
+          Mono<OutgoingDataV1> userIds = userService.getAllIds().collectList()
+              .map(ids -> new OutgoingDataV1(ids, null));
 
-    Mono<OutgoingDataV1> userIds = userService.getAllIds().collectList()
-        .map(ids -> new OutgoingDataV1(ids, null));
-
-    return ServerResponse.ok().body(userIds, OutgoingDataV1.class);
+          return ServerResponse.ok().body(userIds, OutgoingDataV1.class);
+        });
   }
 
   public Mono<ServerResponse> getUser(ServerRequest request) {
     UUID userId = getUUIDParameter(request, "userId");
-    Mono<OutgoingDataV1> foundAccount = userService.findById(userId)
-        .map(optionalUser -> optionalUser.map(AccountMapper::toV1)
-            .orElse(new AccountV1(null, null, null, null, null, null, null)))
-        .map(account -> new OutgoingDataV1(account, null));
 
-    return ServerResponse.ok().body(foundAccount, OutgoingDataV1.class);
+    return RouterUtil
+        .parseAuthenticationToken(request, authenticationService)
+        .flatMap(authorizedUserId -> {
+          if (userId.equals(authorizedUserId)) {
+            return Mono.just(true);
+          }
+          return userService.idIsAdmin(authorizedUserId);
+        })
+        .flatMap(isAuthenticated -> {
+          if (isAuthenticated) {
+            return userService.findById(userId);
+          } else {
+            return Mono.error(new VerificationException());
+          }
+        })
+        .map(account -> account.orElseThrow(
+            () -> new NotFoundException(String.format("User not found by user ID: %s", userId))))
+        .map(AccountMapper::toV1)
+        .map(account -> new OutgoingDataV1(account, null))
+        .flatMap(account -> ServerResponse.ok().syncBody(account))
+        .onErrorResume(RouterUtil::handleErrors);
   }
 
   public Mono<ServerResponse> deleteUser(ServerRequest request) {
@@ -64,6 +100,7 @@ public class UserHandlerV1 {
           } else {
             return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
           }
-        });
+        })
+        .onErrorResume(RouterUtil::handleErrors);
   }
 }

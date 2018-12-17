@@ -74,8 +74,8 @@ public class LoginHandlerV1 {
     String credentials = new String(Base64.getDecoder().decode(s[1]));
 
     try {
-      String cameraId = credentials.split(":")[0];
-      return service.authenticate(cameraId, credentials.split(":")[1], type);
+      String accountId = credentials.split(":")[0];
+      return service.authenticate(accountId, credentials.split(":")[1], type);
     } catch (IllegalArgumentException e) {
       return Mono.error(new BadRequestException(
           "Malformed camera ID in authorization header, must be a valid UUID v4"));

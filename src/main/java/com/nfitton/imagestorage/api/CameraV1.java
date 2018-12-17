@@ -9,10 +9,12 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import javax.validation.constraints.NotNull;
 
 @JsonInclude(Include.NON_NULL)
 public class CameraV1 {
   private UUID id;
+  @NotNull(message = "A password must be given")
   private String password;
   private ZonedDateTime createdAt;
   private ZonedDateTime updatedAt;
