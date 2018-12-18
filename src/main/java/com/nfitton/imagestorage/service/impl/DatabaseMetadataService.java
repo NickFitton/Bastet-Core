@@ -1,7 +1,9 @@
 package com.nfitton.imagestorage.service.impl;
 
+import com.nfitton.imagestorage.configuration.ApiConfiguration;
 import com.nfitton.imagestorage.entity.ImageMetadata;
 import com.nfitton.imagestorage.exception.NotFoundException;
+import com.nfitton.imagestorage.exception.OversizeException;
 import com.nfitton.imagestorage.model.TallyPoint;
 import com.nfitton.imagestorage.model.TimeFrame;
 import com.nfitton.imagestorage.repository.FileMetadataRepository;
@@ -22,10 +24,14 @@ public class DatabaseMetadataService implements FileMetadataService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseMetadataService.class);
   private final FileMetadataRepository repository;
+  private final ApiConfiguration apiConfiguration;
 
   @Autowired
-  public DatabaseMetadataService(FileMetadataRepository repository) {
+  public DatabaseMetadataService(
+      FileMetadataRepository repository,
+      ApiConfiguration apiConfiguration) {
     this.repository = repository;
+    this.apiConfiguration = apiConfiguration;
   }
 
   private static ZonedDateTime advance(ZonedDateTime time, TimeFrame measurement) {
@@ -80,7 +86,16 @@ public class DatabaseMetadataService implements FileMetadataService {
 
   @Override
   public Flux<ImageMetadata> findAllExistedAt(ZonedDateTime from, ZonedDateTime to) {
-    return Mono.fromCallable(() -> repository.findAllByEntryTimeAfterAndExitTimeBefore(from, to))
+    return Mono.fromCallable(() -> repository.countAllByEntryTimeAfterAndExitTimeBefore(from, to))
+        .map(Long::intValue)
+        .flatMap(count -> {
+          int max = apiConfiguration.getMaxPayload();
+          if (count > max) {
+            return Mono.error(new OversizeException(max, count));
+          }
+          return Mono
+              .fromCallable(() -> repository.findAllByEntryTimeAfterAndExitTimeBefore(from, to));
+        })
         .flatMapMany(Flux::fromIterable);
   }
 
