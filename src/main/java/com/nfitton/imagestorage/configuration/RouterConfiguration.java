@@ -26,27 +26,26 @@ public class RouterConfiguration {
       LoginHandlerV1 loginHandlerV1,
       MotionHandlerV1 motionHandlerV1,
       UserHandlerV1 userHandlerV1) {
-    return nest(
-        path("/v1"),
-        nest(
-            path("/cameras"), route(POST("/"), cameraHandlerV1::postCamera)
-                .andRoute(GET("/"), cameraHandlerV1::getCameras)
-                .andNest(path("/{cameraId}"), route(GET("/"), cameraHandlerV1::getCamera)
-                    .andRoute(DELETE("/"), cameraHandlerV1::deleteCamera)))
+    return nest(path("/v1"), nest(
+        path("/cameras"), route(POST("/"), cameraHandlerV1::postCamera)
+            .andRoute(GET("/"), cameraHandlerV1::getCameras)
             .andNest(
-                path("/login"), route(POST("/user"), loginHandlerV1::userLogin)
-                    .andRoute(POST("/camera"), loginHandlerV1::cameraLogin))
-            .andNest(path("/motion"), route(POST("/"), motionHandlerV1::postMotion)
+                path("/{cameraId}"), route(GET("/"), cameraHandlerV1::getCamera)
+                    .andRoute(DELETE("/"), cameraHandlerV1::deleteCamera)))
+        .andNest(
+            path("/login"), route(POST("/user"), loginHandlerV1::userLogin)
+                .andRoute(POST("/camera"), loginHandlerV1::cameraLogin))
+        .andNest(
+            path("/motion"),
+            route(POST("/"), motionHandlerV1::postMotion)
                 .andRoute(GET("/"), motionHandlerV1::getMotion)
-                .andNest(
-                    path("/{motionId}"),
-                    route(PATCH("/"), motionHandlerV1::patchMotionPicture)
-                        .andRoute(GET("/"), motionHandlerV1::getMotionById)
-                        .andRoute(GET("/image"), motionHandlerV1::getMotionImageById)))
-            .andNest(path("/users"), route(POST("/"), userHandlerV1::createUser)
-            .andRoute(GET("/"), userHandlerV1::getUsers)
-            .andRoute(GET("/{userId}"), userHandlerV1::getUser)
-            .andRoute(DELETE("/{userId}"), userHandlerV1::deleteUser)
-            ));
+                .andNest(path("/{motionId}"), route(PATCH("/"), motionHandlerV1::patchMotionPicture)
+                    .andRoute(GET("/"), motionHandlerV1::getMotionById)
+                    .andRoute(GET("/image"), motionHandlerV1::getMotionImageById)))
+        .andNest(
+            path("/users"),
+            route(POST("/"), userHandlerV1::createUser).andRoute(GET("/"), userHandlerV1::getUsers)
+                .andRoute(GET("/{userId}"), userHandlerV1::getUser)
+                .andRoute(DELETE("/{userId}"), userHandlerV1::deleteUser)));
   }
 }

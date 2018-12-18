@@ -100,9 +100,13 @@ public class CameraHandlerV1 {
   public Mono<ServerResponse> deleteCamera(ServerRequest request) {
     UUID cameraId = getCameraId(request);
 
-    return cameraService
-        .deleteById(cameraId)
-        .then(ServerResponse.noContent().build())
+    return RouterUtil.parseAuthenticationToken(request, authenticationService)
+        .flatMap(userId -> {
+          LOGGER.info(
+              String.format("User %s retreiving information for camera %s", userId, cameraId));
+
+          return cameraService.deleteById(cameraId);
+        }).then(ServerResponse.noContent().build())
         .onErrorResume(RouterUtil::handleErrors);
   }
 }

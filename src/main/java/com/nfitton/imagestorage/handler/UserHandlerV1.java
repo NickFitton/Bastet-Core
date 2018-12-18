@@ -12,8 +12,6 @@ import com.nfitton.imagestorage.service.UserService;
 import com.nfitton.imagestorage.util.RouterUtil;
 import java.util.UUID;
 import javax.validation.Validator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -93,8 +91,22 @@ public class UserHandlerV1 {
 
   public Mono<ServerResponse> deleteUser(ServerRequest request) {
     UUID userId = getUUIDParameter(request, "userId");
-    return userService.deleteById(userId)
-        .flatMap(deleted -> {
+
+    return RouterUtil
+        .parseAuthenticationToken(request, authenticationService)
+        .flatMap(authorizedUserId -> {
+          if (userId.equals(authorizedUserId)) {
+            return Mono.just(true);
+          }
+          return userService.idIsAdmin(authorizedUserId);
+        })
+        .flatMap(isAuthenticated -> {
+          if (isAuthenticated) {
+            return userService.deleteById(userId);
+          } else {
+            return Mono.error(new VerificationException());
+          }
+        }).flatMap(deleted -> {
           if (deleted) {
             return ServerResponse.noContent().build();
           } else {
