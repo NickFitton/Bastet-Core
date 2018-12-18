@@ -5,6 +5,7 @@ import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.exception.ConflictException;
 import com.nfitton.imagestorage.exception.InternalServerException;
 import com.nfitton.imagestorage.exception.NotFoundException;
+import com.nfitton.imagestorage.exception.OversizeException;
 import com.nfitton.imagestorage.exception.ValidationException;
 import com.nfitton.imagestorage.exception.VerificationException;
 import com.nfitton.imagestorage.service.AuthenticationService;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.reactive.function.server.ServerResponse.BodyBuilder;
 import reactor.core.publisher.Mono;
 
 public class RouterUtil {
@@ -51,27 +53,28 @@ public class RouterUtil {
   }
 
   public static Mono<ServerResponse> handleErrors(Throwable e) {
+    BodyBuilder status;
+
     if (e instanceof BadRequestException) {
-      return ServerResponse.badRequest().syncBody(new OutgoingDataV1(null, e.getMessage()));
+      status = ServerResponse.badRequest();
     } else if (e instanceof NotFoundException) {
-      return ServerResponse.status(HttpStatus.NOT_FOUND)
-          .syncBody(new OutgoingDataV1(null, e.getMessage()));
+      status = ServerResponse.status(HttpStatus.NOT_FOUND);
+    } else if (e instanceof VerificationException) {
+      status = ServerResponse.status(HttpStatus.FORBIDDEN);
+    } else if (e instanceof ConflictException) {
+      status = ServerResponse.status(HttpStatus.CONFLICT);
+    } else if (e instanceof OversizeException) {
+      status = ServerResponse.status(HttpStatus.PAYLOAD_TOO_LARGE);
+    } else if (e instanceof InternalServerException) {
+      status = ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR);
     } else if (e instanceof ValidationException) {
       ValidationException exception = (ValidationException) e;
       return ServerResponse.badRequest()
           .syncBody(new OutgoingDataV1(null, exception.getViolations()));
-    } else if (e instanceof VerificationException) {
-      return ServerResponse.status(HttpStatus.FORBIDDEN)
-          .syncBody(new OutgoingDataV1(null, e.getMessage()));
-    } else if (e instanceof ConflictException) {
-      return ServerResponse.status(HttpStatus.CONFLICT)
-          .syncBody(new OutgoingDataV1(null, e.getMessage()));
-    } else if (e instanceof InternalServerException) {
-      return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .syncBody(new OutgoingDataV1(null, e.getMessage()));
     } else {
       LOGGER.error("Could not consume exception", e);
       return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
+    return status.syncBody(OutgoingDataV1.errorOnly(e.getMessage()));
   }
 }

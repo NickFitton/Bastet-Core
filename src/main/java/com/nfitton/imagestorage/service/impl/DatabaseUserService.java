@@ -73,6 +73,11 @@ public class DatabaseUserService implements UserService {
   }
 
   @Override
+  public Mono<Boolean> existsById(UUID uuid) {
+    return Mono.fromCallable(() -> repository.existsById(uuid));
+  }
+
+  @Override
   public Mono<Boolean> deleteById(UUID id) {
     return Mono.fromCallable(() -> {
       repository.deleteById(id);

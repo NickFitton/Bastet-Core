@@ -99,6 +99,11 @@ public class DatabaseCameraService implements CameraService {
     return Flux.fromIterable(cameraRepository.findAllCamera());
   }
 
+  @Override
+  public Mono<Boolean> existsById(UUID id) {
+    return Mono.fromCallable(() -> cameraRepository.existsById(id));
+  }
+
   private Mono<Camera> saveCamera(Camera camera) {
     return Mono.fromCallable(() -> cameraRepository.save(camera)).subscribeOn(Schedulers.elastic());
   }

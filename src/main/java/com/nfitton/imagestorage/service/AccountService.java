@@ -15,6 +15,8 @@ public interface AccountService<T, ID> {
 
   Flux<ID> getAllIds();
 
+  Mono<Boolean> existsById(ID id);
+
   Mono<Boolean> deleteById(ID id);
 
 

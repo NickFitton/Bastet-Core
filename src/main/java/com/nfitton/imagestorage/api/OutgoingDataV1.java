@@ -17,6 +17,14 @@ public class OutgoingDataV1 {
     this.error = error;
   }
 
+  public static OutgoingDataV1 dataOnly(Object data) {
+    return new OutgoingDataV1(data, null);
+  }
+
+  public static OutgoingDataV1 errorOnly(Object error) {
+    return new OutgoingDataV1(null, error);
+  }
+
   public Object getData() {
     return data;
   }
