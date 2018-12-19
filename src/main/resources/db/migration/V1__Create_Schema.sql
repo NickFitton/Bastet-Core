@@ -8,12 +8,12 @@ CREATE TABLE image_metadata (
     file_exists BOOLEAN DEFAULT TRUE
 );
 
-CREATE TABLE account (
+CREATE TABLE users (
     id UUID PRIMARY KEY,
     name VARCHAR(64) NOT NULL,
-    email VARCHAR(128) NOT NULL,
+    email VARCHAR(128) NOT NULL UNIQUE,
     password VARCHAR(64) NOT NULL,
-    salt VARCHAR(32) NOT NULL,
+    type VARCHAR(32) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     last_active TIMESTAMP DEFAULT NOW()

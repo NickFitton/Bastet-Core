@@ -1,5 +1,7 @@
 package com.nfitton.imagestorage.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -7,22 +9,25 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import javax.validation.constraints.NotNull;
 
+@JsonInclude(Include.NON_NULL)
 public class CameraV1 {
   private UUID id;
-  private String name;
+  @NotNull(message = "A password must be given")
+  private String password;
   private ZonedDateTime createdAt;
   private ZonedDateTime updatedAt;
   private ZonedDateTime lastUpload;
 
   @JsonCreator public CameraV1(
       @JsonProperty("id") UUID id,
-      @JsonProperty("name") String name,
+      @JsonProperty("password") String password,
       @JsonProperty("createdAt") ZonedDateTime createdAt,
       @JsonProperty("updatedAt") ZonedDateTime updatedAt,
       @JsonProperty("lastUpload") ZonedDateTime lastUpload) {
     this.id = id;
-    this.name = name;
+    this.password = password;
     this.createdAt = utcOrNull(createdAt);
     this.updatedAt = utcOrNull(updatedAt);
     this.lastUpload = utcOrNull(lastUpload);
@@ -50,22 +55,22 @@ public class CameraV1 {
       return false;
     }
     CameraV1 cameraV1 = (CameraV1) o;
-    return Objects.equals(id, cameraV1.id) && Objects.equals(name, cameraV1.name) &&
+    return Objects.equals(id, cameraV1.id) && Objects.equals(password, cameraV1.password) &&
            Objects.equals(createdAt, cameraV1.createdAt) &&
            Objects.equals(updatedAt, cameraV1.updatedAt) &&
            Objects.equals(lastUpload, cameraV1.lastUpload);
   }
 
   @Override public int hashCode() {
-    return Objects.hash(id, name, createdAt, updatedAt, lastUpload);
+    return Objects.hash(id, password, createdAt, updatedAt, lastUpload);
   }
 
   public UUID getId() {
     return id;
   }
 
-  public String getName() {
-    return name;
+  public String getPassword() {
+    return password;
   }
 
   public ZonedDateTime getCreatedAt() {

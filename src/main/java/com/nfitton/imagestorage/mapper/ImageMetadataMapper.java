@@ -6,6 +6,7 @@ import com.nfitton.imagestorage.entity.ImageMetadata;
 import com.nfitton.imagestorage.model.TallyPoint;
 
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
 public class ImageMetadataMapper {
 
@@ -13,6 +14,19 @@ public class ImageMetadataMapper {
     ZonedDateTime now = ZonedDateTime.now();
     return ImageMetadata.Builder
         .newBuilder()
+        .withEntryTime(v1.getEntryTime())
+        .withExitTime(v1.getExitTime())
+        .withImageTime(v1.getImageTime())
+        .withCreatedAt(now)
+        .withUpdatedAt(now)
+        .build();
+  }
+
+  public static ImageMetadata newMetadata(ImageMetadataV1 v1, UUID cameraId) {
+    ZonedDateTime now = ZonedDateTime.now();
+    return ImageMetadata.Builder
+        .newBuilder()
+        .withCameraId(cameraId)
         .withEntryTime(v1.getEntryTime())
         .withExitTime(v1.getExitTime())
         .withImageTime(v1.getImageTime())

@@ -1,68 +1,67 @@
 package com.nfitton.imagestorage.entity;
 
-import javax.persistence.Entity;
+import static java.time.ZonedDateTime.now;
+import static javax.persistence.EnumType.STRING;
+
+import java.time.ZonedDateTime;
+import java.util.Objects;
+import java.util.UUID;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import java.time.ZonedDateTime;
-import java.util.UUID;
-
+import javax.persistence.MappedSuperclass;
 import org.hibernate.annotations.GenericGenerator;
 
-@Entity
+@MappedSuperclass
 public class Account {
 
   @Id
   @GeneratedValue(generator = "UUID")
   @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
   private UUID id;
-  private String name;
-  private String email;
   private String password;
-  private String salt;
+  @Enumerated(value = STRING)
+  private AccountType type;
   private ZonedDateTime createdAt;
   private ZonedDateTime updatedAt;
   private ZonedDateTime lastActive;
 
-  private Account(
+  Account(
       UUID id,
-      String name,
-      String email,
       String password,
-      String salt,
+      AccountType type,
       ZonedDateTime createdAt,
       ZonedDateTime updatedAt,
       ZonedDateTime lastActive) {
     this.id = id;
-    this.name = name;
-    this.email = email;
     this.password = password;
-    this.salt = salt;
+    this.type = type;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.lastActive = lastActive;
   }
 
-  public Account() {
+  Account() {
+  }
+
+  public void updatePassword(String newPassword) {
+    password = newPassword;
+  }
+
+  public void isActive() {
+    this.lastActive = now();
   }
 
   public UUID getId() {
     return id;
   }
 
-  public String getName() {
-    return name;
-  }
-
-  public String getEmail() {
-    return email;
-  }
-
   public String getPassword() {
     return password;
   }
 
-  public String getSalt() {
-    return salt;
+  public AccountType getType() {
+    return type;
   }
 
   public ZonedDateTime getCreatedAt() {
@@ -77,77 +76,19 @@ public class Account {
     return lastActive;
   }
 
-  public static final class Builder {
 
-    private UUID id;
-    private String name;
-    private String email;
-    private String password;
-    private String salt;
-    private ZonedDateTime createdAt;
-    private ZonedDateTime updatedAt;
-    private ZonedDateTime lastActive;
-
-    private Builder() {
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
-
-    public static Builder newBuilder() {
-      return new Builder();
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
-
-    public static Builder clone(Account account) {
-      return new Builder()
-          .withId(account.id)
-          .withName(account.name)
-          .withEmail(account.email)
-          .withPassword(account.password)
-          .withCreatedAt(account.createdAt)
-          .withUpdatedAt(ZonedDateTime.now())
-          .withLastActive(account.lastActive);
-    }
-
-    public Builder withId(UUID val) {
-      id = val;
-      return this;
-    }
-
-    public Builder withName(String val) {
-      name = val;
-      return this;
-    }
-
-    public Builder withEmail(String val) {
-      email = val;
-      return this;
-    }
-
-    public Builder withPassword(String val) {
-      password = val;
-      return this;
-    }
-
-    public Builder withSalt(String val) {
-      salt = val;
-      return this;
-    }
-
-    public Builder withCreatedAt(ZonedDateTime val) {
-      createdAt = val;
-      return this;
-    }
-
-    public Builder withUpdatedAt(ZonedDateTime val) {
-      updatedAt = val;
-      return this;
-    }
-
-    public Builder withLastActive(ZonedDateTime val) {
-      lastActive = val;
-      return this;
-    }
-
-    public Account build() {
-      return new Account(id, name, email, password, salt, createdAt, updatedAt, lastActive);
-    }
+    Account that = (Account) o;
+    return Objects.equals(id, that.id) && Objects.equals(password, that.password) &&
+        Objects.equals(createdAt, that.createdAt) &&
+        Objects.equals(updatedAt, that.updatedAt) &&
+        Objects.equals(lastActive, that.lastActive);
   }
 }

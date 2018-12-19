@@ -1,36 +1,41 @@
 package com.nfitton.imagestorage.mapper;
 
-import com.nfitton.imagestorage.api.AccountV1;
-import com.nfitton.imagestorage.entity.Account;
+import static com.nfitton.imagestorage.entity.AccountType.BASIC;
 
+import com.nfitton.imagestorage.api.UserV1;
+import com.nfitton.imagestorage.entity.User;
+import com.nfitton.imagestorage.util.ValidationUtil;
 import java.time.ZonedDateTime;
-
-import org.springframework.security.crypto.bcrypt.BCrypt;
+import javax.validation.Validator;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 public class AccountMapper {
 
-  public static Account newAccount(AccountV1 v1) {
+  public static User newAccount(UserV1 v1, PasswordEncoder encoder, Validator validator) {
     ZonedDateTime now = ZonedDateTime.now();
-    String salt = BCrypt.gensalt();
 
-    return Account.Builder
+    ValidationUtil.validate(v1, validator);
+
+    return User.Builder
         .newBuilder()
         .withName(v1.getName())
         .withEmail(v1.getEmail())
-        .withPassword(BCrypt.hashpw(v1.getPassword(), salt))
-        .withSalt(salt)
+        .withPassword(encoder.encode(v1.getPassword()))
+        .withType(BASIC)
         .withCreatedAt(now)
         .withUpdatedAt(now)
         .withLastActive(now)
         .build();
   }
 
-  public static Account newPassword(Account oldAccount, String newPassword) {
-    String salt = BCrypt.gensalt();
-    return Account.Builder
-        .clone(oldAccount)
-        .withSalt(salt)
-        .withPassword(BCrypt.hashpw(newPassword, salt))
-        .build();
+  public static UserV1 toV1(User user) {
+    return new UserV1(
+        user.getId(),
+        user.getName(),
+        user.getEmail(),
+        null,
+        user.getCreatedAt(),
+        user.getUpdatedAt(),
+        user.getLastActive());
   }
 }

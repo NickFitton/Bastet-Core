@@ -2,3 +2,7 @@
 storage:
   location: "/tmp/cameraPhotos/"
   create: true
+
+api:
+  payload:
+    max: 500

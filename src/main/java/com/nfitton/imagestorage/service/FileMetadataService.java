@@ -24,6 +24,8 @@ public interface FileMetadataService {
 
   Flux<ImageMetadata> findAllExistedAt(ZonedDateTime from, ZonedDateTime to);
 
+  Flux<ImageMetadata> findAllByCameraId(UUID cameraId, ZonedDateTime from, ZonedDateTime to);
+
   Flux<TallyPoint> countAllExistedAt(ZonedDateTime start, ZonedDateTime end, TimeFrame measurement);
 
   Flux<ImageMetadata> findAll();

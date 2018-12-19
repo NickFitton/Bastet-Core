@@ -1,17 +1,18 @@
 CREATE TABLE camera (
     id UUID PRIMARY KEY,
-    name VARCHAR(64) NOT NULL,
+    password VARCHAR(64) NOT NULL,
+    type VARCHAR(32) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
-    last_upload TIMESTAMP
+    last_active TIMESTAMP
 );
 
-CREATE TABLE key (
-    id UUID PRIMARY KEY,
-    camera_id UUID NOT NULL,
-    key_type VARCHAR(10) NOT NULL,
-    private_key VARCHAR(858),
-    public_key VARCHAR(1115)
+CREATE TABLE authentication (
+    user_id UUID PRIMARY KEY,
+    random_string VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_key_type ON key (key_type);
+CREATE INDEX idx_token ON authentication(random_string);
+
+ALTER TABLE image_metadata ADD camera_id UUID;

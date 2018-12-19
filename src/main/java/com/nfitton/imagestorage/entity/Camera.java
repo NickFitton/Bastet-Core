@@ -1,84 +1,32 @@
 package com.nfitton.imagestorage.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import java.time.ZonedDateTime;
-import java.util.Objects;
-import java.util.UUID;
+import static com.nfitton.imagestorage.entity.AccountType.CAMERA;
+import static java.time.LocalDate.now;
 
-import org.hibernate.annotations.GenericGenerator;
+import java.time.ZonedDateTime;
+import java.util.UUID;
+import javax.persistence.Entity;
 
 @Entity
-public class Camera {
-
-  @Id
-  @GeneratedValue(generator = "UUID")
-  @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-  private UUID id;
-  private String name;
-  private ZonedDateTime createdAt;
-  private ZonedDateTime updatedAt;
-  private ZonedDateTime lastUpload;
+public class Camera extends Account {
 
   public Camera(
       UUID id,
-      String name,
+      String password,
       ZonedDateTime createdAt,
       ZonedDateTime updatedAt,
-      ZonedDateTime lastUpload) {
-    this.id = id;
-    this.name = name;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
-    this.lastUpload = lastUpload;
+      ZonedDateTime lastActive) {
+    super(id, password, CAMERA, createdAt, updatedAt, lastActive);
   }
 
   private Camera() {
-  }
-
-  @Override public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    Camera camera = (Camera) o;
-    return Objects.equals(id, camera.id) && Objects.equals(name, camera.name) &&
-           Objects.equals(createdAt, camera.createdAt) &&
-           Objects.equals(updatedAt, camera.updatedAt) &&
-           Objects.equals(lastUpload, camera.lastUpload);
-  }
-
-  @Override public int hashCode() {
-    return Objects.hash(id, name, createdAt, updatedAt, lastUpload);
-  }
-
-  public UUID getId() {
-    return id;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public ZonedDateTime getCreatedAt() {
-    return createdAt;
-  }
-
-  public ZonedDateTime getUpdatedAt() {
-    return updatedAt;
-  }
-
-  public ZonedDateTime getLastUpload() {
-    return lastUpload;
+    super();
   }
 
   public static final class Builder {
 
     private UUID id;
-    private String name;
+    private String password;
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
     private ZonedDateTime lastUpload;
@@ -93,10 +41,10 @@ public class Camera {
     public static Builder clone(Camera camera) {
       return new Builder()
           .withId(camera.getId())
-          .withName(camera.getName())
+          .withPassword(camera.getPassword())
           .withCreatedAt(camera.getCreatedAt())
           .withUpdatedAt(camera.getUpdatedAt())
-          .withLastUpload(camera.getLastUpload());
+          .withLastActive(camera.getLastActive());
     }
 
     public Builder withId(UUID val) {
@@ -104,8 +52,8 @@ public class Camera {
       return this;
     }
 
-    public Builder withName(String val) {
-      name = val;
+    public Builder withPassword(String val) {
+      password = val;
       return this;
     }
 
@@ -119,13 +67,13 @@ public class Camera {
       return this;
     }
 
-    public Builder withLastUpload(ZonedDateTime val) {
+    public Builder withLastActive(ZonedDateTime val) {
       lastUpload = val;
       return this;
     }
 
     public Camera build() {
-      return new Camera(id, name, createdAt, updatedAt, lastUpload);
+      return new Camera(id, password, createdAt, updatedAt, lastUpload);
     }
 
   }
