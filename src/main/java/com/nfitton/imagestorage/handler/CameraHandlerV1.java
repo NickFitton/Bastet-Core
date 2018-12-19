@@ -59,7 +59,7 @@ public class CameraHandlerV1 {
         .map((CameraV1 v1) -> CameraMapper.toEntity(v1, encoder, validator))
         .flatMap(cameraService::save)
         .map(CameraMapper::toApiBean)
-        .map(camera -> new OutgoingDataV1(camera, null))
+        .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.status(HttpStatus.CREATED).syncBody(data))
         .onErrorResume(RouterUtil::handleErrors);
   }
