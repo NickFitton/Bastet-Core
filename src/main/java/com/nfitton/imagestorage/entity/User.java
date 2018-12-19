@@ -3,8 +3,10 @@ package com.nfitton.imagestorage.entity;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import javax.persistence.Entity;
+import javax.persistence.Table;
 
 @Entity
+@Table(name = "users")
 public class User extends Account {
 
   private String name;

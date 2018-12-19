@@ -8,7 +8,7 @@ CREATE TABLE image_metadata (
     file_exists BOOLEAN DEFAULT TRUE
 );
 
-CREATE TABLE user (
+CREATE TABLE users (
     id UUID PRIMARY KEY,
     name VARCHAR(64) NOT NULL,
     email VARCHAR(128) NOT NULL UNIQUE,
