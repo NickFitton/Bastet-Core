@@ -84,7 +84,7 @@ public class UserHandlerV1 {
         .map(account -> account.orElseThrow(
             () -> new NotFoundException(String.format("User not found by user ID: %s", userId))))
         .map(AccountMapper::toV1)
-        .map(account -> new OutgoingDataV1(account, null))
+        .map(OutgoingDataV1::dataOnly)
         .flatMap(account -> ServerResponse.ok().syncBody(account))
         .onErrorResume(RouterUtil::handleErrors);
   }
