@@ -56,11 +56,10 @@ public class UserHandlerV1 {
           if (!isAdmin) {
             return Mono.error(new VerificationException());
           }
-          Mono<OutgoingDataV1> userIds = userService.getAllIds().collectList()
-              .map(ids -> new OutgoingDataV1(ids, null));
-
-          return ServerResponse.ok().body(userIds, OutgoingDataV1.class);
-        });
+          return userService.getAllIds().collectList();
+        })
+        .map(OutgoingDataV1::dataOnly)
+        .flatMap(data -> ServerResponse.ok().syncBody(data));
   }
 
   public Mono<ServerResponse> getUser(ServerRequest request) {

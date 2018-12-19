@@ -59,21 +59,17 @@ public class CameraHandlerV1 {
         .map((CameraV1 v1) -> CameraMapper.toEntity(v1, encoder, validator))
         .flatMap(cameraService::save)
         .map(CameraMapper::toApiBean)
-        .map(camera -> new OutgoingDataV1(camera, null))
+        .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.status(HttpStatus.CREATED).syncBody(data))
         .onErrorResume(RouterUtil::handleErrors);
   }
 
   public Mono<ServerResponse> getCameras(ServerRequest request) {
     return RouterUtil.parseAuthenticationToken(request, authenticationService)
-        .flatMap(userId -> {
-          LOGGER.info(
-              String.format("User %s retreiving camera id list", userId));
-          Mono<OutgoingDataV1> outgoingData = cameraService.getAllIds().collectList()
-              .map(cameraIds -> new OutgoingDataV1(cameraIds, null));
-
-          return ServerResponse.ok().body(outgoingData, OutgoingDataV1.class);
-        })
+        .flatMapMany(userId -> cameraService.getAllIds())
+        .collectList()
+        .map(OutgoingDataV1::dataOnly)
+        .flatMap(data -> ServerResponse.ok().syncBody(data))
         .onErrorResume(RouterUtil::handleErrors);
   }
 
@@ -81,32 +77,25 @@ public class CameraHandlerV1 {
     UUID cameraId = getCameraId(request);
 
     return RouterUtil.parseAuthenticationToken(request, authenticationService)
-        .flatMap(userId -> {
-          LOGGER.info(
-              String.format("User %s retreiving information for camera %s", userId, cameraId));
-
-          return cameraService.findById(cameraId);
-        }).flatMap(optionalCamera -> {
+        .flatMap(userId -> cameraService.findById(cameraId))
+        .flatMap(optionalCamera -> {
           Optional<OutgoingDataV1> output = optionalCamera
               .map(CameraMapper::toApiBean)
-              .map(cameraV1 -> new OutgoingDataV1(cameraV1, null));
+              .map(OutgoingDataV1::dataOnly);
           if (output.isPresent()) {
             return ServerResponse.ok().syncBody(output.get());
           }
           return ServerResponse.notFound().build();
-        }).onErrorResume(RouterUtil::handleErrors);
+        })
+        .onErrorResume(RouterUtil::handleErrors);
   }
 
   public Mono<ServerResponse> deleteCamera(ServerRequest request) {
     UUID cameraId = getCameraId(request);
 
     return RouterUtil.parseAuthenticationToken(request, authenticationService)
-        .flatMap(userId -> {
-          LOGGER.info(
-              String.format("User %s retreiving information for camera %s", userId, cameraId));
-
-          return cameraService.deleteById(cameraId);
-        }).then(ServerResponse.noContent().build())
+        .flatMap(userId -> cameraService.deleteById(cameraId))
+        .then(ServerResponse.noContent().build())
         .onErrorResume(RouterUtil::handleErrors);
   }
 }
