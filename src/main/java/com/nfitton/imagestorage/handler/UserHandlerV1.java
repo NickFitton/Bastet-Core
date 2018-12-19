@@ -44,7 +44,7 @@ public class UserHandlerV1 {
         .map((UserV1 v1) -> AccountMapper.newAccount(v1, encoder, validator))
         .flatMap(userService::save)
         .map(AccountMapper::toV1)
-        .map(account -> new OutgoingDataV1(account, null))
+        .map(OutgoingDataV1::dataOnly)
         .flatMap(account -> ServerResponse.status(HttpStatus.CREATED).syncBody(account))
         .onErrorResume(RouterUtil::handleErrors);
   }
