@@ -1,11 +1,10 @@
 package com.nfitton.imagestorage.entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 public class Authentication {
@@ -15,6 +14,9 @@ public class Authentication {
   private String randomString;
   private ZonedDateTime createdAt;
 
+  /**
+   * Standard constructor.
+   */
   public Authentication(UUID userId, String randomString, ZonedDateTime createdAt) {
     this.userId = userId;
     this.randomString = randomString;

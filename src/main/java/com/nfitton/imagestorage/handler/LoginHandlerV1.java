@@ -68,7 +68,8 @@ public class LoginHandlerV1 {
     String[] s = authorization.get(0).split(" ");
     if (s.length != 2 || !s[0].toLowerCase().equals("basic")) {
       return Mono.error(new BadRequestException(
-          "Malformed authorization header, should follow format: 'Basic {base64(username:password)}'"));
+          "Malformed authorization header, "
+              + "should follow format: 'Basic {base64(username:password)}'"));
     }
 
     String credentials = new String(Base64.getDecoder().decode(s[1]));

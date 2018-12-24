@@ -1,10 +1,9 @@
 package com.nfitton.imagestorage.api;
 
-import java.time.ZonedDateTime;
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.ZonedDateTime;
+import java.util.UUID;
 
 public class ImageMetadataV1 {
 
@@ -16,8 +15,11 @@ public class ImageMetadataV1 {
   private ZonedDateTime updatedAt;
   private boolean fileExists;
 
-
-  @JsonCreator public ImageMetadataV1(
+  /**
+   * Standard JSON creator, see {@link JsonCreator}.
+   */
+  @JsonCreator
+  public ImageMetadataV1(
       @JsonProperty("id") UUID id,
       @JsonProperty("entryTime") ZonedDateTime entryTime,
       @JsonProperty("exitTime") ZonedDateTime exitTime,

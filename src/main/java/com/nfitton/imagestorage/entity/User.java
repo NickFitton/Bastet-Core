@@ -54,6 +54,7 @@ public class User extends Account {
     public static Builder newBuilder() {
       return new Builder();
     }
+
     public Builder withId(UUID val) {
       id = val;
       return this;

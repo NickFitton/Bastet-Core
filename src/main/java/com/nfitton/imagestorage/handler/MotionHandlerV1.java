@@ -54,6 +54,11 @@ public class MotionHandlerV1 {
     this.userService = userService;
   }
 
+  /**
+   * Saves motion if the user is authenticated returning the saved {@link ImageMetadataV1}.
+   * @param request the incoming request
+   * @return The saved {@link ImageMetadataV1} with a {@link HttpStatus} of CREATED (201)
+   */
   public Mono<ServerResponse> postMotion(ServerRequest request) {
     return Mono
         .zip(
@@ -67,6 +72,11 @@ public class MotionHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Updates a saved motion with the given image, returning the saved {@link ImageMetadataV1}.
+   * @param request the incoming request
+   * @return the updated {@link ImageMetadataV1} with a {@link HttpStatus} of ACCEPTED (202)
+   */
   public Mono<ServerResponse> patchMotionPicture(ServerRequest request) {
     UUID imageId = UUID.fromString(request.pathVariable("motionId"));
     return Mono.zip(
@@ -94,6 +104,11 @@ public class MotionHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Retrieve a list of {@link ImageMetadataV1} that exist in the given timeframe.
+   * @param request the incoming request
+   * @return an Array of {@link ImageMetadataV1}.
+   */
   public Mono<ServerResponse> getMotion(ServerRequest request) {
     return parseAuthenticationToken(request, authenticationService)
         .flatMap(userService::existsById)
@@ -114,6 +129,11 @@ public class MotionHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Retrieve a single {@link ImageMetadataV1} using the given {@link UUID} id.
+   * @param request the incoming request
+   * @return a single {@link ImageMetadataV1} using the given {@link UUID} id.
+   */
   public Mono<ServerResponse> getMotionById(ServerRequest request) {
     return parseAuthenticationToken(request, authenticationService)
         .flatMap(userService::existsById)
@@ -130,6 +150,11 @@ public class MotionHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Retreives the image related to the given id of a {@link ImageMetadataV1}.
+   * @param request the incoming request
+   * @return the JPG bytes of the found image
+   */
   public Mono<ServerResponse> getMotionImageById(ServerRequest request) {
     UUID motionId = RouterUtil.getUUIDParameter(request, "motionId");
 

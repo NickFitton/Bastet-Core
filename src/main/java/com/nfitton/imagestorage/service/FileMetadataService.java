@@ -3,10 +3,8 @@ package com.nfitton.imagestorage.service;
 import com.nfitton.imagestorage.entity.ImageMetadata;
 import com.nfitton.imagestorage.model.TallyPoint;
 import com.nfitton.imagestorage.model.TimeFrame;
-
 import java.time.ZonedDateTime;
 import java.util.UUID;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

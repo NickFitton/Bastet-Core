@@ -1,11 +1,10 @@
 package com.nfitton.imagestorage.entity;
 
+import java.time.ZonedDateTime;
+import java.util.UUID;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import java.time.ZonedDateTime;
-import java.util.UUID;
-
 import org.hibernate.annotations.GenericGenerator;
 
 @Entity
@@ -95,6 +94,11 @@ public class ImageMetadata {
       return new Builder();
     }
 
+    /**
+     * Hard copies the given camera object into a {@link ImageMetadata.Builder}.
+     * @param metadata the camera to copy
+     * @return a {@link ImageMetadata.Builder} that can have its values edited
+     */
     public static Builder clone(ImageMetadata metadata) {
       return new Builder()
           .withId(metadata.getId())
@@ -147,15 +151,20 @@ public class ImageMetadata {
       return this;
     }
 
+    /**
+     * Uses the values set in the builder to construct an {@link ImageMetadata}.
+     * @return the constructed {@link ImageMetadata}
+     */
     public ImageMetadata build() {
-      return new ImageMetadata(id,
-                               cameraId,
-                               entryTime,
-                               exitTime,
-                               imageTime,
-                               createdAt,
-                               updatedAt,
-                               fileExists);
+      return new ImageMetadata(
+          id,
+          cameraId,
+          entryTime,
+          exitTime,
+          imageTime,
+          createdAt,
+          updatedAt,
+          fileExists);
     }
   }
 }

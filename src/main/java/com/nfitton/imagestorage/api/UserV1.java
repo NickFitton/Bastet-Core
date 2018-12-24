@@ -1,16 +1,16 @@
 package com.nfitton.imagestorage.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.ZonedDateTime;
 import java.util.UUID;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.validation.constraints.NotNull;
 
 @JsonInclude(Include.NON_NULL)
 public class UserV1 {
+
   private UUID id;
   @NotNull(message = "A name must be given")
   private String name;
@@ -22,7 +22,11 @@ public class UserV1 {
   private ZonedDateTime updatedAt;
   private ZonedDateTime lastActive;
 
-  @JsonCreator public UserV1(
+  /**
+   * Standard JSON creator, see {@link JsonCreator}.
+   */
+  @JsonCreator
+  public UserV1(
       @JsonProperty("id") UUID id,
       @JsonProperty("name") String name,
       @JsonProperty("email") String email,

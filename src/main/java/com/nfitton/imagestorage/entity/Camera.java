@@ -1,8 +1,8 @@
 package com.nfitton.imagestorage.entity;
 
 import static com.nfitton.imagestorage.entity.AccountType.CAMERA;
-import static java.time.LocalDate.now;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import javax.persistence.Entity;
@@ -38,6 +38,11 @@ public class Camera extends Account {
       return new Builder();
     }
 
+    /**
+     * Hard copies the given camera object into a {@link Camera.Builder}.
+     * @param camera the camera to copy
+     * @return a {@link Camera.Builder} that can have its values edited
+     */
     public static Builder clone(Camera camera) {
       return new Builder()
           .withId(camera.getId())

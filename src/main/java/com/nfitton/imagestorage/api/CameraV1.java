@@ -1,18 +1,18 @@
 package com.nfitton.imagestorage.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.UUID;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.validation.constraints.NotNull;
 
 @JsonInclude(Include.NON_NULL)
 public class CameraV1 {
+
   private UUID id;
   @NotNull(message = "A password must be given")
   private String password;
@@ -20,7 +20,11 @@ public class CameraV1 {
   private ZonedDateTime updatedAt;
   private ZonedDateTime lastUpload;
 
-  @JsonCreator public CameraV1(
+  /**
+   * Standard JSON creator, see {@link JsonCreator}.
+   */
+  @JsonCreator
+  public CameraV1(
       @JsonProperty("id") UUID id,
       @JsonProperty("password") String password,
       @JsonProperty("createdAt") ZonedDateTime createdAt,
@@ -47,7 +51,8 @@ public class CameraV1 {
     }
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
@@ -55,13 +60,14 @@ public class CameraV1 {
       return false;
     }
     CameraV1 cameraV1 = (CameraV1) o;
-    return Objects.equals(id, cameraV1.id) && Objects.equals(password, cameraV1.password) &&
-           Objects.equals(createdAt, cameraV1.createdAt) &&
-           Objects.equals(updatedAt, cameraV1.updatedAt) &&
-           Objects.equals(lastUpload, cameraV1.lastUpload);
+    return Objects.equals(id, cameraV1.id) && Objects.equals(password, cameraV1.password)
+        && Objects.equals(createdAt, cameraV1.createdAt)
+        && Objects.equals(updatedAt, cameraV1.updatedAt)
+        && Objects.equals(lastUpload, cameraV1.lastUpload);
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return Objects.hash(id, password, createdAt, updatedAt, lastUpload);
   }
 

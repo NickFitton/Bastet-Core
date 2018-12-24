@@ -11,6 +11,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 public class AccountMapper {
 
+  /**
+   * Takes the received user data, encodes the password and returns a constructed {@link User}.
+   *
+   * @param v1 the user data received
+   * @param encoder the encoder for the password
+   * @param validator the validator for the data
+   * @return a valid {@link User}
+   */
   public static User newAccount(UserV1 v1, PasswordEncoder encoder, Validator validator) {
     ZonedDateTime now = ZonedDateTime.now();
 
@@ -28,6 +36,12 @@ public class AccountMapper {
         .build();
   }
 
+  /**
+   * Takes the outgoing user data, and converts it to a {@link UserV1} to return.
+   *
+   * @param user the user to convert
+   * @return the {@link UserV1} without exposing the password
+   */
   public static UserV1 toV1(User user) {
     return new UserV1(
         user.getId(),

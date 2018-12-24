@@ -1,9 +1,7 @@
 package com.nfitton.imagestorage.configuration;
 
 import com.nfitton.imagestorage.exception.StartupException;
-
 import java.io.File;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +21,13 @@ public class PathConfiguration {
     return location;
   }
 
-  @Value("${storage.location}") public void setLocation(String location) throws StartupException {
+  /**
+   * Receives the storage location and validates it.
+   * @param location the location stored in the config
+   * @throws StartupException if the given location is a file or nonexistent
+   */
+  @Value("${storage.location}")
+  public void setLocation(String location) throws StartupException {
     File folder = new File(location);
 
     if (!folder.exists() && autoCreate) {

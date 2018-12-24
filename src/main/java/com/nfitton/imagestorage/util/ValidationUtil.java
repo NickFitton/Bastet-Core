@@ -7,6 +7,7 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 
 public class ValidationUtil {
+
   public static <BEAN> void validate(BEAN bean, Validator validator) {
     Set<ConstraintViolation<BEAN>> violations = validator.validate(bean);
     if (violations.size() > 0) {
