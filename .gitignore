@@ -5,3 +5,9 @@
 # Java
 out
 build
+
+# Mac
+*/.DS_Store
+
+# Libraries
+libs/*
