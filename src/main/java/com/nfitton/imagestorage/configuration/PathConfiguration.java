@@ -1,9 +1,7 @@
 package com.nfitton.imagestorage.configuration;
 
 import com.nfitton.imagestorage.exception.StartupException;
-
 import java.io.File;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

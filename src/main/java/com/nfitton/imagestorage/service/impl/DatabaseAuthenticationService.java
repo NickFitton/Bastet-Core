@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Service
 public class DatabaseAuthenticationService implements AuthenticationService {
@@ -59,18 +60,19 @@ public class DatabaseAuthenticationService implements AuthenticationService {
   }
 
   private Mono<Optional<Authentication>> findById(UUID userId) {
-    return Mono.fromCallable(() -> repository.findById(userId));
+    return Mono.fromCallable(() -> repository.findById(userId)).subscribeOn(Schedulers.elastic());
   }
 
   private Mono<Optional<Authentication>> findByToken(String authToken) {
-    return Mono.fromCallable(() -> repository.findByRandomString(authToken));
+    return Mono.fromCallable(() -> repository.findByRandomString(authToken))
+        .subscribeOn(Schedulers.elastic());
   }
 
   private Mono<UUID> revokeAuthentication(Authentication auth) {
     return Mono.fromCallable(() -> {
       repository.delete(auth);
       return auth.getUserId();
-    });
+    }).subscribeOn(Schedulers.elastic());
   }
 
   private Mono<String> createAuthentication(UUID userId) {
@@ -79,11 +81,11 @@ public class DatabaseAuthenticationService implements AuthenticationService {
     Authentication newAuthentication = new Authentication(userId, token, now);
 
     return Mono.fromCallable(() -> repository.save(newAuthentication))
-        .map(Authentication::getRandomString);
+        .map(Authentication::getRandomString).subscribeOn(Schedulers.elastic());
   }
 
   public Flux<Authentication> getAll() {
-    return Flux.fromIterable(repository.findAll());
+    return Flux.fromIterable(repository.findAll()).subscribeOn(Schedulers.elastic());
   }
 
   public <T extends Account> Mono<UUID> authenticate(
@@ -100,7 +102,7 @@ public class DatabaseAuthenticationService implements AuthenticationService {
             }
           }
           return Mono.error(new BadRequestException("Invalid username/password combination"));
-        });
+        }).subscribeOn(Schedulers.elastic());
   }
 
   @Override
@@ -118,6 +120,6 @@ public class DatabaseAuthenticationService implements AuthenticationService {
             }
           }
           return Mono.error(new BadRequestException("Invalid username/password combination"));
-        });
+        }).subscribeOn(Schedulers.elastic());
   }
 }

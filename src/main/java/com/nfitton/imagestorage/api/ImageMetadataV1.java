@@ -1,10 +1,10 @@
 package com.nfitton.imagestorage.api;
 
-import java.time.ZonedDateTime;
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.ZonedDateTime;
+import java.util.Set;
+import java.util.UUID;
 
 public class ImageMetadataV1 {
 
@@ -15,16 +15,18 @@ public class ImageMetadataV1 {
   private ZonedDateTime createdAt;
   private ZonedDateTime updatedAt;
   private boolean fileExists;
+  private Set<ImageEntityV1> imageEntities;
 
-
-  @JsonCreator public ImageMetadataV1(
+  @JsonCreator
+  public ImageMetadataV1(
       @JsonProperty("id") UUID id,
       @JsonProperty("entryTime") ZonedDateTime entryTime,
       @JsonProperty("exitTime") ZonedDateTime exitTime,
       @JsonProperty("imageTime") ZonedDateTime imageTime,
       @JsonProperty("createdAt") ZonedDateTime createdAt,
       @JsonProperty("updatedAt") ZonedDateTime updatedAt,
-      @JsonProperty("fileExists") boolean fileExists) {
+      @JsonProperty("fileExists") boolean fileExists,
+      @JsonProperty("imageEntities") Set<ImageEntityV1> imageEntities) {
     this.id = id;
     this.entryTime = entryTime;
     this.exitTime = exitTime;
@@ -32,6 +34,7 @@ public class ImageMetadataV1 {
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.fileExists = fileExists;
+    this.imageEntities = imageEntities;
   }
 
   public UUID getId() {
@@ -60,5 +63,9 @@ public class ImageMetadataV1 {
 
   public boolean isFileExists() {
     return fileExists;
+  }
+
+  public Set<ImageEntityV1> getImageEntities() {
+    return imageEntities;
   }
 }

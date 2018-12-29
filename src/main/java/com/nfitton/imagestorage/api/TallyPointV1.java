@@ -1,9 +1,8 @@
 package com.nfitton.imagestorage.api;
 
-import java.time.ZonedDateTime;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.ZonedDateTime;
 
 public class TallyPointV1 {
   private ZonedDateTime time;
