@@ -14,6 +14,7 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
+apply plugin: 'checkstyle'
 
 group = 'com.nfitton'
 version = "${version}"
@@ -23,6 +24,11 @@ repositories {
     mavenCentral()
 }
 
+checkstyle {
+    configFile = rootProject.file('checkstyle/checkstyle.xml')
+    // maxWarnings = 0
+    checkstyleTest.enabled = true
+}
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'

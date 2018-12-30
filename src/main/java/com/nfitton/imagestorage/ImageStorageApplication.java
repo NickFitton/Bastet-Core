@@ -7,12 +7,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class ImageStorageApplication {
 
-	static {
-		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-	}
+  static {
+    System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+  }
 
-	public static void main(String[] args) {
-		SpringApplication.run(ImageStorageApplication.class, args);
-	}
+  public static void main(String[] args) {
+    SpringApplication.run(ImageStorageApplication.class, args);
+  }
 
 }
