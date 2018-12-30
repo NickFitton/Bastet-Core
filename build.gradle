@@ -31,12 +31,15 @@ checkstyle {
 }
 
 dependencies {
+    checkstyle 'com.puppycrawl.tools:checkstyle:8.13'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.boot:spring-boot-starter-activemq'
+
+    implementation "org.openpnp:opencv:3.4.2-1"
 
     compile 'org.flywaydb:flyway-core'
     runtimeOnly 'com.h2database:h2'

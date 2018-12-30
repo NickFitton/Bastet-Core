@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class ImageStorageApplication {
 
   static {
+    nu.pattern.OpenCV.loadShared();
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
   }
 
