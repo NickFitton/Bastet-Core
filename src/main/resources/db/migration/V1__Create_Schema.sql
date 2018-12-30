@@ -5,7 +5,8 @@ CREATE TABLE image_metadata (
     image_time TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
-    file_exists BOOLEAN DEFAULT TRUE
+    file_exists BOOLEAN DEFAULT TRUE,
+    camera_id UUID
 );
 
 CREATE TABLE users (
@@ -18,3 +19,30 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT NOW(),
     last_active TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE camera (
+    id UUID PRIMARY KEY,
+    password VARCHAR(64) NOT NULL,
+    type VARCHAR(32) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    last_active TIMESTAMP
+);
+
+CREATE TABLE authentication (
+    user_id UUID PRIMARY KEY,
+    random_string VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE image_entity (
+  id UUID PRIMARY KEY,
+  metadata_id UUID REFERENCES image_metadata(id),
+  x SMALLINT,
+  y SMALLINT,
+  width SMALLINT,
+  height SMALLINT,
+  type VARCHAR(16)
+);
+
+CREATE INDEX idx_token ON authentication(random_string);

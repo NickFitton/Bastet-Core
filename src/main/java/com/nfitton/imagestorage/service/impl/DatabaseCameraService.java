@@ -26,12 +26,12 @@ public class DatabaseCameraService implements CameraService {
   private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCameraService.class);
 
   private final AuthenticationService authenticationService;
-  private CameraRepository cameraRepository;
+  private CameraRepository repository;
 
   @Autowired
   public DatabaseCameraService(
-      CameraRepository cameraRepository, AuthenticationService authenticationService) {
-    this.cameraRepository = cameraRepository;
+      CameraRepository repository, AuthenticationService authenticationService) {
+    this.repository = repository;
     this.authenticationService = authenticationService;
   }
 
@@ -55,7 +55,7 @@ public class DatabaseCameraService implements CameraService {
     switch (type) {
       case CAMERA:
         return authenticationService
-            .authenticate(UUID.fromString(id), password, CAMERA, cameraRepository);
+            .authenticate(UUID.fromString(id), password, CAMERA, repository);
       default:
         throw new InternalServerException(
             String.format("User service can't authenticate given type: %s", type));
@@ -84,27 +84,28 @@ public class DatabaseCameraService implements CameraService {
   @Override
   public Mono<Boolean> deleteById(UUID cameraId) {
     return Mono.fromCallable(() -> {
-      cameraRepository.deleteById(cameraId);
+      repository.deleteById(cameraId);
       return true;
-    });
+    }).subscribeOn(Schedulers.elastic());
   }
 
   @Override
   public Mono<Optional<Camera>> findById(UUID id) {
-    return Mono.fromCallable(() -> cameraRepository.findById(id));
+    return Mono.fromCallable(() -> repository.findById(id)).subscribeOn(Schedulers.elastic());
   }
 
   @Override
   public Flux<UUID> getAllIds() {
-    return Flux.fromIterable(cameraRepository.findAllCamera());
+    return Flux.fromIterable(repository.findAllCamera()).subscribeOn(Schedulers.elastic());
   }
 
   @Override
   public Mono<Boolean> existsById(UUID id) {
-    return Mono.fromCallable(() -> cameraRepository.existsById(id));
+    return Mono.fromCallable(() -> repository.existsById(id))
+        .subscribeOn(Schedulers.elastic());
   }
 
   private Mono<Camera> saveCamera(Camera camera) {
-    return Mono.fromCallable(() -> cameraRepository.save(camera)).subscribeOn(Schedulers.elastic());
+    return Mono.fromCallable(() -> repository.save(camera)).subscribeOn(Schedulers.elastic());
   }
 }

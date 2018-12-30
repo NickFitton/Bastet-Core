@@ -1,12 +1,15 @@
 package com.nfitton.imagestorage.mapper;
 
+import com.nfitton.imagestorage.api.ImageEntityV1;
 import com.nfitton.imagestorage.api.ImageMetadataV1;
 import com.nfitton.imagestorage.api.TallyPointV1;
+import com.nfitton.imagestorage.entity.ImageEntity;
 import com.nfitton.imagestorage.entity.ImageMetadata;
 import com.nfitton.imagestorage.model.TallyPoint;
-
 import java.time.ZonedDateTime;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class ImageMetadataMapper {
 
@@ -43,7 +46,17 @@ public class ImageMetadataMapper {
         metadata.getImageTime(),
         metadata.getCreatedAt(),
         metadata.getUpdatedAt(),
-        metadata.fileExists());
+        metadata.fileExists(),
+        toV1(metadata.getImageEntities()));
+  }
+
+  private static Set<ImageEntityV1> toV1(Set<ImageEntity> entities) {
+    return entities.stream().map(ImageMetadataMapper::toV1).collect(Collectors.toSet());
+  }
+
+  private static ImageEntityV1 toV1(ImageEntity entity) {
+    return new ImageEntityV1(entity.getX(), entity.getY(), entity.getWidth(), entity.getHeight(),
+                             entity.getType());
   }
 
   public static TallyPointV1 toV1(TallyPoint point) {

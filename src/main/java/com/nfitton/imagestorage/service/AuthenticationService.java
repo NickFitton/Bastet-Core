@@ -3,7 +3,6 @@ package com.nfitton.imagestorage.service;
 import com.nfitton.imagestorage.entity.Account;
 import com.nfitton.imagestorage.entity.AccountType;
 import com.nfitton.imagestorage.entity.Authentication;
-import com.nfitton.imagestorage.entity.User;
 import com.nfitton.imagestorage.repository.AccountRepository;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;

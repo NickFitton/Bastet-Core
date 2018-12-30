@@ -4,10 +4,12 @@ import static com.nfitton.imagestorage.util.RouterUtil.parseAuthenticationToken;
 
 import com.nfitton.imagestorage.api.ImageMetadataV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
+import com.nfitton.imagestorage.component.AnalysisQueueMessage;
 import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.exception.VerificationException;
 import com.nfitton.imagestorage.mapper.ImageMetadataMapper;
+import com.nfitton.imagestorage.service.AnalysisService;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.CameraService;
 import com.nfitton.imagestorage.service.FileMetadataService;
@@ -22,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -37,8 +40,10 @@ public class MotionHandlerV1 {
   private final AuthenticationService authenticationService;
   private final FileMetadataService fileMetadataService;
   private final FileUploadService fileUploadService;
+  private final AnalysisService analysisService;
   private final CameraService cameraService;
   private final UserService userService;
+  private final JmsTemplate jmsTemplate;
 
   @Autowired
   MotionHandlerV1(
@@ -46,12 +51,16 @@ public class MotionHandlerV1 {
       FileMetadataService fileMetadataService,
       FileUploadService fileUploadService,
       CameraService cameraService,
-      UserService userService) {
+      UserService userService,
+      AnalysisService analysisService,
+      JmsTemplate jmsTemplate) {
     this.authenticationService = authenticationService;
     this.fileMetadataService = fileMetadataService;
     this.fileUploadService = fileUploadService;
     this.cameraService = cameraService;
     this.userService = userService;
+    this.analysisService = analysisService;
+    this.jmsTemplate = jmsTemplate;
   }
 
   public Mono<ServerResponse> postMotion(ServerRequest request) {
@@ -87,10 +96,12 @@ public class MotionHandlerV1 {
           return Mono.zip(
               cameraService.imageTaken(tuple.getT1()),
               fileUploadService.uploadFile(file, imageId));
-        }).then(fileMetadataService.imageUploaded(imageId))
-        .map(ImageMetadataMapper::toV1)
-        .map(OutgoingDataV1::dataOnly)
-        .flatMap(data -> ServerResponse.accepted().syncBody(data))
+        }).flatMap(tuple2 -> {
+          LOGGER.info("Sending to queue: {}", imageId);
+          jmsTemplate
+              .convertAndSend("analysisQueue", new AnalysisQueueMessage(tuple2.getT2(), imageId));
+          return ServerResponse.accepted().build();
+        })
         .onErrorResume(RouterUtil::handleErrors);
   }
 

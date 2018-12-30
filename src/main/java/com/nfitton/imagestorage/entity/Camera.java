@@ -1,7 +1,6 @@
 package com.nfitton.imagestorage.entity;
 
 import static com.nfitton.imagestorage.entity.AccountType.CAMERA;
-import static java.time.LocalDate.now;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;

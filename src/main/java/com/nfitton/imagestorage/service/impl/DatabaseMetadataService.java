@@ -1,6 +1,7 @@
 package com.nfitton.imagestorage.service.impl;
 
 import com.nfitton.imagestorage.configuration.ApiConfiguration;
+import com.nfitton.imagestorage.entity.ImageEntity;
 import com.nfitton.imagestorage.entity.ImageMetadata;
 import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.exception.OversizeException;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Service
 public class DatabaseMetadataService implements FileMetadataService {
@@ -56,37 +58,45 @@ public class DatabaseMetadataService implements FileMetadataService {
   @Override
   public Mono<ImageMetadata> save(ImageMetadata metadata) {
     LOGGER.info("Saving metadata for id: {}", metadata.getId());
-    return Mono.fromCallable(() -> repository.save(metadata));
+    return Mono.fromCallable(() -> repository.save(metadata)).subscribeOn(Schedulers.elastic());
   }
 
   @Override
-  public Mono<ImageMetadata> imageUploaded(UUID imageId) {
-    LOGGER.info("Updating image existence for id: {}", imageId);
+  public Mono<ImageMetadata> imageUploaded(UUID imageId, List<ImageEntity> entities) {
+    LOGGER.info("Updating image existence for id: {} adding {} entities", imageId, entities.size());
     return findById(imageId).map(ImageMetadata.Builder::clone)
-        .map(builder -> builder.withFileExists(true).withUpdatedAt(ZonedDateTime.now()).build())
+        .map(builder -> builder
+            .withFileExists(true)
+            .withUpdatedAt(ZonedDateTime.now())
+            .withImageEntities(entities)
+            .build())
         .flatMap(this::save);
   }
 
   @Override
   public Mono<Boolean> exists(UUID imageId) {
-    return Mono.fromCallable(() -> repository.existsById(imageId));
+    return Mono.fromCallable(() -> repository.existsById(imageId))
+        .subscribeOn(Schedulers.elastic());
   }
 
   @Override
   public Mono<ImageMetadata> findById(UUID metadataId) {
     return Mono.fromCallable(() -> repository.findById(metadataId).orElseThrow(
-        () -> new NotFoundException(String.format("File not found for id %s", metadataId))));
+        () -> new NotFoundException(String.format("File not found for id %s", metadataId))))
+        .subscribeOn(Schedulers.elastic());
   }
 
   @Override
   public Flux<ImageMetadata> findAllExistedAt(ZonedDateTime time) {
     return Mono.fromCallable(() -> repository.findAllByEntryTimeAfterAndExitTimeBefore(time, time))
+        .subscribeOn(Schedulers.elastic())
         .flatMapMany(Flux::fromIterable);
   }
 
   @Override
   public Flux<ImageMetadata> findAllExistedAt(ZonedDateTime from, ZonedDateTime to) {
     return Mono.fromCallable(() -> repository.countAllByEntryTimeAfterAndExitTimeBefore(from, to))
+        .subscribeOn(Schedulers.elastic())
         .map(Long::intValue)
         .flatMap(count -> {
           int max = apiConfiguration.getMaxPayload();
@@ -94,7 +104,8 @@ public class DatabaseMetadataService implements FileMetadataService {
             return Mono.error(new OversizeException(max, count));
           }
           return Mono
-              .fromCallable(() -> repository.findAllByEntryTimeAfterAndExitTimeBefore(from, to));
+              .fromCallable(() -> repository.findAllByEntryTimeAfterAndExitTimeBefore(from, to))
+              .subscribeOn(Schedulers.elastic());
         })
         .flatMapMany(Flux::fromIterable);
   }
@@ -106,6 +117,7 @@ public class DatabaseMetadataService implements FileMetadataService {
       ZonedDateTime to) {
     return Mono.fromCallable(
         () -> repository.findAllByCameraIdAndEntryTimeAfterAndExitTimeBefore(cameraId, from, to))
+        .subscribeOn(Schedulers.elastic())
         .flatMapMany(Flux::fromIterable);
   }
 
@@ -126,6 +138,7 @@ public class DatabaseMetadataService implements FileMetadataService {
 
   @Override
   public Flux<ImageMetadata> findAll() {
-    return Mono.fromCallable(repository::findAll).flatMapMany(Flux::fromIterable);
+    return Mono.fromCallable(repository::findAll).flatMapMany(Flux::fromIterable)
+        .subscribeOn(Schedulers.elastic());
   }
 }

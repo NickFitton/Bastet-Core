@@ -1,11 +1,16 @@
 package com.nfitton.imagestorage.entity;
 
+import java.time.ZonedDateTime;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.UUID;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import java.time.ZonedDateTime;
-import java.util.UUID;
-
+import javax.persistence.OneToMany;
 import org.hibernate.annotations.GenericGenerator;
 
 @Entity
@@ -22,6 +27,8 @@ public class ImageMetadata {
   private ZonedDateTime createdAt;
   private ZonedDateTime updatedAt;
   private boolean fileExists;
+  @OneToMany(mappedBy = "imageMetadata", cascade = CascadeType.ALL)
+  private Set<ImageEntity> imageEntities;
 
   private ImageMetadata(
       UUID id,
@@ -31,7 +38,8 @@ public class ImageMetadata {
       ZonedDateTime imageTime,
       ZonedDateTime createdAt,
       ZonedDateTime updatedAt,
-      boolean fileExists) {
+      boolean fileExists,
+      Set<ImageEntity> imageEntities) {
     this.id = id;
     this.cameraId = cameraId;
     this.entryTime = entryTime;
@@ -40,9 +48,14 @@ public class ImageMetadata {
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.fileExists = fileExists;
+    this.imageEntities = imageEntities;
   }
 
   public ImageMetadata() {
+  }
+
+  public Set<ImageEntity> getImageEntities() {
+    return imageEntities;
   }
 
   public UUID getId() {
@@ -87,8 +100,10 @@ public class ImageMetadata {
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
     private boolean fileExists;
+    private Collection<ImageEntity> imageEntities;
 
     private Builder() {
+      imageEntities = new LinkedList<>();
     }
 
     public static Builder newBuilder() {
@@ -147,15 +162,22 @@ public class ImageMetadata {
       return this;
     }
 
+    public Builder withImageEntities(Collection<ImageEntity> val) {
+      imageEntities = val;
+      return this;
+    }
+
     public ImageMetadata build() {
-      return new ImageMetadata(id,
-                               cameraId,
-                               entryTime,
-                               exitTime,
-                               imageTime,
-                               createdAt,
-                               updatedAt,
-                               fileExists);
+      return new ImageMetadata(
+          id,
+          cameraId,
+          entryTime,
+          exitTime,
+          imageTime,
+          createdAt,
+          updatedAt,
+          fileExists,
+          new HashSet<>(imageEntities));
     }
   }
 }

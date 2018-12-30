@@ -5,3 +5,16 @@
 # Java
 out
 build
+
+# Mac
+**/.DS_Store
+
+# Gradle cache
+.gradle
+
+# Libraries
+libs/*
+src/main/resources/haar
+
+# SonarQube
+.scannerwork
