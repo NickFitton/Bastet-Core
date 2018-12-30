@@ -11,4 +11,4 @@ build
 
 # Libraries
 libs/*
-haarcascade-*.xml
+src/main/resources/haar/haarcascade-*
