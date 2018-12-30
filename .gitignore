@@ -7,7 +7,10 @@ out
 build
 
 # Mac
-*/.DS_Store
+**/.DS_Store
+
+# Gradle cache
+.gradle
 
 # Libraries
 libs/*
