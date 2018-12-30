@@ -64,7 +64,7 @@ public class LocalFileStorage implements FileUploadService {
 
   @Override
   public Mono<String> uploadFile(FilePart file, UUID imageId) {
-    String somePath = path + imageId + ".jpg";
+    String imagePath = path + imageId + ".jpg";
 
     return file.transferTo(new File(somePath)).then(Mono.just(somePath));
   }
