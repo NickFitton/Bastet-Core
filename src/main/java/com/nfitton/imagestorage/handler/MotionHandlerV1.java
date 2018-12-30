@@ -102,12 +102,6 @@ public class MotionHandlerV1 {
               .convertAndSend("analysisQueue", new AnalysisQueueMessage(tuple2.getT2(), imageId));
           return ServerResponse.accepted().build();
         })
-//        .flatMap(tuple2 -> analysisService.analyzeImage(tuple2.getT2()).collectList())
-//        .flatMap(entities -> fileMetadataService.imageUploaded(imageId, entities))
-//        }).then(fileMetadataService.imageUploaded(imageId))
-//        .map(ImageMetadataMapper::toV1)
-//        .map(OutgoingDataV1::dataOnly)
-//        .flatMap(data -> ServerResponse.accepted().syncBody(data))
         .onErrorResume(RouterUtil::handleErrors);
   }
 
