@@ -1,5 +1,7 @@
 spring:
   profiles.active: local
   flyway.locations: classpath:db/migration
-  jpa.properties.hibernate.temp.use_jdbc_metadata_defaults: false
+  jpa.properties.hibernate:
+    temp.use_jdbc_metadata_defaults: false
+    enable_lazy_load_no_trans: true
   jackson.serialization.WRITE_DATES_AS_TIMESTAMPS: false

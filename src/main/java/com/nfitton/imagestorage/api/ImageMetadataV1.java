@@ -3,6 +3,8 @@ package com.nfitton.imagestorage.api;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.ZonedDateTime;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -15,7 +17,7 @@ public class ImageMetadataV1 {
   private ZonedDateTime createdAt;
   private ZonedDateTime updatedAt;
   private boolean fileExists;
-  private Set<ImageEntityV1> imageEntities;
+  private List<ImageEntityV1> imageEntities;
 
   @JsonCreator
   public ImageMetadataV1(
@@ -26,7 +28,7 @@ public class ImageMetadataV1 {
       @JsonProperty("createdAt") ZonedDateTime createdAt,
       @JsonProperty("updatedAt") ZonedDateTime updatedAt,
       @JsonProperty("fileExists") boolean fileExists,
-      @JsonProperty("imageEntities") Set<ImageEntityV1> imageEntities) {
+      @JsonProperty("imageEntities") List<ImageEntityV1> imageEntities) {
     this.id = id;
     this.entryTime = entryTime;
     this.exitTime = exitTime;
@@ -65,7 +67,7 @@ public class ImageMetadataV1 {
     return fileExists;
   }
 
-  public Set<ImageEntityV1> getImageEntities() {
+  public List<ImageEntityV1> getImageEntities() {
     return imageEntities;
   }
 }

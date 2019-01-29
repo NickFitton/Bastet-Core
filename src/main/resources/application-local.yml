@@ -6,3 +6,6 @@ storage:
 api:
   payload:
     max: 500
+logging:
+  level:
+    com.nfitton: debug

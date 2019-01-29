@@ -40,7 +40,6 @@ public class MotionHandlerV1 {
   private final AuthenticationService authenticationService;
   private final FileMetadataService fileMetadataService;
   private final FileUploadService fileUploadService;
-  private final AnalysisService analysisService;
   private final CameraService cameraService;
   private final UserService userService;
   private final JmsTemplate jmsTemplate;
@@ -52,14 +51,12 @@ public class MotionHandlerV1 {
       FileUploadService fileUploadService,
       CameraService cameraService,
       UserService userService,
-      AnalysisService analysisService,
       JmsTemplate jmsTemplate) {
     this.authenticationService = authenticationService;
     this.fileMetadataService = fileMetadataService;
     this.fileUploadService = fileUploadService;
     this.cameraService = cameraService;
     this.userService = userService;
-    this.analysisService = analysisService;
     this.jmsTemplate = jmsTemplate;
   }
 
@@ -97,7 +94,7 @@ public class MotionHandlerV1 {
               cameraService.imageTaken(tuple.getT1()),
               fileUploadService.uploadFile(file, imageId));
         }).flatMap(tuple2 -> {
-          LOGGER.info("Sending to queue: {}", imageId);
+          LOGGER.debug("Sending to queue: {}", imageId);
           jmsTemplate
               .convertAndSend("analysisQueue", new AnalysisQueueMessage(tuple2.getT2(), imageId));
           return ServerResponse.accepted().build();

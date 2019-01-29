@@ -55,10 +55,14 @@ public class CameraHandlerV1 {
   }
 
   public Mono<ServerResponse> postCamera(ServerRequest request) {
+    LOGGER.debug("Creating camera");
     return request.bodyToMono(CameraV1.class)
         .map((CameraV1 v1) -> CameraMapper.toEntity(v1, encoder, validator))
         .flatMap(cameraService::save)
-        .map(CameraMapper::toApiBean)
+        .map(camera -> {
+          LOGGER.debug("Camera created with id: {}", camera.getId()  );
+          return CameraMapper.toApiBean(camera);
+        })
         .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.status(HttpStatus.CREATED).syncBody(data))
         .onErrorResume(RouterUtil::handleErrors);
