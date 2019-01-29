@@ -1,0 +1,11 @@
+#storage.location: "/media/nick/KINGSTON/lakePhotos/"
+storage:
+  location: "/tmp/cameraPhotos/"
+  create: true
+
+api:
+  payload:
+    max: 500
+logging:
+  level:
+    com.nfitton: debug
