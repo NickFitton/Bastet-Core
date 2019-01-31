@@ -91,6 +91,21 @@ public class ImageData {
         fileExists);
   }
 
+  @Override
+  public String toString() {
+    return "ImageData{" +
+        "id=" + id +
+        ", cameraId=" + cameraId +
+        ", entryTime=" + entryTime +
+        ", exitTime=" + exitTime +
+        ", imageTime=" + imageTime +
+        ", createdAt=" + createdAt +
+        ", updatedAt=" + updatedAt +
+        ", fileExists=" + fileExists +
+        ", entities=" + entities +
+        '}';
+  }
+
   public static final class Builder {
 
     private UUID id;

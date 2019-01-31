@@ -14,7 +14,7 @@ public interface FileMetadataService {
 
   Mono<ImageData> save(ImageData data);
 
-  Mono<List<ImageEntity>> imageUploaded(UUID imageId, List<ImageEntity> entities);
+  Mono<ImageData> imageUploaded(UUID imageId, List<ImageEntity> entities);
 
   Mono<Boolean> exists(UUID imageId);
 

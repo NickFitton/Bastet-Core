@@ -76,6 +76,20 @@ public class ImageMetadata {
     return fileExists;
   }
 
+  @Override
+  public String toString() {
+    return "ImageMetadata{" +
+        "id=" + id +
+        ", cameraId=" + cameraId +
+        ", entryTime=" + entryTime +
+        ", exitTime=" + exitTime +
+        ", imageTime=" + imageTime +
+        ", createdAt=" + createdAt +
+        ", updatedAt=" + updatedAt +
+        ", fileExists=" + fileExists +
+        '}';
+  }
+
   public static final class Builder {
 
     private UUID id;

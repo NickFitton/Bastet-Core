@@ -66,19 +66,16 @@ public class DatabaseMetadataService implements FileMetadataService {
     LOGGER.debug("Saving image data");
     Mono<ImageMetadata> savedMetadata = Mono
         .fromCallable(() -> metadataRepository.save(data.asMetadata()));
-    Mono<List<ImageEntity>> savedEntities = Mono.just(new LinkedList<>());
     if (data.getId() != null) {
-      savedEntities = imageUploaded(data.getId(), data.getEntities());
+      return imageUploaded(data.getId(), data.getEntities());
+    } else {
+      return savedMetadata
+          .map(metadata -> ImageData.Builder.clone(metadata, new LinkedList<>()).build());
     }
-    return Mono.zip(savedMetadata, savedEntities)
-        .map(tuple -> {
-          LOGGER.info("Saved {} entities", tuple.getT2().size());
-          return ImageData.Builder.clone(tuple.getT1(), tuple.getT2()).build();
-        });
   }
 
   @Override
-  public Mono<List<ImageEntity>> imageUploaded(UUID imageId, List<ImageEntity> entities) {
+  public Mono<ImageData> imageUploaded(UUID imageId, List<ImageEntity> entities) {
     LOGGER.debug("Updating image {} with entities", imageId);
     return Mono.fromCallable(() -> metadataRepository.existsById(imageId))
         .flatMap(imageExists -> {
@@ -87,7 +84,18 @@ public class DatabaseMetadataService implements FileMetadataService {
                 .map(entity -> Builder.clone(entity).withMetadataId(imageId).build())
                 .collect(Collectors.toList());
 
-            return Mono.fromCallable(() -> entityRepository.saveAll(connectedEntities));
+            Mono<ImageMetadata> updatedMetadata = Mono
+                .fromCallable(() -> metadataRepository.findById(imageId))
+                .map(Optional::get)
+                .map(metadata -> ImageMetadata.Builder.clone(metadata)
+                    .withUpdatedAt(ZonedDateTime.now()).withFileExists(true).build())
+                .flatMap(metadata -> Mono.fromCallable(() -> metadataRepository.save(metadata)));
+
+            Mono<List<ImageEntity>> savedEntities = Mono
+                .fromCallable(() -> entityRepository.saveAll(connectedEntities));
+
+            return Mono.zip(updatedMetadata, savedEntities)
+                .map(tuple -> ImageData.Builder.clone(tuple.getT1(), tuple.getT2()).build());
           }
           return Mono.error(notFound(imageId));
         });
