@@ -94,6 +94,17 @@ public class CameraHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  public Mono<ServerResponse> claimCamera(ServerRequest request) {
+    UUID cameraId = getCameraId(request);
+
+    return RouterUtil.parseAuthenticationToken(request, authenticationService)
+        .flatMap(userId -> cameraService.claimCamera(cameraId, userId))
+        .flatMap(camera -> {
+          LOGGER.info("{}", camera.getId());
+          return ServerResponse.accepted().build();
+        });
+  }
+
   public Mono<ServerResponse> deleteCamera(ServerRequest request) {
     UUID cameraId = getCameraId(request);
 

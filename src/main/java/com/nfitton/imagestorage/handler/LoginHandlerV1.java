@@ -6,10 +6,13 @@ import static com.nfitton.imagestorage.entity.AccountType.CAMERA;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.entity.AccountType;
 import com.nfitton.imagestorage.exception.BadRequestException;
+import com.nfitton.imagestorage.exception.NotFoundException;
+import com.nfitton.imagestorage.mapper.AccountMapper;
 import com.nfitton.imagestorage.service.AccountService;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.CameraService;
 import com.nfitton.imagestorage.service.UserService;
+import com.nfitton.imagestorage.util.RouterUtil;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -54,6 +57,16 @@ public class LoginHandlerV1 {
         .flatMap(token -> ServerResponse.ok().syncBody(new OutgoingDataV1(token, null)))
         .onErrorResume(e -> ServerResponse.status(HttpStatus.FORBIDDEN)
             .syncBody(new OutgoingDataV1(null, e.getMessage())));
+  }
+
+  public Mono<ServerResponse> getSelf(ServerRequest request) {
+    return RouterUtil.parseAuthenticationToken(request, authenticationService)
+        .flatMap(userService::findById)
+        .map(optionalUser -> optionalUser
+            .orElseThrow(() -> new NotFoundException("User not found by given id")))
+        .map(AccountMapper::toV1)
+        .map(OutgoingDataV1::dataOnly)
+        .flatMap(data -> ServerResponse.ok().syncBody(data));
   }
 
   private <T> Mono<UUID> parseAuthorization(

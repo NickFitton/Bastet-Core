@@ -9,22 +9,31 @@ import javax.persistence.Entity;
 @Entity
 public class Camera extends Account {
 
+  private UUID ownedBy;
+
   public Camera(
       UUID id,
+      UUID ownedBy,
       String password,
       ZonedDateTime createdAt,
       ZonedDateTime updatedAt,
       ZonedDateTime lastActive) {
     super(id, password, CAMERA, createdAt, updatedAt, lastActive);
+    this.ownedBy = ownedBy;
   }
 
   private Camera() {
     super();
   }
 
+  public UUID getOwnedBy() {
+    return ownedBy;
+  }
+
   public static final class Builder {
 
     private UUID id;
+    private UUID ownedBy;
     private String password;
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
@@ -40,6 +49,7 @@ public class Camera extends Account {
     public static Builder clone(Camera camera) {
       return new Builder()
           .withId(camera.getId())
+          .withOwnedBy(camera.getOwnedBy())
           .withPassword(camera.getPassword())
           .withCreatedAt(camera.getCreatedAt())
           .withUpdatedAt(camera.getUpdatedAt())
@@ -48,6 +58,11 @@ public class Camera extends Account {
 
     public Builder withId(UUID val) {
       id = val;
+      return this;
+    }
+
+    public Builder withOwnedBy(UUID val) {
+      ownedBy = val;
       return this;
     }
 
@@ -72,7 +87,7 @@ public class Camera extends Account {
     }
 
     public Camera build() {
-      return new Camera(id, password, createdAt, updatedAt, lastUpload);
+      return new Camera(id, ownedBy, password, createdAt, updatedAt, lastUpload);
     }
 
   }

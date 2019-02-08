@@ -4,7 +4,9 @@ import static com.nfitton.imagestorage.entity.AccountType.CAMERA;
 
 import com.nfitton.imagestorage.entity.AccountType;
 import com.nfitton.imagestorage.entity.Camera;
+import com.nfitton.imagestorage.exception.ConflictException;
 import com.nfitton.imagestorage.exception.InternalServerException;
+import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.repository.CameraRepository;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.CameraService;
@@ -33,6 +35,10 @@ public class DatabaseCameraService implements CameraService {
       CameraRepository repository, AuthenticationService authenticationService) {
     this.repository = repository;
     this.authenticationService = authenticationService;
+  }
+
+  private static NotFoundException cameraNotFound() {
+    return new NotFoundException("Camera not found by given id");
   }
 
   @Override
@@ -92,6 +98,19 @@ public class DatabaseCameraService implements CameraService {
   @Override
   public Mono<Optional<Camera>> findById(UUID id) {
     return Mono.fromCallable(() -> repository.findById(id)).subscribeOn(Schedulers.elastic());
+  }
+
+  @Override
+  public Mono<Camera> claimCamera(UUID cameraId, UUID userId) {
+    return findById(cameraId)
+        .map(optionalCamera -> optionalCamera.orElseThrow(DatabaseCameraService::cameraNotFound))
+        .map(c -> {
+          if (c.getOwnedBy() != null) {
+            return Camera.Builder.clone(c).withOwnedBy(userId).build();
+          }
+          throw new ConflictException("Camera has already been claimed");
+        })
+        .flatMap(this::saveCamera);
   }
 
   @Override

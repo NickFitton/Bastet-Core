@@ -11,7 +11,8 @@ CREATE TABLE image_metadata (
 
 CREATE TABLE users (
     id UUID PRIMARY KEY,
-    name VARCHAR(64) NOT NULL,
+    first_name VARCHAR(64) NOT NULL,
+    last_name VARCHAR(64) NOT NULL,
     email VARCHAR(128) NOT NULL UNIQUE,
     password VARCHAR(64) NOT NULL,
     type VARCHAR(32) NOT NULL,
@@ -22,6 +23,7 @@ CREATE TABLE users (
 
 CREATE TABLE camera (
     id UUID PRIMARY KEY,
+    owned_by UUID REFERENCES users(id),
     password VARCHAR(64) NOT NULL,
     type VARCHAR(32) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),

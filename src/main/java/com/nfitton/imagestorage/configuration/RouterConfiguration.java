@@ -31,9 +31,13 @@ public class RouterConfiguration {
             .andRoute(GET("/"), cameraHandlerV1::getCameras)
             .andNest(
                 path("/{cameraId}"), route(GET("/"), cameraHandlerV1::getCamera)
-                    .andRoute(DELETE("/"), cameraHandlerV1::deleteCamera)))
+                    .andRoute(DELETE("/"), cameraHandlerV1::deleteCamera)
+                    .andRoute(PATCH("/"), cameraHandlerV1::claimCamera)
+            ))
         .andNest(
-            path("/login"), route(POST("/user"), loginHandlerV1::userLogin)
+            path("/login"),
+            nest(path("/user"), route(POST("/"), loginHandlerV1::userLogin)
+                .andRoute(GET("/"), loginHandlerV1::getSelf))
                 .andRoute(POST("/camera"), loginHandlerV1::cameraLogin))
         .andNest(
             path("/motion"),
