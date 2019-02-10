@@ -100,7 +100,7 @@ public class CameraHandlerV1 {
     return RouterUtil.parseAuthenticationToken(request, authenticationService)
         .flatMap(userId -> cameraService.claimCamera(cameraId, userId))
         .flatMap(camera -> {
-          LOGGER.info("{}", camera.getId());
+          LOGGER.info("Camera {} claimed by user", camera.getId());
           return ServerResponse.accepted().build();
         });
   }
