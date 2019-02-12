@@ -49,3 +49,21 @@ CREATE TABLE image_entity (
 );
 
 CREATE INDEX idx_token ON authentication(random_string);
+
+CREATE TABLE groups (
+  id UUID PRIMARY KEY,
+  owner_id UUID REFERENCES users(id),
+  name VARCHAR(64) NOT NULL
+);
+
+CREATE TABLE users_groups (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id),
+  group_id UUID REFERENCES groups(id)
+);
+
+CREATE TABLE groups_cameras (
+  id UUID PRIMARY KEY,
+  group_id UUID REFERENCES groups(id),
+  camera_id UUID REFERENCES camera(id)
+);

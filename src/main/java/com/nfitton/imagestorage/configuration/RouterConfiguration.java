@@ -9,6 +9,7 @@ import static org.springframework.web.reactive.function.server.RouterFunctions.n
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 import com.nfitton.imagestorage.handler.CameraHandlerV1;
+import com.nfitton.imagestorage.handler.GroupHandlerV1;
 import com.nfitton.imagestorage.handler.LoginHandlerV1;
 import com.nfitton.imagestorage.handler.MotionHandlerV1;
 import com.nfitton.imagestorage.handler.UserHandlerV1;
@@ -25,6 +26,7 @@ public class RouterConfiguration {
       CameraHandlerV1 cameraHandlerV1,
       LoginHandlerV1 loginHandlerV1,
       MotionHandlerV1 motionHandlerV1,
+      GroupHandlerV1 groupHandlerV1,
       UserHandlerV1 userHandlerV1) {
     return nest(path("/v1"), nest(
         path("/cameras"), route(POST("/"), cameraHandlerV1::postCamera)
@@ -50,6 +52,10 @@ public class RouterConfiguration {
             path("/users"),
             route(POST("/"), userHandlerV1::createUser).andRoute(GET("/"), userHandlerV1::getUsers)
                 .andRoute(GET("/{userId}"), userHandlerV1::getUser)
-                .andRoute(DELETE("/{userId}"), userHandlerV1::deleteUser)));
+                .andRoute(DELETE("/{userId}"), userHandlerV1::deleteUser))
+        .andNest(
+            path("/groups"),
+            route(POST("/"), groupHandlerV1::createGroup)
+                .andRoute(GET("/{groupId}"), groupHandlerV1::getGroupById)));
   }
 }
