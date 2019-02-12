@@ -2,6 +2,7 @@ package com.nfitton.imagestorage.handler;
 
 import com.nfitton.imagestorage.api.CameraV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
+import com.nfitton.imagestorage.entity.Camera;
 import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.mapper.CameraMapper;
 import com.nfitton.imagestorage.service.AuthenticationService;
@@ -60,7 +61,7 @@ public class CameraHandlerV1 {
         .map((CameraV1 v1) -> CameraMapper.toEntity(v1, encoder, validator))
         .flatMap(cameraService::save)
         .map(camera -> {
-          LOGGER.debug("Camera created with id: {}", camera.getId()  );
+          LOGGER.debug("Camera created with id: {}", camera.getId());
           return CameraMapper.toApiBean(camera);
         })
         .map(OutgoingDataV1::dataOnly)
@@ -70,7 +71,8 @@ public class CameraHandlerV1 {
 
   public Mono<ServerResponse> getCameras(ServerRequest request) {
     return RouterUtil.parseAuthenticationToken(request, authenticationService)
-        .flatMapMany(userId -> cameraService.getAllIds())
+        .flatMapMany(cameraService::findAllOwnedById)
+        .map(CameraMapper::toApiBean)
         .collectList()
         .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.ok().syncBody(data))
@@ -97,12 +99,17 @@ public class CameraHandlerV1 {
   public Mono<ServerResponse> claimCamera(ServerRequest request) {
     UUID cameraId = getCameraId(request);
 
-    return RouterUtil.parseAuthenticationToken(request, authenticationService)
-        .flatMap(userId -> cameraService.claimCamera(cameraId, userId))
-        .flatMap(camera -> {
-          LOGGER.info("Camera {} claimed by user", camera.getId());
-          return ServerResponse.accepted().build();
-        });
+    Mono<Camera> cameraName = request.bodyToMono(CameraV1.class).map(CameraMapper::toEntity)
+        .switchIfEmpty(Mono.just(new Camera()));
+
+    return Mono.zip(
+        cameraName,
+        RouterUtil.parseAuthenticationToken(request, authenticationService))
+        .flatMap(tuple2 -> {
+          LOGGER.debug("Camera {} updated by user", cameraId, tuple2.getT2());
+          return cameraService.updateCamera(cameraId, tuple2.getT2(), tuple2.getT1());
+        })
+        .flatMap(camera -> ServerResponse.accepted().build());
   }
 
   public Mono<ServerResponse> deleteCamera(ServerRequest request) {

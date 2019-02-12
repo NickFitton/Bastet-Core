@@ -9,7 +9,6 @@ import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.exception.VerificationException;
 import com.nfitton.imagestorage.mapper.ImageMetadataMapper;
-import com.nfitton.imagestorage.service.AnalysisService;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.CameraService;
 import com.nfitton.imagestorage.service.FileMetadataService;
@@ -17,7 +16,10 @@ import com.nfitton.imagestorage.service.FileUploadService;
 import com.nfitton.imagestorage.service.UserService;
 import com.nfitton.imagestorage.util.RouterUtil;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,6 +105,11 @@ public class MotionHandlerV1 {
   }
 
   public Mono<ServerResponse> getMotion(ServerRequest request) {
+    Stream<UUID> cameraIds = request.queryParam("cameras")
+        .map(param -> Arrays.asList(param.split(",")))
+        .orElse(Collections.emptyList())
+        .stream()
+        .map(UUID::fromString);
     return parseAuthenticationToken(request, authenticationService)
         .flatMap(userService::existsById)
         .flatMapMany(exists -> {
@@ -111,7 +118,8 @@ public class MotionHandlerV1 {
             ZonedDateTime from = request.queryParam("from").map(ZonedDateTime::parse)
                 .orElse(now.minusDays(7));
             ZonedDateTime to = request.queryParam("to").map(ZonedDateTime::parse).orElse(now);
-            return fileMetadataService.findAllExistedAt(from, to);
+            return Flux.fromStream(cameraIds)
+                .flatMap(cameraId -> fileMetadataService.findAllByCameraId(cameraId, from, to));
           } else {
             return Mono.error(new VerificationException());
           }

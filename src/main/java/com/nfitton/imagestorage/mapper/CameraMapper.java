@@ -14,8 +14,21 @@ public class CameraMapper {
     return Camera.Builder
         .newBuilder()
         .withId(v1.getId())
-        .withOwnedBy(v1.getOwnedBy())
+        .withOwnerId(v1.getOwnedBy())
+        .withName(v1.getName())
         .withPassword(encoder.encode(v1.getPassword()))
+        .withCreatedAt(v1.getCreatedAt())
+        .withUpdatedAt(v1.getUpdatedAt())
+        .withLastActive(v1.getLastUpload())
+        .build();
+  }
+
+  public static Camera toEntity(CameraV1 v1) {
+    return Camera.Builder
+        .newBuilder()
+        .withId(v1.getId())
+        .withOwnerId(v1.getOwnedBy())
+        .withName(v1.getName())
         .withCreatedAt(v1.getCreatedAt())
         .withUpdatedAt(v1.getUpdatedAt())
         .withLastActive(v1.getLastUpload())
@@ -25,7 +38,8 @@ public class CameraMapper {
   public static CameraV1 toApiBean(Camera camera) {
     return new CameraV1(
         camera.getId(),
-        camera.getOwnedBy(),
+        camera.getOwnerId(),
+        camera.getName() == null ? camera.getId().toString() : camera.getName(),
         null,
         camera.getCreatedAt(),
         camera.getUpdatedAt(),

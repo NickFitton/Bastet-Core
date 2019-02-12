@@ -11,6 +11,7 @@ import java.util.UUID;
 public class ImageMetadataV1 {
 
   private UUID id;
+  private UUID cameraId;
   private ZonedDateTime entryTime;
   private ZonedDateTime exitTime;
   private ZonedDateTime imageTime;
@@ -22,6 +23,7 @@ public class ImageMetadataV1 {
   @JsonCreator
   public ImageMetadataV1(
       @JsonProperty("id") UUID id,
+      @JsonProperty("cameraId") UUID cameraId,
       @JsonProperty("entryTime") ZonedDateTime entryTime,
       @JsonProperty("exitTime") ZonedDateTime exitTime,
       @JsonProperty("imageTime") ZonedDateTime imageTime,
@@ -30,6 +32,7 @@ public class ImageMetadataV1 {
       @JsonProperty("fileExists") boolean fileExists,
       @JsonProperty("imageEntities") List<ImageEntityV1> imageEntities) {
     this.id = id;
+    this.cameraId = cameraId;
     this.entryTime = entryTime;
     this.exitTime = exitTime;
     this.imageTime = imageTime;
@@ -41,6 +44,10 @@ public class ImageMetadataV1 {
 
   public UUID getId() {
     return id;
+  }
+
+  public UUID getCameraId() {
+    return cameraId;
   }
 
   public ZonedDateTime getEntryTime() {

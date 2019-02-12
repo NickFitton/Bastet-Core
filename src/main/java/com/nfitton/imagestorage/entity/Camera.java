@@ -9,31 +9,39 @@ import javax.persistence.Entity;
 @Entity
 public class Camera extends Account {
 
-  private UUID ownedBy;
+  private UUID ownerId;
+  private String name;
 
   public Camera(
       UUID id,
-      UUID ownedBy,
+      UUID ownerId,
+      String name,
       String password,
       ZonedDateTime createdAt,
       ZonedDateTime updatedAt,
       ZonedDateTime lastActive) {
     super(id, password, CAMERA, createdAt, updatedAt, lastActive);
-    this.ownedBy = ownedBy;
+    this.ownerId = ownerId;
+    this.name = name;
   }
 
-  private Camera() {
+  public Camera() {
     super();
   }
 
-  public UUID getOwnedBy() {
-    return ownedBy;
+  public UUID getOwnerId() {
+    return ownerId;
+  }
+
+  public String getName() {
+    return name;
   }
 
   public static final class Builder {
 
     private UUID id;
-    private UUID ownedBy;
+    private UUID ownerId;
+    private String name;
     private String password;
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
@@ -49,7 +57,7 @@ public class Camera extends Account {
     public static Builder clone(Camera camera) {
       return new Builder()
           .withId(camera.getId())
-          .withOwnedBy(camera.getOwnedBy())
+          .withOwnerId(camera.getOwnerId())
           .withPassword(camera.getPassword())
           .withCreatedAt(camera.getCreatedAt())
           .withUpdatedAt(camera.getUpdatedAt())
@@ -61,8 +69,13 @@ public class Camera extends Account {
       return this;
     }
 
-    public Builder withOwnedBy(UUID val) {
-      ownedBy = val;
+    public Builder withOwnerId(UUID val) {
+      ownerId = val;
+      return this;
+    }
+
+    public Builder withName(String val) {
+      name = val;
       return this;
     }
 
@@ -87,7 +100,7 @@ public class Camera extends Account {
     }
 
     public Camera build() {
-      return new Camera(id, ownedBy, password, createdAt, updatedAt, lastUpload);
+      return new Camera(id, ownerId, name, password, createdAt, updatedAt, lastUpload);
     }
 
   }

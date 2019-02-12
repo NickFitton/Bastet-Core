@@ -15,6 +15,7 @@ public class CameraV1 {
 
   private UUID id;
   private UUID ownedBy;
+  private String name;
   @NotNull(message = "A password must be given")
   private String password;
   private ZonedDateTime createdAt;
@@ -25,12 +26,14 @@ public class CameraV1 {
   public CameraV1(
       @JsonProperty("id") UUID id,
       @JsonProperty("ownedBy") UUID ownedBy,
+      @JsonProperty("name") String name,
       @JsonProperty("password") String password,
       @JsonProperty("createdAt") ZonedDateTime createdAt,
       @JsonProperty("updatedAt") ZonedDateTime updatedAt,
       @JsonProperty("lastUpload") ZonedDateTime lastUpload) {
     this.id = id;
     this.ownedBy = ownedBy;
+    this.name = name;
     this.password = password;
     this.createdAt = utcOrNull(createdAt);
     this.updatedAt = utcOrNull(updatedAt);
@@ -79,6 +82,10 @@ public class CameraV1 {
 
   public UUID getOwnedBy() {
     return ownedBy;
+  }
+
+  public String getName() {
+    return name;
   }
 
   public String getPassword() {

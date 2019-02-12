@@ -4,7 +4,7 @@ import static com.nfitton.imagestorage.entity.AccountType.CAMERA;
 
 import com.nfitton.imagestorage.entity.AccountType;
 import com.nfitton.imagestorage.entity.Camera;
-import com.nfitton.imagestorage.exception.ConflictException;
+import com.nfitton.imagestorage.exception.ForbiddenException;
 import com.nfitton.imagestorage.exception.InternalServerException;
 import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.repository.CameraRepository;
@@ -101,16 +101,31 @@ public class DatabaseCameraService implements CameraService {
   }
 
   @Override
-  public Mono<Camera> claimCamera(UUID cameraId, UUID userId) {
+  public Mono<Camera> updateCamera(UUID cameraId, UUID userId, Camera updatedInfo) {
     return findById(cameraId)
         .map(optionalCamera -> optionalCamera.orElseThrow(DatabaseCameraService::cameraNotFound))
-        .map(c -> {
-          if (c.getOwnedBy() != null) {
-            return Camera.Builder.clone(c).withOwnedBy(userId).build();
+        .map(existingCamera -> {
+          Camera.Builder builder = Camera.Builder.clone(existingCamera)
+              .withUpdatedAt(ZonedDateTime.now());
+          if (existingCamera.getOwnerId() == null) {
+            builder.withOwnerId(userId);
+          } else if (!existingCamera.getOwnerId().toString().equals(userId.toString())) {
+            LOGGER
+                .warn("{} tried to update camera owned by {}", userId, existingCamera.getOwnerId());
+            throw new ForbiddenException("User does not own camera");
           }
-          throw new ConflictException("Camera has already been claimed");
+          if (updatedInfo.getName() != null) {
+            builder.withName(updatedInfo.getName());
+          }
+          return builder.build();
         })
         .flatMap(this::saveCamera);
+  }
+
+  @Override
+  public Flux<Camera> findAllOwnedById(UUID ownerId) {
+    return Flux.fromIterable(repository.findAllByOwnerId(ownerId))
+        .subscribeOn(Schedulers.elastic());
   }
 
   @Override

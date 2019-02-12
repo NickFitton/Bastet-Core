@@ -29,6 +29,7 @@ public class ImageMetadataMapper {
   public static ImageMetadataV1 toV1(ImageData metadata) {
     return new ImageMetadataV1(
         metadata.getId(),
+        metadata.getCameraId(),
         metadata.getEntryTime(),
         metadata.getExitTime(),
         metadata.getImageTime(),
