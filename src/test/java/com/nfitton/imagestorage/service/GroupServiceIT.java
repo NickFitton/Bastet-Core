@@ -1,11 +1,14 @@
 package com.nfitton.imagestorage.service;
 
 import com.nfitton.imagestorage.ImageStorageApplication;
+import com.nfitton.imagestorage.api.CameraV1;
 import com.nfitton.imagestorage.api.UserV1;
+import com.nfitton.imagestorage.entity.Camera;
 import com.nfitton.imagestorage.entity.Group;
 import com.nfitton.imagestorage.entity.User;
 import com.nfitton.imagestorage.entity.UserGroup;
 import com.nfitton.imagestorage.mapper.AccountMapper;
+import com.nfitton.imagestorage.mapper.CameraMapper;
 import com.nfitton.imagestorage.model.GroupData;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +31,9 @@ public class GroupServiceIT {
 
   @Autowired
   UserService userService;
+
+  @Autowired
+  CameraService cameraService;
 
   @Autowired
   GroupService groupService;
@@ -83,7 +89,7 @@ public class GroupServiceIT {
   }
 
   @Test
-  public void groupOwnerCanRemoveOtherUsersFromGroup() {
+  public void groupMemberCanBeRemovedFromGroup() {
     User userA = generateUser();
     User savedUserA = userService.save(userA).block();
     Assertions.assertNotNull(savedUserA);
@@ -106,7 +112,7 @@ public class GroupServiceIT {
   }
 
   @Test
-  public void groupOwnerCanChangeOwnerOfGroup() {
+  public void groupOwnerCanBeChanged() {
     User userA = generateUser();
     User savedUserA = userService.save(userA).block();
     Assertions.assertNotNull(savedUserA);
@@ -152,6 +158,102 @@ public class GroupServiceIT {
     Assertions.assertEquals(collect.size(), groupIds.size());
   }
 
+  @Test
+  public void cameraCanBeAddedToGroup() {
+    User userA = generateUser();
+
+    User savedUserA = userService.save(userA).block();
+    Assertions.assertNotNull(savedUserA);
+
+    GroupData savedGroup = groupService.createGroup(createGroup(savedUserA.getId())).block();
+    Assertions.assertNotNull(savedGroup);
+
+    Camera cameraA = generateCamera();
+    Camera savedCamera = cameraService.save(cameraA).block();
+    Assertions.assertNotNull(savedCamera);
+
+    savedCamera = cameraService
+        .updateCamera(savedCamera.getId(), savedUserA.getId(), generateCamera("Test Camera"))
+        .block();
+    Assertions.assertNotNull(savedCamera);
+
+    savedGroup = groupService
+        .addCameraToGroup(savedUserA.getId(), savedCamera.getId(), savedGroup.getGroup().getId())
+        .block();
+    Assertions.assertNotNull(savedGroup);
+    Assertions.assertEquals(1, savedGroup.getCameraIds().size());
+    Assertions.assertTrue(savedGroup.getCameraIds().contains(savedCamera.getId()));
+  }
+
+  @Test
+  public void cameraCanBeRemovedFromGroup() {
+    User userA = generateUser();
+
+    User savedUserA = userService.save(userA).block();
+    Assertions.assertNotNull(savedUserA);
+
+    GroupData savedGroup = groupService.createGroup(createGroup(savedUserA.getId())).block();
+    Assertions.assertNotNull(savedGroup);
+
+    Camera cameraA = generateCamera();
+    Camera savedCamera = cameraService.save(cameraA).block();
+    Assertions.assertNotNull(savedCamera);
+
+    savedCamera = cameraService
+        .updateCamera(savedCamera.getId(), savedUserA.getId(), generateCamera("Test Camera"))
+        .block();
+    Assertions.assertNotNull(savedCamera);
+
+    savedGroup = groupService
+        .addCameraToGroup(savedUserA.getId(), savedCamera.getId(), savedGroup.getGroup().getId())
+        .block();
+    Assertions.assertNotNull(savedGroup);
+
+    savedGroup = groupService
+        .removeCameraFromGroup(savedCamera.getId(), savedGroup.getGroup().getId()).block();
+    Assertions.assertNotNull(savedGroup);
+    Assertions.assertEquals(0, savedGroup.getCameraIds().size());
+    Assertions.assertFalse(savedGroup.getCameraIds().contains(savedCamera.getId()));
+  }
+
+  @Test
+  public void whenGroupMemberIsRemovedCamerasRemovedAlso() {
+    User userA = generateUser();
+    User savedUserA = userService.save(userA).block();
+    Assertions.assertNotNull(savedUserA);
+
+    User userB = generateUser();
+    User savedUserB = userService.save(userB).block();
+    Assertions.assertNotNull(savedUserB);
+
+    GroupData savedGroup = groupService.createGroup(createGroup(savedUserA.getId())).block();
+    Assertions.assertNotNull(savedGroup);
+
+    GroupData updatedData = groupService
+        .addUserToGroup(userB.getId(), savedGroup.getGroup().getId()).block();
+    Assertions.assertNotNull(updatedData);
+
+    Camera cameraB = generateCamera();
+    Camera savedCamera = cameraService.save(cameraB).block();
+    Assertions.assertNotNull(savedCamera);
+
+    savedCamera = cameraService
+        .updateCamera(savedCamera.getId(), savedUserB.getId(), generateCamera("Test Camera"))
+        .block();
+    Assertions.assertNotNull(savedCamera);
+
+    savedGroup = groupService
+        .addCameraToGroup(savedUserB.getId(), savedCamera.getId(), savedGroup.getGroup().getId())
+        .block();
+    Assertions.assertNotNull(savedGroup);
+
+    updatedData = groupService
+        .removeUserFromGroup(savedUserB.getId(), savedGroup.getGroup().getId()).block();
+    Assertions.assertNotNull(updatedData);
+    Assertions.assertEquals(1, updatedData.getUserIds().size());
+    Assertions.assertEquals(0, updatedData.getCameraIds().size());
+  }
+
   private User generateUser() {
     return AccountMapper.newAccount(new UserV1(
         null,
@@ -162,5 +264,33 @@ public class GroupServiceIT {
         null,
         null,
         null), encoder, validator);
+  }
+
+  private Camera generateCamera() {
+    return CameraMapper
+        .toEntity(
+            new CameraV1(
+                null,
+                null,
+                null,
+                "1234",
+                null,
+                null,
+                null),
+            encoder,
+            validator);
+  }
+
+  private Camera generateCamera(String name) {
+    return CameraMapper
+        .toEntity(
+            new CameraV1(
+                null,
+                null,
+                name,
+                null,
+                null,
+                null,
+                null));
   }
 }

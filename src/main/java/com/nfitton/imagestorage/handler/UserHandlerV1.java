@@ -75,16 +75,10 @@ public class UserHandlerV1 {
     return RouterUtil
         .parseAuthenticationToken(request, authenticationService)
         .flatMap(authorizedUserId -> {
-          if (userId.equals(authorizedUserId)) {
-            return Mono.just(true);
-          }
-          return userService.idIsAdmin(authorizedUserId);
-        })
-        .flatMap(isAuthenticated -> {
-          if (isAuthenticated) {
+          if (authorizedUserId != null) {
             return userService.findById(userId);
           } else {
-            return Mono.error(new VerificationException("Must be admin to perform this request"));
+            return Mono.error(new VerificationException("Must be authorized to perform this request"));
           }
         })
         .map(account -> account.orElseThrow(
@@ -138,7 +132,7 @@ public class UserHandlerV1 {
         .map(GroupMapper::toV1)
         .collectList()
         .map(OutgoingDataV1::dataOnly)
-        .flatMap(data -> ServerResponse.status(HttpStatus.ACCEPTED).syncBody(data))
+        .flatMap(data -> ServerResponse.status(HttpStatus.OK).syncBody(data))
         .onErrorResume(RouterUtil::handleErrors);
 
   }

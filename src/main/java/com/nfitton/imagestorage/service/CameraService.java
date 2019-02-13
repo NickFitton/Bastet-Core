@@ -10,6 +10,7 @@ public interface CameraService extends AccountService<Camera, UUID> {
 
   Mono<Camera> imageTaken(UUID cameraId);
 
+  // TODO: Remove the optional tag from this method and create a new method `Mono<Boolean> existsById(UUID cameraId)`
   Mono<Optional<Camera>> findById(UUID cameraId);
 
   Mono<Camera> updateCamera(UUID cameraId, UUID userId, Camera cameraName);

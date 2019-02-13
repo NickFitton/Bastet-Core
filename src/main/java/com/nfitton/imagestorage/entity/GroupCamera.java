@@ -25,6 +25,10 @@ public class GroupCamera {
     this.cameraId = cameraId;
   }
 
+  GroupCamera() {
+    
+  }
+
   public UUID getId() {
     return id;
   }

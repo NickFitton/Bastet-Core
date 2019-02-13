@@ -4,13 +4,19 @@ import static com.nfitton.imagestorage.util.RouterUtil.getUUIDParameter;
 
 import com.nfitton.imagestorage.api.GroupV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
+import com.nfitton.imagestorage.api.UserV1;
+import com.nfitton.imagestorage.entity.Camera;
+import com.nfitton.imagestorage.entity.User;
 import com.nfitton.imagestorage.exception.ForbiddenException;
+import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.mapper.GroupMapper;
 import com.nfitton.imagestorage.model.GroupData;
 import com.nfitton.imagestorage.service.AuthenticationService;
+import com.nfitton.imagestorage.service.CameraService;
 import com.nfitton.imagestorage.service.GroupService;
-import com.nfitton.imagestorage.util.ExceptionUtil;
+import com.nfitton.imagestorage.service.UserService;
 import com.nfitton.imagestorage.util.RouterUtil;
+import java.util.List;
 import java.util.UUID;
 import javax.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,15 +30,21 @@ import reactor.core.publisher.Mono;
 public class GroupHandlerV1 {
 
   private final GroupService groupService;
+  private final UserService userService;
+  private final CameraService cameraService;
   private final AuthenticationService authenticationService;
   private final Validator validator;
 
   @Autowired
   public GroupHandlerV1(
       GroupService groupService,
+      UserService userService,
+      CameraService cameraService,
       AuthenticationService authenticationService,
       Validator validator) {
     this.groupService = groupService;
+    this.userService = userService;
+    this.cameraService = cameraService;
     this.authenticationService = authenticationService;
     this.validator = validator;
   }
@@ -67,7 +79,7 @@ public class GroupHandlerV1 {
         })
         .map(GroupMapper::toV1)
         .map(OutgoingDataV1::dataOnly)
-        .flatMap(account -> ServerResponse.status(HttpStatus.CREATED).syncBody(account))
+        .flatMap(account -> ServerResponse.status(HttpStatus.OK).syncBody(account))
         .onErrorResume(RouterUtil::handleErrors);
   }
 
@@ -108,6 +120,102 @@ public class GroupHandlerV1 {
           throw new ForbiddenException("Must be owner to change owner");
         })
         .map(GroupMapper::toV1)
+        .map(OutgoingDataV1::dataOnly)
+        .flatMap(data -> ServerResponse.status(HttpStatus.ACCEPTED).syncBody(data))
+        .onErrorResume(RouterUtil::handleErrors);
+  }
+
+  public Mono<ServerResponse> addCameraToGroup(ServerRequest request) {
+    UUID groupId = getUUIDParameter(request, "groupId");
+    UUID cameraId = getUUIDParameter(request, "cameraId");
+
+    return Mono.zip(
+        RouterUtil.parseAuthenticationToken(request, authenticationService),
+        groupService.existsById(groupId))
+        .flatMap(tuple -> {
+          if (!tuple.getT2()) {
+            throw new NotFoundException("Group not found by given id");
+          }
+          UUID requestingUser = tuple.getT1();
+
+          return groupService.addCameraToGroup(requestingUser, cameraId, groupId);
+        })
+        .map(GroupMapper::toV1)
+        .map(OutgoingDataV1::dataOnly)
+        .flatMap(data -> ServerResponse.status(HttpStatus.ACCEPTED).syncBody(data))
+        .onErrorResume(RouterUtil::handleErrors);
+  }
+
+  public Mono<ServerResponse> addUserToGroup(ServerRequest request) {
+    UUID groupId = getUUIDParameter(request, "groupId");
+
+    Mono<List<UUID>> groupUsersMono = groupService.findGroupDataById(groupId)
+        .map(GroupData::getUserIds);
+
+    Mono<UUID> userIdMono = request.bodyToMono(UserV1.class)
+        .map(UserV1::getEmail)
+        .flatMap(userService::findByEmail).map(User::getId);
+
+    return Mono.zip(
+        RouterUtil.parseAuthenticationToken(request, authenticationService),
+        groupUsersMono, userIdMono)
+        .flatMap(tuple -> {
+          UUID requestingUser = tuple.getT1();
+          if (!tuple.getT2().contains(requestingUser)) {
+            throw new ForbiddenException("User not part of given group");
+          }
+
+          return groupService.addUserToGroup(tuple.getT3(), groupId);
+        })
+        .map(GroupMapper::toV1)
+        .map(OutgoingDataV1::dataOnly)
+        .flatMap(data -> ServerResponse.status(HttpStatus.ACCEPTED).syncBody(data))
+        .onErrorResume(RouterUtil::handleErrors);
+  }
+
+  public Mono<ServerResponse> removeCameraFromGroup(ServerRequest request) {
+    UUID groupId = getUUIDParameter(request, "groupId");
+    UUID cameraId = getUUIDParameter(request, "cameraId");
+
+    return Mono.zip(
+        RouterUtil.parseAuthenticationToken(request, authenticationService),
+        groupService.findGroupDataById(groupId), cameraService.findById(cameraId))
+        .flatMap(tuple -> {
+          UUID requestorId = tuple.getT1();
+          GroupData data = tuple.getT2();
+          Camera selectedCamera = tuple.getT3()
+              .orElseThrow(() -> new NotFoundException("Camera not found by given id"));
+
+          if (requestorId.equals(data.getGroup().getOwnerId()) || selectedCamera.getOwnerId()
+              .equals(requestorId)) {
+            return groupService.removeCameraFromGroup(cameraId, groupId);
+          }
+          throw new ForbiddenException("User not admin or doesn't own selected camera");
+        })
+        .map(GroupMapper::toV1)
+        .map(OutgoingDataV1::dataOnly)
+        .flatMap(data -> ServerResponse.status(HttpStatus.ACCEPTED).syncBody(data))
+        .onErrorResume(RouterUtil::handleErrors);
+  }
+
+  public Mono<ServerResponse> getGroupCameras(ServerRequest request) {
+    UUID groupId = getUUIDParameter(request, "groupId");
+
+    return Mono.zip(
+        RouterUtil.parseAuthenticationToken(request, authenticationService),
+        groupService.findGroupDataById(groupId))
+        .flatMapIterable(tuple2 -> {
+          UUID requestorId = tuple2.getT1();
+          GroupData data = tuple2.getT2();
+          if (!data.getUserIds().contains(requestorId)) {
+            throw new ForbiddenException("Must be in group to get cameras");
+          }
+
+          return data.getCameraIds();
+        }).flatMap(cameraService::findById)
+        .map(optionalCamera -> optionalCamera
+            .orElseThrow(() -> new NotFoundException("Camera not found by given id")))
+        .collectList()
         .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.status(HttpStatus.ACCEPTED).syncBody(data))
         .onErrorResume(RouterUtil::handleErrors);

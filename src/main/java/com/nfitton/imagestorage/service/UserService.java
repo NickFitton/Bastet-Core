@@ -6,4 +6,5 @@ import reactor.core.publisher.Mono;
 
 public interface UserService extends AccountService<User, UUID> {
   Mono<Boolean> idIsAdmin(UUID userId);
+  Mono<User> findByEmail(String email);
 }

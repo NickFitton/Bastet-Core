@@ -58,8 +58,12 @@ public class RouterConfiguration {
             path("/groups"),
             route(POST("/"), groupHandlerV1::createGroup)
                 .andRoute(GET("/{groupId}"), groupHandlerV1::getGroupById)
-        .andRoute(DELETE("/{groupId}/{userId}"), groupHandlerV1::removeUserFromGroup)
+        .andRoute(DELETE("/{groupId}/member/{userId}"), groupHandlerV1::removeUserFromGroup)
         .andRoute(PATCH("/{groupId}/owner/{userId}"), groupHandlerV1::changeOwnerOfGroup)
+        .andRoute(POST("/{groupId}/member"), groupHandlerV1::addUserToGroup)
+        .andRoute(POST("/{groupId}/cameras/{cameraId}"), groupHandlerV1::addCameraToGroup)
+        .andRoute(GET("/{groupId}/cameras"), groupHandlerV1::getGroupCameras)
+        .andRoute(DELETE("/{groupId}/cameras/{cameraId}"), groupHandlerV1::removeCameraFromGroup)
         ));
   }
 }

@@ -12,6 +12,8 @@ public interface GroupService {
 
   Mono<GroupData> createGroup(GroupData groupData);
 
+  Mono<Boolean> existsById(UUID groupId);
+
   Mono<GroupData> findGroupDataById(UUID groupId);
 
   Mono<Group> findGroupById(UUID groupId);
@@ -24,7 +26,7 @@ public interface GroupService {
 
   Flux<UserGroup> getGroupsByUserId(UUID userId);
 
-  Flux<GroupCamera> getCamerasByGroupId(UUID userId, UUID groupId);
+  Mono<GroupData> addCameraToGroup(UUID requestorId, UUID cameraId, UUID groupId);
 
-  Mono<GroupData> removeCameraFromGroup(UUID userId, UUID cameraId, UUID groupId);
+  Mono<GroupData> removeCameraFromGroup(UUID cameraId, UUID groupId);
 }

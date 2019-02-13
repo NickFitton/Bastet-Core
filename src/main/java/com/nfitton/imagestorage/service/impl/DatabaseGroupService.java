@@ -1,5 +1,6 @@
 package com.nfitton.imagestorage.service.impl;
 
+import com.nfitton.imagestorage.entity.Camera;
 import com.nfitton.imagestorage.entity.Group;
 import com.nfitton.imagestorage.entity.GroupCamera;
 import com.nfitton.imagestorage.entity.UserGroup;
@@ -10,6 +11,7 @@ import com.nfitton.imagestorage.model.GroupData;
 import com.nfitton.imagestorage.repository.GroupCameraRepository;
 import com.nfitton.imagestorage.repository.GroupRepository;
 import com.nfitton.imagestorage.repository.UserGroupRepository;
+import com.nfitton.imagestorage.service.CameraService;
 import com.nfitton.imagestorage.service.GroupService;
 import com.nfitton.imagestorage.service.UserService;
 import com.nfitton.imagestorage.util.ExceptionUtil;
@@ -33,17 +35,20 @@ public class DatabaseGroupService implements GroupService {
   private final GroupCameraRepository groupCameraRepository;
   private final UserGroupRepository userGroupRepository;
   private final UserService userService;
+  private final CameraService cameraService;
 
   @Autowired
   public DatabaseGroupService(
       GroupRepository groupRepository,
       GroupCameraRepository groupCameraRepository,
       UserGroupRepository userGroupRepository,
-      UserService userService) {
+      UserService userService,
+      CameraService cameraService) {
     this.groupRepository = groupRepository;
     this.groupCameraRepository = groupCameraRepository;
     this.userGroupRepository = userGroupRepository;
     this.userService = userService;
+    this.cameraService = cameraService;
   }
 
   private static NotFoundException groupNotFound(UUID groupId) {
@@ -89,16 +94,25 @@ public class DatabaseGroupService implements GroupService {
   @Override
   public Mono<GroupData> removeUserFromGroup(UUID userId, UUID groupId) {
     return Mono.zip(findGroupDataById(groupId), userService.existsById(userId))
-        .flatMap(tuple2 -> {
+        .flatMapMany(tuple2 -> {
           if (!tuple2.getT2()) {
             throw ExceptionUtil.userNotFound();
           }
+
           GroupData data = tuple2.getT1();
           if (userId == data.getGroup().getOwnerId()) {
             throw new ForbiddenException("Cannot remove owner from group");
           }
           if (!data.getUserIds().contains(userId)) {
             throw new NotFoundException("User not in group");
+          }
+          return cameraService.findAllOwnedById(userId).map(Camera::getId);
+        })
+        .flatMap(cameraId -> removeCamera(cameraId, groupId))
+        .collectList()
+        .flatMap(camerasRemoved -> {
+          if (camerasRemoved.contains(false)) {
+            throw new InternalServerException("Failed to remove all cameras from group");
           }
           return removeUser(userId, groupId);
         }).flatMap(success -> {
@@ -134,14 +148,56 @@ public class DatabaseGroupService implements GroupService {
   }
 
   @Override
-  public Flux<GroupCamera> getCamerasByGroupId(
-      UUID userId, UUID groupId) {
-    return null;
+  public Mono<GroupData> addCameraToGroup(UUID requestorId, UUID cameraId, UUID groupId) {
+    return Mono.zip(findGroupDataById(groupId), cameraService.findById(cameraId))
+        .flatMap(tuple2 -> {
+          Camera camera = tuple2.getT2()
+              .orElseThrow(() -> new NotFoundException("Camera not found by given id"));
+          LOGGER.debug("Camera owner {}, requestor {}", camera.getOwnerId(), requestorId);
+          if (camera.getOwnerId() == null || !camera.getOwnerId().equals(requestorId)) {
+            throw new ForbiddenException("User does not own given camera");
+          }
+          if (!tuple2.getT1().getUserIds().contains(requestorId)) {
+            throw new ForbiddenException("User is not part of given group");
+          }
+          GroupCamera newCamera = new GroupCamera(null, groupId, cameraId);
+          return saveGroupCamera(newCamera);
+        })
+        .map(GroupCamera::getGroupId)
+        .flatMap(this::findGroupDataById);
   }
 
   @Override
-  public Mono<GroupData> removeCameraFromGroup(UUID userId, UUID cameraId, UUID groupId) {
-    return null;
+  public Mono<GroupData> removeCameraFromGroup(UUID cameraId, UUID groupId) {
+    return Mono.zip(findGroupDataById(groupId), cameraService.existsById(cameraId))
+        .flatMap(tuple2 -> {
+          if (!tuple2.getT2()) {
+            throw ExceptionUtil.cameraNotFound();
+          }
+          GroupData data = tuple2.getT1();
+          if (!data.getCameraIds().contains(cameraId)) {
+            throw new NotFoundException("Camera not in group");
+          }
+          return removeCamera(cameraId, groupId);
+        }).flatMap(success -> {
+          if (!success) {
+            throw new InternalServerException("Failed to remove camera from group");
+          }
+          return findGroupDataById(groupId);
+        });
+  }
+
+  private Mono<Boolean> removeCamera(UUID cameraId, UUID groupId) {
+    return Mono.fromCallable(() -> {
+      groupCameraRepository.deleteByCameraIdAndGroupId(cameraId, groupId);
+      return true;
+    })
+        .doOnError(
+            e -> LOGGER
+                .error(
+                    "Threw error when removing camera {} from group {}: {}", cameraId, groupId, e))
+        .onErrorReturn(false);
+
   }
 
   private Mono<List<UserGroup>> findUsersInGroup(UUID groupId) {
@@ -152,7 +208,8 @@ public class DatabaseGroupService implements GroupService {
     return Mono.fromCallable(() -> groupCameraRepository.findAllByGroupId(groupId));
   }
 
-  private Mono<Boolean> existsById(UUID groupId) {
+  @Override
+  public Mono<Boolean> existsById(UUID groupId) {
     return Mono.fromCallable(() -> groupRepository.existsById(groupId))
         .subscribeOn(Schedulers.elastic());
   }
