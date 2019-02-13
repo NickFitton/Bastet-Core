@@ -52,10 +52,14 @@ public class RouterConfiguration {
             path("/users"),
             route(POST("/"), userHandlerV1::createUser).andRoute(GET("/"), userHandlerV1::getUsers)
                 .andRoute(GET("/{userId}"), userHandlerV1::getUser)
-                .andRoute(DELETE("/{userId}"), userHandlerV1::deleteUser))
+                .andRoute(DELETE("/{userId}"), userHandlerV1::deleteUser)
+                .andRoute(GET("/{userId}/groups"), userHandlerV1::getGroupsForUser))
         .andNest(
             path("/groups"),
             route(POST("/"), groupHandlerV1::createGroup)
-                .andRoute(GET("/{groupId}"), groupHandlerV1::getGroupById)));
+                .andRoute(GET("/{groupId}"), groupHandlerV1::getGroupById)
+        .andRoute(DELETE("/{groupId}/{userId}"), groupHandlerV1::removeUserFromGroup)
+        .andRoute(PATCH("/{groupId}/owner/{userId}"), groupHandlerV1::changeOwnerOfGroup)
+        ));
   }
 }

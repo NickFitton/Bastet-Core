@@ -4,10 +4,14 @@ import static com.nfitton.imagestorage.util.RouterUtil.getUUIDParameter;
 
 import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.api.UserV1;
+import com.nfitton.imagestorage.entity.UserGroup;
+import com.nfitton.imagestorage.exception.ForbiddenException;
 import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.exception.VerificationException;
 import com.nfitton.imagestorage.mapper.AccountMapper;
+import com.nfitton.imagestorage.mapper.GroupMapper;
 import com.nfitton.imagestorage.service.AuthenticationService;
+import com.nfitton.imagestorage.service.GroupService;
 import com.nfitton.imagestorage.service.UserService;
 import com.nfitton.imagestorage.util.RouterUtil;
 import java.util.UUID;
@@ -27,16 +31,19 @@ public class UserHandlerV1 {
   private final UserService userService;
   private final Validator validator;
   private final AuthenticationService authenticationService;
+  private final GroupService groupService;
 
   @Autowired
   public UserHandlerV1(
       Validator validator,
       PasswordEncoder encoder, UserService userService,
-      AuthenticationService authenticationService) {
+      AuthenticationService authenticationService,
+      GroupService groupService) {
     this.validator = validator;
     this.encoder = encoder;
     this.userService = userService;
     this.authenticationService = authenticationService;
+    this.groupService = groupService;
   }
 
   public Mono<ServerResponse> createUser(ServerRequest request) {
@@ -54,7 +61,7 @@ public class UserHandlerV1 {
         .flatMap(userService::idIsAdmin)
         .flatMap(isAdmin -> {
           if (!isAdmin) {
-            return Mono.error(new VerificationException());
+            return Mono.error(new VerificationException("Must be admin to perform this request"));
           }
           return userService.getAllIds().collectList();
         })
@@ -77,7 +84,7 @@ public class UserHandlerV1 {
           if (isAuthenticated) {
             return userService.findById(userId);
           } else {
-            return Mono.error(new VerificationException());
+            return Mono.error(new VerificationException("Must be admin to perform this request"));
           }
         })
         .map(account -> account.orElseThrow(
@@ -103,7 +110,7 @@ public class UserHandlerV1 {
           if (isAuthenticated) {
             return userService.deleteById(userId);
           } else {
-            return Mono.error(new VerificationException());
+            return Mono.error(new VerificationException("Must be admin to perform this request"));
           }
         }).flatMap(deleted -> {
           if (deleted) {
@@ -113,5 +120,26 @@ public class UserHandlerV1 {
           }
         })
         .onErrorResume(RouterUtil::handleErrors);
+  }
+
+  public Mono<ServerResponse> getGroupsForUser(ServerRequest request) {
+    UUID userId = getUUIDParameter(request, "userId");
+
+    return RouterUtil
+        .parseAuthenticationToken(request, authenticationService)
+        .flatMapMany(authorizedUserId -> {
+          if (userId.equals(authorizedUserId)) {
+            return groupService.getGroupsByUserId(userId);
+          }
+          throw new ForbiddenException("Cannot request other users groups");
+        })
+        .map(UserGroup::getGroupId)
+        .flatMap(groupService::findGroupById)
+        .map(GroupMapper::toV1)
+        .collectList()
+        .map(OutgoingDataV1::dataOnly)
+        .flatMap(data -> ServerResponse.status(HttpStatus.ACCEPTED).syncBody(data))
+        .onErrorResume(RouterUtil::handleErrors);
+
   }
 }

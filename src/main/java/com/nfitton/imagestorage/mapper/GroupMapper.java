@@ -25,4 +25,8 @@ public class GroupMapper {
         group.getId(), group.getOwnerId(), group.getName(), groupData.getUserIds(),
         groupData.getCameraIds());
   }
+
+  public static GroupV1 toV1(Group group) {
+    return new GroupV1(group.getId(), group.getOwnerId(), group.getName(), null, null);
+  }
 }

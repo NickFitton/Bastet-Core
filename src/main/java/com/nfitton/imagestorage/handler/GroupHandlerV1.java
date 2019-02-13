@@ -6,8 +6,10 @@ import com.nfitton.imagestorage.api.GroupV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.exception.ForbiddenException;
 import com.nfitton.imagestorage.mapper.GroupMapper;
+import com.nfitton.imagestorage.model.GroupData;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.GroupService;
+import com.nfitton.imagestorage.util.ExceptionUtil;
 import com.nfitton.imagestorage.util.RouterUtil;
 import java.util.UUID;
 import javax.validation.Validator;
@@ -66,6 +68,48 @@ public class GroupHandlerV1 {
         .map(GroupMapper::toV1)
         .map(OutgoingDataV1::dataOnly)
         .flatMap(account -> ServerResponse.status(HttpStatus.CREATED).syncBody(account))
+        .onErrorResume(RouterUtil::handleErrors);
+  }
+
+  public Mono<ServerResponse> removeUserFromGroup(ServerRequest request) {
+    UUID groupId = getUUIDParameter(request, "groupId");
+    UUID userId = getUUIDParameter(request, "userId");
+
+    return Mono.zip(
+        RouterUtil.parseAuthenticationToken(request, authenticationService),
+        groupService.findGroupDataById(groupId))
+        .flatMap(tuple -> {
+          UUID requestingUser = tuple.getT1();
+          GroupData group = tuple.getT2();
+          if (group.getGroup().getOwnerId() == requestingUser || userId == requestingUser) {
+            return groupService.removeUserFromGroup(userId, groupId);
+          }
+          throw new ForbiddenException("Must be owner to remove other users");
+        })
+        .map(GroupMapper::toV1)
+        .map(OutgoingDataV1::dataOnly)
+        .flatMap(data -> ServerResponse.status(HttpStatus.ACCEPTED).syncBody(data))
+        .onErrorResume(RouterUtil::handleErrors);
+  }
+
+  public Mono<ServerResponse> changeOwnerOfGroup(ServerRequest request) {
+    UUID groupId = getUUIDParameter(request, "groupId");
+    UUID newOwnerId = getUUIDParameter(request, "userId");
+
+    return Mono.zip(
+        RouterUtil.parseAuthenticationToken(request, authenticationService),
+        groupService.findGroupDataById(groupId))
+        .flatMap(tuple -> {
+          UUID requestingUser = tuple.getT1();
+          GroupData group = tuple.getT2();
+          if (group.getGroup().getOwnerId() == requestingUser) {
+            return groupService.changeOwnerOfGroup(newOwnerId, groupId);
+          }
+          throw new ForbiddenException("Must be owner to change owner");
+        })
+        .map(GroupMapper::toV1)
+        .map(OutgoingDataV1::dataOnly)
+        .flatMap(data -> ServerResponse.status(HttpStatus.ACCEPTED).syncBody(data))
         .onErrorResume(RouterUtil::handleErrors);
   }
 }

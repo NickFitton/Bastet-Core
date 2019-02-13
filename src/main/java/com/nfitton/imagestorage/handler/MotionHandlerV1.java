@@ -14,6 +14,7 @@ import com.nfitton.imagestorage.service.CameraService;
 import com.nfitton.imagestorage.service.FileMetadataService;
 import com.nfitton.imagestorage.service.FileUploadService;
 import com.nfitton.imagestorage.service.UserService;
+import com.nfitton.imagestorage.util.ExceptionUtil;
 import com.nfitton.imagestorage.util.RouterUtil;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -121,7 +122,7 @@ public class MotionHandlerV1 {
             return Flux.fromStream(cameraIds)
                 .flatMap(cameraId -> fileMetadataService.findAllByCameraId(cameraId, from, to));
           } else {
-            return Mono.error(new VerificationException());
+            return Mono.error(ExceptionUtil.badCredentials());
           }
         }).map(ImageMetadataMapper::toV1)
         .collectList()
@@ -138,7 +139,7 @@ public class MotionHandlerV1 {
             UUID motionId = RouterUtil.getUUIDParameter(request, "motionId");
             return fileMetadataService.findById(motionId);
           } else {
-            return Mono.error(new VerificationException());
+            return Mono.error(ExceptionUtil.badCredentials());
           }
         }).map(ImageMetadataMapper::toV1)
         .map(OutgoingDataV1::dataOnly)
@@ -155,7 +156,7 @@ public class MotionHandlerV1 {
           if (exists) {
             return fileMetadataService.findById(motionId);
           } else {
-            return Mono.error(new VerificationException());
+            return Mono.error(ExceptionUtil.badCredentials());
           }
         })
         .flatMapMany(metadata -> {
