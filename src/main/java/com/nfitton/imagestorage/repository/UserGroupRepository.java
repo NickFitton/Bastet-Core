@@ -17,5 +17,8 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, UUID> {
   @Transactional
   void deleteByUserIdAndGroupId(UUID userId, UUID groupId);
 
+  @Transactional
+  void deleteByGroupId(UUID groupId);
+
 //  Optional<UserGroup> findByGroupIdAndUserId(UUID groupId, UUID userId);
 }

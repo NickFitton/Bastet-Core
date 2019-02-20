@@ -187,6 +187,21 @@ public class DatabaseGroupService implements GroupService {
         });
   }
 
+  @Override
+  public Mono<Boolean> deleteGroup(UUID groupId) {
+    return existsById(groupId).flatMap(exists -> {
+      if (exists) {
+        return Mono.fromCallable(() -> {
+          groupCameraRepository.deleteByGroupId(groupId);
+          userGroupRepository.deleteByGroupId(groupId);
+          groupRepository.deleteById(groupId);
+          return true;
+        });
+      }
+      return Mono.error(() -> groupNotFound(groupId));
+    });
+  }
+
   private Mono<Boolean> removeCamera(UUID cameraId, UUID groupId) {
     return Mono.fromCallable(() -> {
       groupCameraRepository.deleteByCameraIdAndGroupId(cameraId, groupId);

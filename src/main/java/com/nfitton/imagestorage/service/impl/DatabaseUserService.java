@@ -95,6 +95,6 @@ public class DatabaseUserService implements UserService {
   @Override
   public Mono<User> findByEmail(String email) {
     return Mono.fromCallable(() -> repository.findByEmail(email)
-        .orElseThrow(() -> new NotFoundException("User not found by given id")));
+        .orElseThrow(() -> new NotFoundException("User not found by given email address")));
   }
 }

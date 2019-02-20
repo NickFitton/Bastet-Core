@@ -31,7 +31,7 @@ class SecurityConfiguration {
   @Bean
   public CorsWebFilter corsWebFilter(
       @Value("${idaas.endpoints.cors.allowed-origins:*}") String[] origins,
-      @Value("${idaas.endpoints.cors.allowed-methods:GET,OPTIONS,POST,PATCH}") String[] methods,
+      @Value("${idaas.endpoints.cors.allowed-methods:GET,OPTIONS,POST,PATCH,PUT,DELETE}") String[] methods,
       @Value("${idaas.endpoints.cors.allowed-headers:*}") String[] headers) {
     CorsConfiguration corsConfig = new CorsConfiguration();
     corsConfig.setAllowedOrigins(Arrays.asList(origins));

@@ -57,13 +57,17 @@ public class RouterConfiguration {
         .andNest(
             path("/groups"),
             route(POST("/"), groupHandlerV1::createGroup)
-                .andRoute(GET("/{groupId}"), groupHandlerV1::getGroupById)
-        .andRoute(DELETE("/{groupId}/member/{userId}"), groupHandlerV1::removeUserFromGroup)
-        .andRoute(PATCH("/{groupId}/owner/{userId}"), groupHandlerV1::changeOwnerOfGroup)
-        .andRoute(POST("/{groupId}/member"), groupHandlerV1::addUserToGroup)
-        .andRoute(POST("/{groupId}/cameras/{cameraId}"), groupHandlerV1::addCameraToGroup)
-        .andRoute(GET("/{groupId}/cameras"), groupHandlerV1::getGroupCameras)
-        .andRoute(DELETE("/{groupId}/cameras/{cameraId}"), groupHandlerV1::removeCameraFromGroup)
+                .andNest(
+                    path("/{groupId}"),
+                    route(GET("/"), groupHandlerV1::getGroupById)
+                        .andRoute(DELETE("/"), groupHandlerV1::deleteGroup))
+                .andRoute(POST("/{groupId}/member"), groupHandlerV1::addUserToGroup)
+                .andRoute(DELETE("/{groupId}/member/{userId}"), groupHandlerV1::removeUserFromGroup)
+                .andRoute(PATCH("/{groupId}/owner/{userId}"), groupHandlerV1::changeOwnerOfGroup)
+                .andRoute(POST("/{groupId}/cameras/{cameraId}"), groupHandlerV1::addCameraToGroup)
+                .andRoute(GET("/{groupId}/cameras"), groupHandlerV1::getGroupCameras)
+                .andRoute(
+                    DELETE("/{groupId}/cameras/{cameraId}"), groupHandlerV1::removeCameraFromGroup)
         ));
   }
 }

@@ -59,11 +59,13 @@ CREATE TABLE groups (
 CREATE TABLE users_groups (
   id UUID PRIMARY KEY,
   user_id UUID REFERENCES users(id),
-  group_id UUID REFERENCES groups(id)
+  group_id UUID REFERENCES groups(id),
+  UNIQUE (user_id, group_id)
 );
 
 CREATE TABLE groups_cameras (
   id UUID PRIMARY KEY,
   group_id UUID REFERENCES groups(id),
-  camera_id UUID REFERENCES camera(id)
+  camera_id UUID REFERENCES camera(id),
+  UNIQUE (camera_id, group_id)
 );

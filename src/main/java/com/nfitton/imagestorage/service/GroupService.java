@@ -29,4 +29,6 @@ public interface GroupService {
   Mono<GroupData> addCameraToGroup(UUID requestorId, UUID cameraId, UUID groupId);
 
   Mono<GroupData> removeCameraFromGroup(UUID cameraId, UUID groupId);
+
+  Mono<Boolean> deleteGroup(UUID groupId);
 }

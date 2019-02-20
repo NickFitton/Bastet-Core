@@ -14,4 +14,7 @@ public interface GroupCameraRepository extends JpaRepository<GroupCamera, UUID> 
 
   @Transactional
   void deleteByCameraIdAndGroupId(UUID cameraId, UUID groupId);
+
+  @Transactional
+  void deleteByGroupId(UUID groupId);
 }

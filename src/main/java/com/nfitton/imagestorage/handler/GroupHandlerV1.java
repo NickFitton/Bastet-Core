@@ -7,8 +7,10 @@ import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.api.UserV1;
 import com.nfitton.imagestorage.entity.Camera;
 import com.nfitton.imagestorage.entity.User;
+import com.nfitton.imagestorage.exception.ConflictException;
 import com.nfitton.imagestorage.exception.ForbiddenException;
 import com.nfitton.imagestorage.exception.NotFoundException;
+import com.nfitton.imagestorage.exception.VerificationException;
 import com.nfitton.imagestorage.mapper.GroupMapper;
 import com.nfitton.imagestorage.model.GroupData;
 import com.nfitton.imagestorage.service.AuthenticationService;
@@ -16,9 +18,10 @@ import com.nfitton.imagestorage.service.CameraService;
 import com.nfitton.imagestorage.service.GroupService;
 import com.nfitton.imagestorage.service.UserService;
 import com.nfitton.imagestorage.util.RouterUtil;
-import java.util.List;
 import java.util.UUID;
 import javax.validation.Validator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -28,6 +31,8 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class GroupHandlerV1 {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(GroupHandlerV1.class);
 
   private final GroupService groupService;
   private final UserService userService;
@@ -47,6 +52,10 @@ public class GroupHandlerV1 {
     this.cameraService = cameraService;
     this.authenticationService = authenticationService;
     this.validator = validator;
+  }
+
+  private static boolean userInGroup(GroupData data, UUID userId) {
+    return data.getGroup().getOwnerId().equals(userId) || data.getUserIds().contains(userId);
   }
 
   public Mono<ServerResponse> createGroup(ServerRequest request) {
@@ -149,8 +158,7 @@ public class GroupHandlerV1 {
   public Mono<ServerResponse> addUserToGroup(ServerRequest request) {
     UUID groupId = getUUIDParameter(request, "groupId");
 
-    Mono<List<UUID>> groupUsersMono = groupService.findGroupDataById(groupId)
-        .map(GroupData::getUserIds);
+    Mono<GroupData> groupUsersMono = groupService.findGroupDataById(groupId);
 
     Mono<UUID> userIdMono = request.bodyToMono(UserV1.class)
         .map(UserV1::getEmail)
@@ -161,8 +169,12 @@ public class GroupHandlerV1 {
         groupUsersMono, userIdMono)
         .flatMap(tuple -> {
           UUID requestingUser = tuple.getT1();
-          if (!tuple.getT2().contains(requestingUser)) {
+          UUID newUser = tuple.getT3();
+          if (!userInGroup(tuple.getT2(), requestingUser)) {
             throw new ForbiddenException("User not part of given group");
+          }
+          if (userInGroup(tuple.getT2(), newUser)) {
+            throw new ConflictException("User already in group");
           }
 
           return groupService.addUserToGroup(tuple.getT3(), groupId);
@@ -218,6 +230,24 @@ public class GroupHandlerV1 {
         .collectList()
         .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.status(HttpStatus.ACCEPTED).syncBody(data))
+        .onErrorResume(RouterUtil::handleErrors);
+  }
+
+  public Mono<ServerResponse> deleteGroup(ServerRequest request) {
+    LOGGER.info("Made it here");
+    UUID groupId = getUUIDParameter(request, "groupId");
+    return Mono.zip(
+        RouterUtil.parseAuthenticationToken(request, authenticationService),
+        groupService.findGroupDataById(groupId))
+        .flatMap(tuple2 -> {
+          LOGGER.info("{} {}", tuple2.getT1(), tuple2.getT2().getGroup().getOwnerId());
+          if (tuple2.getT1().equals(tuple2.getT2().getGroup().getOwnerId())) {
+            return groupService.deleteGroup(groupId);
+          } else {
+            throw new VerificationException("User forbidden from deleteing group");
+          }
+        })
+        .flatMap(data -> ServerResponse.status(HttpStatus.ACCEPTED).build())
         .onErrorResume(RouterUtil::handleErrors);
   }
 }

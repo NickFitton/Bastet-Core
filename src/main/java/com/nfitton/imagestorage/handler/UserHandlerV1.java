@@ -128,7 +128,7 @@ public class UserHandlerV1 {
           throw new ForbiddenException("Cannot request other users groups");
         })
         .map(UserGroup::getGroupId)
-        .flatMap(groupService::findGroupById)
+        .flatMap(groupService::findGroupDataById)
         .map(GroupMapper::toV1)
         .collectList()
         .map(OutgoingDataV1::dataOnly)
