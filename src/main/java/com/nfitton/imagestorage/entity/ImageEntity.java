@@ -5,11 +5,8 @@ import static javax.persistence.EnumType.STRING;
 import java.util.UUID;
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import org.hibernate.annotations.GenericGenerator;
 
 @Entity
@@ -19,9 +16,7 @@ public class ImageEntity {
   @GeneratedValue(generator = "UUID")
   @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
   private UUID id;
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "metadata_id", referencedColumnName = "id")
-  private ImageMetadata imageMetadata;
+  private UUID metadataId;
   private int x;
   private int y;
   private int width;
@@ -33,13 +28,13 @@ public class ImageEntity {
   }
 
   public ImageEntity(
-      ImageMetadata metadataId,
+      UUID metadataId,
       int x,
       int y,
       int width,
       int height,
       EntityType type) {
-    this.imageMetadata = metadataId;
+    this.metadataId = metadataId;
     this.x = x;
     this.y = y;
     this.width = width;
@@ -47,12 +42,16 @@ public class ImageEntity {
     this.type = type;
   }
 
-  public ImageEntity(
+  private ImageEntity(
+      UUID id,
+      UUID metadataId,
       int x,
       int y,
       int width,
       int height,
       EntityType type) {
+    this.id = id;
+    this.metadataId = metadataId;
     this.x = x;
     this.y = y;
     this.width = width;
@@ -64,8 +63,8 @@ public class ImageEntity {
     return id;
   }
 
-  public ImageMetadata getImageMetadata() {
-    return imageMetadata;
+  public UUID getMetadataId() {
+    return metadataId;
   }
 
   public int getX() {
@@ -86,5 +85,80 @@ public class ImageEntity {
 
   public EntityType getType() {
     return type;
+  }
+
+  public static final class Builder {
+
+    private UUID id;
+    private UUID metadataId;
+    private int x;
+    private int y;
+    private int width;
+    private int height;
+    private EntityType type;
+
+    private Builder() {
+    }
+
+    public static Builder newBuilder() {
+      return new Builder();
+    }
+
+    public static Builder clone(ImageEntity entity) {
+      return new Builder()
+          .withId(entity.getId())
+          .withMetadataId(entity.getMetadataId())
+          .withX(entity.getX())
+          .withY(entity.getY())
+          .withWidth(entity.getWidth())
+          .withHeight(entity.getHeight())
+          .withType(entity.getType());
+    }
+
+    public Builder withId(UUID val) {
+      id = val;
+      return this;
+    }
+
+    public Builder withMetadataId(UUID val) {
+      metadataId = val;
+      return this;
+    }
+
+    public Builder withX(int val) {
+      x = val;
+      return this;
+    }
+
+    public Builder withY(int val) {
+      y = val;
+      return this;
+    }
+
+    public Builder withWidth(int val) {
+      width = val;
+      return this;
+    }
+
+    public Builder withHeight(int val) {
+      height = val;
+      return this;
+    }
+
+    public Builder withType(EntityType val) {
+      type = val;
+      return this;
+    }
+
+    public ImageEntity build() {
+      return new ImageEntity(
+          id,
+          metadataId,
+          x,
+          y,
+          width,
+          height,
+          type);
+    }
   }
 }

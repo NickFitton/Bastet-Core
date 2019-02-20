@@ -6,6 +6,7 @@ import com.nfitton.imagestorage.entity.AccountType;
 import com.nfitton.imagestorage.entity.User;
 import com.nfitton.imagestorage.exception.ConflictException;
 import com.nfitton.imagestorage.exception.InternalServerException;
+import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.repository.AccountRepository;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.UserService;
@@ -89,5 +90,11 @@ public class DatabaseUserService implements UserService {
   public Mono<Boolean> idIsAdmin(UUID userId) {
     return findById(userId)
         .map(optionalUser -> optionalUser.map(user -> user.getType() == ADMIN).orElse(false));
+  }
+
+  @Override
+  public Mono<User> findByEmail(String email) {
+    return Mono.fromCallable(() -> repository.findByEmail(email)
+        .orElseThrow(() -> new NotFoundException("User not found by given email address")));
   }
 }

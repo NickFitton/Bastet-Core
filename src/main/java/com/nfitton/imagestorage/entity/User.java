@@ -9,12 +9,14 @@ import javax.persistence.Table;
 @Table(name = "users")
 public class User extends Account {
 
-  private String name;
+  private String firstName;
+  private String lastName;
   private String email;
 
   private User(
       UUID id,
-      String name,
+      String firstName,
+      String lastName,
       String email,
       String password,
       AccountType type,
@@ -22,15 +24,20 @@ public class User extends Account {
       ZonedDateTime updatedAt,
       ZonedDateTime lastActive) {
     super(id, password, type, createdAt, updatedAt, lastActive);
-    this.name = name;
+    this.firstName = firstName;
+    this.lastName = lastName;
     this.email = email;
   }
 
   public User() {
   }
 
-  public String getName() {
-    return name;
+  public String getFirstName() {
+    return firstName;
+  }
+
+  public String getLastName() {
+    return lastName;
   }
 
   public String getEmail() {
@@ -40,7 +47,8 @@ public class User extends Account {
   public static final class Builder {
 
     private UUID id;
-    private String name;
+    private String firstName;
+    private String lastName;
     private String email;
     private String password;
     private AccountType type;
@@ -59,8 +67,13 @@ public class User extends Account {
       return this;
     }
 
-    public Builder withName(String val) {
-      name = val;
+    public Builder withFirstName(String val) {
+      firstName = val.toLowerCase();
+      return this;
+    }
+
+    public Builder withLastName(String val) {
+      lastName = val.toLowerCase();
       return this;
     }
 
@@ -95,7 +108,7 @@ public class User extends Account {
     }
 
     public User build() {
-      return new User(id, name, email, password, type, createdAt, updatedAt, lastActive);
+      return new User(id, firstName, lastName, email, password, type, createdAt, updatedAt, lastActive);
     }
   }
 }

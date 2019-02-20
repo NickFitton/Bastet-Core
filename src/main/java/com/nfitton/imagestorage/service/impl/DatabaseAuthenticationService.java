@@ -12,6 +12,8 @@ import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +24,8 @@ import reactor.core.scheduler.Schedulers;
 
 @Service
 public class DatabaseAuthenticationService implements AuthenticationService {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseAuthenticationService.class);
 
   private final AuthenticationRepository repository;
   private final PasswordEncoder encoder;
@@ -78,6 +82,7 @@ public class DatabaseAuthenticationService implements AuthenticationService {
   private Mono<String> createAuthentication(UUID userId) {
     ZonedDateTime now = ZonedDateTime.now();
     String token = new String(Base64.getEncoder().encode(UUID.randomUUID().toString().getBytes()));
+    LOGGER.debug("Token created: {}", token);
     Authentication newAuthentication = new Authentication(userId, token, now);
 
     return Mono.fromCallable(() -> repository.save(newAuthentication))

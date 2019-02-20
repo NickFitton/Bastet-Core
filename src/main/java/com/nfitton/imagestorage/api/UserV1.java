@@ -10,9 +10,12 @@ import javax.validation.constraints.NotNull;
 
 @JsonInclude(Include.NON_NULL)
 public class UserV1 {
+
   private UUID id;
-  @NotNull(message = "A name must be given")
-  private String name;
+  @NotNull(message = "A first name must be given")
+  private String firstName;
+  @NotNull(message = "A last name must be given")
+  private String lastName;
   @NotNull(message = "An email must be given")
   private String email;
   @NotNull(message = "A password must be given")
@@ -21,16 +24,19 @@ public class UserV1 {
   private ZonedDateTime updatedAt;
   private ZonedDateTime lastActive;
 
-  @JsonCreator public UserV1(
+  @JsonCreator
+  public UserV1(
       @JsonProperty("id") UUID id,
-      @JsonProperty("name") String name,
+      @JsonProperty("firstName") String firstName,
+      @JsonProperty("lastName") String lastName,
       @JsonProperty("email") String email,
       @JsonProperty("password") String password,
       @JsonProperty("createdAt") ZonedDateTime createdAt,
       @JsonProperty("updatedAt") ZonedDateTime updatedAt,
       @JsonProperty("lastActive") ZonedDateTime lastActive) {
     this.id = id;
-    this.name = name;
+    this.firstName = firstName;
+    this.lastName = lastName;
     this.email = email;
     this.password = password;
     this.createdAt = createdAt;
@@ -42,8 +48,12 @@ public class UserV1 {
     return id;
   }
 
-  public String getName() {
-    return name;
+  public String getFirstName() {
+    return firstName;
+  }
+
+  public String getLastName() {
+    return lastName;
   }
 
   public String getEmail() {

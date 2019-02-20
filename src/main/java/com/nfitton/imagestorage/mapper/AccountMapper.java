@@ -18,7 +18,8 @@ public class AccountMapper {
 
     return User.Builder
         .newBuilder()
-        .withName(v1.getName())
+        .withFirstName(v1.getFirstName())
+        .withLastName(v1.getLastName())
         .withEmail(v1.getEmail())
         .withPassword(encoder.encode(v1.getPassword()))
         .withType(BASIC)
@@ -31,7 +32,8 @@ public class AccountMapper {
   public static UserV1 toV1(User user) {
     return new UserV1(
         user.getId(),
-        user.getName(),
+        user.getFirstName(),
+        user.getLastName(),
         user.getEmail(),
         null,
         user.getCreatedAt(),

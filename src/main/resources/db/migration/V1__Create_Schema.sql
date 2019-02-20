@@ -11,7 +11,8 @@ CREATE TABLE image_metadata (
 
 CREATE TABLE users (
     id UUID PRIMARY KEY,
-    name VARCHAR(64) NOT NULL,
+    first_name VARCHAR(64) NOT NULL,
+    last_name VARCHAR(64) NOT NULL,
     email VARCHAR(128) NOT NULL UNIQUE,
     password VARCHAR(64) NOT NULL,
     type VARCHAR(32) NOT NULL,
@@ -22,6 +23,8 @@ CREATE TABLE users (
 
 CREATE TABLE camera (
     id UUID PRIMARY KEY,
+    owner_id UUID REFERENCES users(id),
+    name VARCHAR(64),
     password VARCHAR(64) NOT NULL,
     type VARCHAR(32) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
@@ -46,3 +49,23 @@ CREATE TABLE image_entity (
 );
 
 CREATE INDEX idx_token ON authentication(random_string);
+
+CREATE TABLE groups (
+  id UUID PRIMARY KEY,
+  owner_id UUID REFERENCES users(id),
+  name VARCHAR(64) NOT NULL
+);
+
+CREATE TABLE users_groups (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id),
+  group_id UUID REFERENCES groups(id),
+  UNIQUE (user_id, group_id)
+);
+
+CREATE TABLE groups_cameras (
+  id UUID PRIMARY KEY,
+  group_id UUID REFERENCES groups(id),
+  camera_id UUID REFERENCES camera(id),
+  UNIQUE (camera_id, group_id)
+);

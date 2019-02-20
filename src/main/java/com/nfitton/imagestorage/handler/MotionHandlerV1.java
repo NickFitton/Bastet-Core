@@ -9,15 +9,18 @@ import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.exception.VerificationException;
 import com.nfitton.imagestorage.mapper.ImageMetadataMapper;
-import com.nfitton.imagestorage.service.AnalysisService;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.CameraService;
 import com.nfitton.imagestorage.service.FileMetadataService;
 import com.nfitton.imagestorage.service.FileUploadService;
 import com.nfitton.imagestorage.service.UserService;
+import com.nfitton.imagestorage.util.ExceptionUtil;
 import com.nfitton.imagestorage.util.RouterUtil;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +43,6 @@ public class MotionHandlerV1 {
   private final AuthenticationService authenticationService;
   private final FileMetadataService fileMetadataService;
   private final FileUploadService fileUploadService;
-  private final AnalysisService analysisService;
   private final CameraService cameraService;
   private final UserService userService;
   private final JmsTemplate jmsTemplate;
@@ -52,14 +54,12 @@ public class MotionHandlerV1 {
       FileUploadService fileUploadService,
       CameraService cameraService,
       UserService userService,
-      AnalysisService analysisService,
       JmsTemplate jmsTemplate) {
     this.authenticationService = authenticationService;
     this.fileMetadataService = fileMetadataService;
     this.fileUploadService = fileUploadService;
     this.cameraService = cameraService;
     this.userService = userService;
-    this.analysisService = analysisService;
     this.jmsTemplate = jmsTemplate;
   }
 
@@ -97,7 +97,7 @@ public class MotionHandlerV1 {
               cameraService.imageTaken(tuple.getT1()),
               fileUploadService.uploadFile(file, imageId));
         }).flatMap(tuple2 -> {
-          LOGGER.info("Sending to queue: {}", imageId);
+          LOGGER.debug("Sending to queue: {}", imageId);
           jmsTemplate
               .convertAndSend("analysisQueue", new AnalysisQueueMessage(tuple2.getT2(), imageId));
           return ServerResponse.accepted().build();
@@ -106,6 +106,11 @@ public class MotionHandlerV1 {
   }
 
   public Mono<ServerResponse> getMotion(ServerRequest request) {
+    Stream<UUID> cameraIds = request.queryParam("cameras")
+        .map(param -> Arrays.asList(param.split(",")))
+        .orElse(Collections.emptyList())
+        .stream()
+        .map(UUID::fromString);
     return parseAuthenticationToken(request, authenticationService)
         .flatMap(userService::existsById)
         .flatMapMany(exists -> {
@@ -114,9 +119,10 @@ public class MotionHandlerV1 {
             ZonedDateTime from = request.queryParam("from").map(ZonedDateTime::parse)
                 .orElse(now.minusDays(7));
             ZonedDateTime to = request.queryParam("to").map(ZonedDateTime::parse).orElse(now);
-            return fileMetadataService.findAllExistedAt(from, to);
+            return Flux.fromStream(cameraIds)
+                .flatMap(cameraId -> fileMetadataService.findAllByCameraId(cameraId, from, to));
           } else {
-            return Mono.error(new VerificationException());
+            return Mono.error(ExceptionUtil.badCredentials());
           }
         }).map(ImageMetadataMapper::toV1)
         .collectList()
@@ -133,7 +139,7 @@ public class MotionHandlerV1 {
             UUID motionId = RouterUtil.getUUIDParameter(request, "motionId");
             return fileMetadataService.findById(motionId);
           } else {
-            return Mono.error(new VerificationException());
+            return Mono.error(ExceptionUtil.badCredentials());
           }
         }).map(ImageMetadataMapper::toV1)
         .map(OutgoingDataV1::dataOnly)
@@ -150,7 +156,7 @@ public class MotionHandlerV1 {
           if (exists) {
             return fileMetadataService.findById(motionId);
           } else {
-            return Mono.error(new VerificationException());
+            return Mono.error(ExceptionUtil.badCredentials());
           }
         })
         .flatMapMany(metadata -> {

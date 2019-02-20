@@ -12,20 +12,28 @@ import javax.validation.constraints.NotNull;
 
 @JsonInclude(Include.NON_NULL)
 public class CameraV1 {
+
   private UUID id;
+  private UUID ownedBy;
+  private String name;
   @NotNull(message = "A password must be given")
   private String password;
   private ZonedDateTime createdAt;
   private ZonedDateTime updatedAt;
   private ZonedDateTime lastUpload;
 
-  @JsonCreator public CameraV1(
+  @JsonCreator
+  public CameraV1(
       @JsonProperty("id") UUID id,
+      @JsonProperty("ownedBy") UUID ownedBy,
+      @JsonProperty("name") String name,
       @JsonProperty("password") String password,
       @JsonProperty("createdAt") ZonedDateTime createdAt,
       @JsonProperty("updatedAt") ZonedDateTime updatedAt,
       @JsonProperty("lastUpload") ZonedDateTime lastUpload) {
     this.id = id;
+    this.ownedBy = ownedBy;
+    this.name = name;
     this.password = password;
     this.createdAt = utcOrNull(createdAt);
     this.updatedAt = utcOrNull(updatedAt);
@@ -46,7 +54,8 @@ public class CameraV1 {
     }
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
@@ -54,18 +63,29 @@ public class CameraV1 {
       return false;
     }
     CameraV1 cameraV1 = (CameraV1) o;
-    return Objects.equals(id, cameraV1.id) && Objects.equals(password, cameraV1.password) &&
-           Objects.equals(createdAt, cameraV1.createdAt) &&
-           Objects.equals(updatedAt, cameraV1.updatedAt) &&
-           Objects.equals(lastUpload, cameraV1.lastUpload);
+    return Objects.equals(id, cameraV1.id) &&
+        Objects.equals(ownedBy, cameraV1.ownedBy) &&
+        Objects.equals(password, cameraV1.password) &&
+        Objects.equals(createdAt, cameraV1.createdAt) &&
+        Objects.equals(updatedAt, cameraV1.updatedAt) &&
+        Objects.equals(lastUpload, cameraV1.lastUpload);
   }
 
-  @Override public int hashCode() {
-    return Objects.hash(id, password, createdAt, updatedAt, lastUpload);
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, ownedBy, password, createdAt, updatedAt, lastUpload);
   }
 
   public UUID getId() {
     return id;
+  }
+
+  public UUID getOwnedBy() {
+    return ownedBy;
+  }
+
+  public String getName() {
+    return name;
   }
 
   public String getPassword() {

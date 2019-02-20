@@ -12,4 +12,6 @@ public interface CameraRepository extends JpaRepository<Camera, UUID> {
 
   @Query("SELECT id FROM Camera")
   List<UUID> findAllCamera();
+
+  List<Camera> findAllByOwnerId(UUID ownerId);
 }

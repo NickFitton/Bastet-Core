@@ -1,6 +1,6 @@
 package com.nfitton.imagestorage.component;
 
-import com.nfitton.imagestorage.entity.ImageMetadata;
+import com.nfitton.imagestorage.model.ImageData;
 import com.nfitton.imagestorage.service.AnalysisService;
 import com.nfitton.imagestorage.service.FileMetadataService;
 import org.slf4j.Logger;
@@ -27,16 +27,16 @@ public class AnalysisQueueListener {
 
   @JmsListener(destination = "analysisQueue", containerFactory = "jmsFactory")
   public void receiveMessage(AnalysisQueueMessage message) {
-    LOGGER.info("Received by queue: {}", message.getImageId());
-    ImageMetadata block = analysisService
+    LOGGER.debug("Received by queue: {}", message.getImageId());
+    ImageData block = analysisService
         .analyzeImage(message.getFile())
         .collectList()
         .flatMap(entities -> fileMetadataService.imageUploaded(message.getImageId(), entities))
         .block();
 
-    LOGGER.info(
+    LOGGER.debug(
         "Queue action complete, num entities found: {}",
-        block.getImageEntities().size());
+        block.getEntities().size());
 
   }
 }

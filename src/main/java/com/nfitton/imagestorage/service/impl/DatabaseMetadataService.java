@@ -1,39 +1,41 @@
 package com.nfitton.imagestorage.service.impl;
 
-import com.nfitton.imagestorage.configuration.ApiConfiguration;
 import com.nfitton.imagestorage.entity.ImageEntity;
+import com.nfitton.imagestorage.entity.ImageEntity.Builder;
 import com.nfitton.imagestorage.entity.ImageMetadata;
 import com.nfitton.imagestorage.exception.NotFoundException;
-import com.nfitton.imagestorage.exception.OversizeException;
+import com.nfitton.imagestorage.model.ImageData;
 import com.nfitton.imagestorage.model.TallyPoint;
 import com.nfitton.imagestorage.model.TimeFrame;
+import com.nfitton.imagestorage.repository.FileEntityRepository;
 import com.nfitton.imagestorage.repository.FileMetadataRepository;
 import com.nfitton.imagestorage.service.FileMetadataService;
 import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 @Service
 public class DatabaseMetadataService implements FileMetadataService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseMetadataService.class);
-  private final FileMetadataRepository repository;
-  private final ApiConfiguration apiConfiguration;
+  private final FileMetadataRepository metadataRepository;
+  private final FileEntityRepository entityRepository;
 
   @Autowired
   public DatabaseMetadataService(
-      FileMetadataRepository repository,
-      ApiConfiguration apiConfiguration) {
-    this.repository = repository;
-    this.apiConfiguration = apiConfiguration;
+      FileMetadataRepository metadataRepository,
+      FileEntityRepository entityRepository) {
+    this.metadataRepository = metadataRepository;
+    this.entityRepository = entityRepository;
   }
 
   private static ZonedDateTime advance(ZonedDateTime time, TimeFrame measurement) {
@@ -55,70 +57,99 @@ public class DatabaseMetadataService implements FileMetadataService {
     }
   }
 
-  @Override
-  public Mono<ImageMetadata> save(ImageMetadata metadata) {
-    LOGGER.info("Saving metadata for id: {}", metadata.getId());
-    return Mono.fromCallable(() -> repository.save(metadata)).subscribeOn(Schedulers.elastic());
+  private static Throwable notFound(UUID metadataId) {
+    return new NotFoundException(String.format("Metadata by id %s not found", metadataId));
   }
 
   @Override
-  public Mono<ImageMetadata> imageUploaded(UUID imageId, List<ImageEntity> entities) {
-    LOGGER.info("Updating image existence for id: {} adding {} entities", imageId, entities.size());
-    return findById(imageId).map(ImageMetadata.Builder::clone)
-        .map(builder -> builder
-            .withFileExists(true)
-            .withUpdatedAt(ZonedDateTime.now())
-            .withImageEntities(entities)
-            .build())
-        .flatMap(this::save);
+  public Mono<ImageData> save(ImageData data) {
+    LOGGER.debug("Saving image data");
+    Mono<ImageMetadata> savedMetadata = Mono
+        .fromCallable(() -> metadataRepository.save(data.asMetadata()));
+    if (data.getId() != null) {
+      return imageUploaded(data.getId(), data.getEntities());
+    } else {
+      return savedMetadata
+          .map(metadata -> ImageData.Builder.clone(metadata, new LinkedList<>()).build());
+    }
+  }
+
+  @Override
+  public Mono<ImageData> imageUploaded(UUID imageId, List<ImageEntity> entities) {
+    LOGGER.debug("Updating image {} with entities", imageId);
+    return Mono.fromCallable(() -> metadataRepository.existsById(imageId))
+        .flatMap(imageExists -> {
+          if (imageExists) {
+            List<ImageEntity> connectedEntities = entities.stream()
+                .map(entity -> Builder.clone(entity).withMetadataId(imageId).build())
+                .collect(Collectors.toList());
+
+            Mono<ImageMetadata> updatedMetadata = Mono
+                .fromCallable(() -> metadataRepository.findById(imageId))
+                .map(Optional::get)
+                .map(metadata -> ImageMetadata.Builder.clone(metadata)
+                    .withUpdatedAt(ZonedDateTime.now()).withFileExists(true).build())
+                .flatMap(metadata -> Mono.fromCallable(() -> metadataRepository.save(metadata)));
+
+            Mono<List<ImageEntity>> savedEntities = Mono
+                .fromCallable(() -> entityRepository.saveAll(connectedEntities));
+
+            return Mono.zip(updatedMetadata, savedEntities)
+                .map(tuple -> ImageData.Builder.clone(tuple.getT1(), tuple.getT2()).build());
+          }
+          return Mono.error(notFound(imageId));
+        });
   }
 
   @Override
   public Mono<Boolean> exists(UUID imageId) {
-    return Mono.fromCallable(() -> repository.existsById(imageId))
-        .subscribeOn(Schedulers.elastic());
+    return Mono.fromCallable(() -> metadataRepository.existsById(imageId));
   }
 
   @Override
-  public Mono<ImageMetadata> findById(UUID metadataId) {
-    return Mono.fromCallable(() -> repository.findById(metadataId).orElseThrow(
-        () -> new NotFoundException(String.format("File not found for id %s", metadataId))))
-        .subscribeOn(Schedulers.elastic());
-  }
+  public Mono<ImageData> findById(UUID metadataId) {
+    LOGGER.debug("Finding data by id {}", metadataId);
+    Mono<Optional<ImageMetadata>> optionalMono = Mono
+        .fromCallable(() -> metadataRepository.findById(metadataId));
+    Mono<List<ImageEntity>> entities = Mono
+        .fromCallable(() -> entityRepository.findAllByMetadataId(metadataId));
 
-  @Override
-  public Flux<ImageMetadata> findAllExistedAt(ZonedDateTime time) {
-    return Mono.fromCallable(() -> repository.findAllByEntryTimeAfterAndExitTimeBefore(time, time))
-        .subscribeOn(Schedulers.elastic())
-        .flatMapMany(Flux::fromIterable);
-  }
-
-  @Override
-  public Flux<ImageMetadata> findAllExistedAt(ZonedDateTime from, ZonedDateTime to) {
-    return Mono.fromCallable(() -> repository.countAllByEntryTimeAfterAndExitTimeBefore(from, to))
-        .subscribeOn(Schedulers.elastic())
-        .map(Long::intValue)
-        .flatMap(count -> {
-          int max = apiConfiguration.getMaxPayload();
-          if (count > max) {
-            return Mono.error(new OversizeException(max, count));
+    return Mono.zip(optionalMono, entities)
+        .flatMap(tuple -> {
+          if (tuple.getT1().isPresent()) {
+            LOGGER.debug("Metadata has {} connected entities", tuple.getT2().size());
+            return Mono.just(ImageData.Builder.clone(tuple.getT1().get(), tuple.getT2()).build());
           }
-          return Mono
-              .fromCallable(() -> repository.findAllByEntryTimeAfterAndExitTimeBefore(from, to))
-              .subscribeOn(Schedulers.elastic());
-        })
-        .flatMapMany(Flux::fromIterable);
+          return Mono.error(notFound(metadataId));
+        });
   }
 
   @Override
-  public Flux<ImageMetadata> findAllByCameraId(
-      UUID cameraId,
-      ZonedDateTime from,
-      ZonedDateTime to) {
-    return Mono.fromCallable(
-        () -> repository.findAllByCameraIdAndEntryTimeAfterAndExitTimeBefore(cameraId, from, to))
-        .subscribeOn(Schedulers.elastic())
-        .flatMapMany(Flux::fromIterable);
+  public Flux<ImageData> findAllExistedAt(ZonedDateTime time) {
+    return Mono
+        .fromCallable(() -> metadataRepository.findAllByEntryTimeAfterAndExitTimeBefore(time, time))
+        .flatMapMany(this::findEntitiesByMetadata);
+  }
+
+  @Override
+  public Flux<ImageData> findAllExistedAt(ZonedDateTime from, ZonedDateTime to) {
+    return Mono
+        .fromCallable(() -> metadataRepository.findAllByEntryTimeAfterAndExitTimeBefore(from, to))
+        .flatMapMany(this::findEntitiesByMetadata);
+  }
+
+  @Override
+  public Flux<ImageData> findAllByCameraId(UUID cameraId, ZonedDateTime from, ZonedDateTime to) {
+    return Mono.fromCallable(() -> metadataRepository
+        .findAllByCameraIdAndEntryTimeAfterAndExitTimeBefore(cameraId, from, to))
+        .flatMapMany(this::findEntitiesByMetadata);
+  }
+
+  private Flux<ImageData> findEntitiesByMetadata(List<ImageMetadata> metadata) {
+    return Flux.fromIterable(metadata)
+        .flatMap(imageMetadata -> Mono
+            .fromCallable(() -> entityRepository.findAllByMetadataId(imageMetadata.getId()))
+            .map(entities -> ImageData.Builder.clone(imageMetadata, entities).build()));
   }
 
   @Override
@@ -129,7 +160,7 @@ public class DatabaseMetadataService implements FileMetadataService {
     List<TallyPoint> points = new LinkedList<>();
     while (advance(start, measurement).isBefore(end)) {
       ZonedDateTime tempEnd = advance(start, measurement);
-      long count = repository.countAllByEntryTimeAfterAndExitTimeBefore(start, tempEnd);
+      long count = metadataRepository.countAllByEntryTimeAfterAndExitTimeBefore(start, tempEnd);
       points.add(new TallyPoint(start, count));
       start = advance(start, measurement);
     }
@@ -137,8 +168,8 @@ public class DatabaseMetadataService implements FileMetadataService {
   }
 
   @Override
-  public Flux<ImageMetadata> findAll() {
-    return Mono.fromCallable(repository::findAll).flatMapMany(Flux::fromIterable)
-        .subscribeOn(Schedulers.elastic());
+  public Flux<ImageData> findAll() {
+    return Mono.fromCallable(metadataRepository::findAll)
+        .flatMapMany(this::findEntitiesByMetadata);
   }
 }

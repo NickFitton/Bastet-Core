@@ -3,31 +3,36 @@ package com.nfitton.imagestorage.api;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.ZonedDateTime;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 public class ImageMetadataV1 {
 
   private UUID id;
+  private UUID cameraId;
   private ZonedDateTime entryTime;
   private ZonedDateTime exitTime;
   private ZonedDateTime imageTime;
   private ZonedDateTime createdAt;
   private ZonedDateTime updatedAt;
   private boolean fileExists;
-  private Set<ImageEntityV1> imageEntities;
+  private List<ImageEntityV1> imageEntities;
 
   @JsonCreator
   public ImageMetadataV1(
       @JsonProperty("id") UUID id,
+      @JsonProperty("cameraId") UUID cameraId,
       @JsonProperty("entryTime") ZonedDateTime entryTime,
       @JsonProperty("exitTime") ZonedDateTime exitTime,
       @JsonProperty("imageTime") ZonedDateTime imageTime,
       @JsonProperty("createdAt") ZonedDateTime createdAt,
       @JsonProperty("updatedAt") ZonedDateTime updatedAt,
       @JsonProperty("fileExists") boolean fileExists,
-      @JsonProperty("imageEntities") Set<ImageEntityV1> imageEntities) {
+      @JsonProperty("imageEntities") List<ImageEntityV1> imageEntities) {
     this.id = id;
+    this.cameraId = cameraId;
     this.entryTime = entryTime;
     this.exitTime = exitTime;
     this.imageTime = imageTime;
@@ -39,6 +44,10 @@ public class ImageMetadataV1 {
 
   public UUID getId() {
     return id;
+  }
+
+  public UUID getCameraId() {
+    return cameraId;
   }
 
   public ZonedDateTime getEntryTime() {
@@ -65,7 +74,7 @@ public class ImageMetadataV1 {
     return fileExists;
   }
 
-  public Set<ImageEntityV1> getImageEntities() {
+  public List<ImageEntityV1> getImageEntities() {
     return imageEntities;
   }
 }

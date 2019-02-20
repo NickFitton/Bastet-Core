@@ -40,7 +40,8 @@ public class OpenCVAnalysisService implements AnalysisService {
       absFaceSize = minSize;
     }
 
-    return Flux.concat(haarAnalysis(grayImage, absFaceSize), hogAnalysis(grayImage));
+//    return Flux.concat(haarAnalysis(grayImage, absFaceSize), hogAnalysis(grayImage));
+    return haarAnalysis(grayImage, absFaceSize);
   }
 
   private Flux<ImageEntity> haarAnalysis(Mat image, int minSize) {
@@ -55,8 +56,13 @@ public class OpenCVAnalysisService implements AnalysisService {
               return bodies;
             })
                 .flatMapIterable(MatOfRect::toList)
-                .map(rect -> new ImageEntity(rect.x, rect.y, rect.width, rect.height,
-                                             tuple2.getT2())));
+                .map(rect -> ImageEntity.Builder.newBuilder().withX(rect.x)
+                    .withY(rect.y)
+                    .withWidth(rect.width)
+                    .withHeight(rect.height)
+                    .withType(tuple2.getT2())
+                    .build()
+                ));
   }
 
   private Flux<ImageEntity> hogAnalysis(Mat image) {
@@ -69,6 +75,12 @@ public class OpenCVAnalysisService implements AnalysisService {
 
     return Flux.fromIterable(faces.toList())
         .map(rect ->
-                 new ImageEntity(rect.x, rect.y, rect.width, rect.height, EntityType.OTHER));
+                 ImageEntity.Builder.newBuilder().withX(rect.x)
+                     .withY(rect.y)
+                     .withWidth(rect.width)
+                     .withHeight(rect.height)
+                     .withType(EntityType.OTHER)
+                     .build()
+        );
   }
 }
