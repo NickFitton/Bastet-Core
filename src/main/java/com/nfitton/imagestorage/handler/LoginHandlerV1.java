@@ -54,9 +54,10 @@ public class LoginHandlerV1 {
       AccountType type) {
     return parseAuthorization(request, service, type)
         .flatMap(authenticationService::createAuthToken)
-        .flatMap(token -> ServerResponse.ok().syncBody(new OutgoingDataV1(token, null)))
+        .map(OutgoingDataV1::dataOnly)
+        .flatMap(data -> ServerResponse.ok().syncBody(data))
         .onErrorResume(e -> ServerResponse.status(HttpStatus.FORBIDDEN)
-            .syncBody(new OutgoingDataV1(null, e.getMessage())));
+            .syncBody(OutgoingDataV1.errorOnly(e.getMessage())));
   }
 
   public Mono<ServerResponse> getSelf(ServerRequest request) {

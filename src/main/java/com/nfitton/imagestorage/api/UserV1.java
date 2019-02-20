@@ -6,19 +6,32 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.ZonedDateTime;
 import java.util.UUID;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 
 @JsonInclude(Include.NON_NULL)
 public class UserV1 {
 
   private UUID id;
-  @NotNull(message = "A first name must be given")
+  @NotBlank(message = "A first name must be given")
+  @Pattern(regexp = "[A-Za-z]*")
+  @Size(min=2, max=32)
   private String firstName;
-  @NotNull(message = "A last name must be given")
+  @NotBlank(message = "A last name must be given")
+  @Pattern(regexp = "[A-Za-z]*")
+  @Size(min=2, max=32)
   private String lastName;
-  @NotNull(message = "An email must be given")
+  @NotBlank(message = "An email must be given")
+  @Email
+  @Size(min=4, max=64)
   private String email;
-  @NotNull(message = "A password must be given")
+  @NotBlank(message = "A password must be given")
+  @Size(min=6, max=64)
   private String password;
   private ZonedDateTime createdAt;
   private ZonedDateTime updatedAt;
@@ -74,5 +87,68 @@ public class UserV1 {
 
   public ZonedDateTime getLastActive() {
     return lastActive;
+  }
+
+  public static final class Builder {
+
+    private UUID id;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String password;
+    private ZonedDateTime createdAt;
+    private ZonedDateTime updatedAt;
+    private ZonedDateTime lastActive;
+
+    private Builder() {
+    }
+
+    public static Builder newBuilder() {
+      return new Builder();
+    }
+
+    public Builder withId(UUID val) {
+      this.id = val;
+      return this;
+    }
+
+    public Builder withFirstName(String val) {
+      this.firstName = val;
+      return this;
+    }
+
+    public Builder withLastName(String val) {
+      this.lastName = val;
+      return this;
+    }
+
+    public Builder withEmail(String val) {
+      this.email = val;
+      return this;
+    }
+
+    public Builder withPassword(String val) {
+      this.password = val;
+      return this;
+    }
+
+    public Builder withCreatedAt(ZonedDateTime val) {
+      this.createdAt = val;
+      return this;
+    }
+
+    public Builder withUpdatedAt(ZonedDateTime val) {
+      this.updatedAt = val;
+      return this;
+    }
+
+    public Builder withLastActive(ZonedDateTime val) {
+      this.lastActive = val;
+      return this;
+    }
+
+    public UserV1 build() {
+      return new UserV1(id, firstName, lastName, email, password, createdAt, updatedAt, lastActive);
+    }
   }
 }

@@ -9,21 +9,22 @@ import com.nfitton.imagestorage.repository.FileMetadataRepository;
 import com.nfitton.imagestorage.service.impl.DatabaseMetadataService;
 import java.time.ZonedDateTime;
 import java.util.UUID;
-import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 
 @ActiveProfiles( {"local", "h2"})
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = ImageStorageApplication.class)
 public class DatabaseMetadataServiceIT {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseMetadataServiceIT.class);
 
   @Autowired
