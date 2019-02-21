@@ -1,6 +1,7 @@
 package com.nfitton.imagestorage.handler;
 
 import com.nfitton.imagestorage.api.CameraV1;
+import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.entity.Camera;
 import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.mapper.CameraMapper;
@@ -63,6 +64,7 @@ public class CameraHandlerV1 {
           LOGGER.debug("Camera created with id: {}", camera.getId());
           return CameraMapper.toApiBean(camera);
         })
+        .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.status(HttpStatus.CREATED).syncBody(data))
         .onErrorResume(RouterUtil::handleErrors);
   }
@@ -72,6 +74,7 @@ public class CameraHandlerV1 {
         .flatMapMany(cameraService::findAllOwnedById)
         .map(CameraMapper::toApiBean)
         .collectList()
+        .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.ok().syncBody(data))
         .onErrorResume(RouterUtil::handleErrors);
   }
@@ -82,7 +85,8 @@ public class CameraHandlerV1 {
     return RouterUtil.parseAuthenticationToken(request, authenticationService)
         .flatMap(userId -> cameraService.findById(cameraId))
         .flatMap(optionalCamera -> {
-          Optional<CameraV1> output = optionalCamera.map(CameraMapper::toApiBean);
+          Optional<OutgoingDataV1> output = optionalCamera.map(CameraMapper::toApiBean)
+              .map(OutgoingDataV1::dataOnly);
           if (output.isPresent()) {
             return ServerResponse.ok().syncBody(output.get());
           }

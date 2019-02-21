@@ -2,9 +2,8 @@ package com.nfitton.imagestorage.service;
 
 import com.nfitton.imagestorage.ImageStorageApplication;
 import com.nfitton.imagestorage.api.CameraV1;
+import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.util.CameraUtil;
-import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,31 +30,36 @@ public class CameraHandlerIT extends BaseTestIT {
     Assertions.assertNotNull(response);
     Assertions.assertEquals(HttpStatus.CREATED, response.statusCode());
 
-    CameraV1 savedCameraData = response.bodyToMono(CameraV1.class).block();
+    OutgoingDataV1 retrievedData = response.bodyToMono(OutgoingDataV1.class).block();
+    Assertions.assertNotNull(retrievedData);
 
-    Assertions.assertNotNull(savedCameraData);
-    Assertions.assertNull(savedCameraData.getPassword());
+    CameraV1 cameraV1 = retrievedData.parseData(CameraV1.class, objectMapper);
+    Assertions.assertNull(cameraV1.getPassword());
+    Assertions.assertNotNull(cameraV1.getId());
+
   }
 
   @Test
   public void getCameraIsSuccessful() {
     WebClient client = getWebClient();
-    String sessionToken = getSessionToken(adminUser.getEmail(), userPassword);
+    String sessionToken = getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
 
     ClientResponse response = CameraUtil.getCamera(client, sessionToken, standardCamera.getId());
 
     Assertions.assertNotNull(response);
     Assertions.assertEquals(HttpStatus.OK, response.statusCode());
-    CameraV1 retrievedCamera = response.bodyToMono(CameraV1.class).block();
-    Assertions.assertNotNull(retrievedCamera);
-    Assertions.assertEquals(standardCamera.getId(), retrievedCamera.getId());
-    Assertions.assertNull(retrievedCamera.getPassword());
+    OutgoingDataV1 retrievedCameraData = response.bodyToMono(OutgoingDataV1.class).block();
+    Assertions.assertNotNull(retrievedCameraData);
+
+    CameraV1 cameraV1 = retrievedCameraData.parseData(CameraV1.class, objectMapper);
+    Assertions.assertEquals(standardCamera.getId(), cameraV1.getId());
+    Assertions.assertNull(cameraV1.getPassword());
   }
 
   @Test
   public void deleteCameraIsSuccessful() {
     WebClient client = getWebClient();
-    String sessionToken = getSessionToken(adminUser.getEmail(), userPassword);
+    String sessionToken = getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
 
     ClientResponse response = CameraUtil.deleteCamera(client, sessionToken, standardCamera.getId());
 

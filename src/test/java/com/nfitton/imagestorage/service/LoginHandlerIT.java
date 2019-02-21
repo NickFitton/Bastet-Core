@@ -1,6 +1,7 @@
 package com.nfitton.imagestorage.service;
 
 import com.google.common.net.HttpHeaders;
+import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.api.UserV1;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -78,16 +79,16 @@ public class LoginHandlerIT extends BaseTestIT {
         .post()
         .uri("/v1/login/user")
         .header(HttpHeaders.AUTHORIZATION, getLoginHeader(standardUser.getEmail(), userPassword))
-        .header(HttpHeaders.AUTHORIZATION, getLoginHeader(adminUser.getEmail(), userPassword))
+        .header(HttpHeaders.AUTHORIZATION, getLoginHeader(standardUser.getEmail(), userPassword))
         .exchange()
         .block();
     Assertions.assertNotNull(response);
     Assertions.assertEquals(HttpStatus.FORBIDDEN, response.statusCode());
 
-    String errorResponse = response.bodyToMono(String.class).block();
-    Assertions.assertEquals(
-        "{\"error\":\"login must have a single 'authorization' header\"}",
-        errorResponse);
+    OutgoingDataV1 errorResponse = response.bodyToMono(OutgoingDataV1.class).block();
+    Assertions.assertNotNull(errorResponse);
+    Assertions.assertNull(errorResponse.getData());
+    Assertions.assertNotNull(errorResponse.getError());
   }
 
   @Test
@@ -103,16 +104,17 @@ public class LoginHandlerIT extends BaseTestIT {
     Assertions.assertNotNull(response);
     Assertions.assertEquals(HttpStatus.FORBIDDEN, response.statusCode());
 
-    String errorResponse = response.bodyToMono(String.class).block();
-    Assertions.assertEquals(
-        "{\"error\":\"Malformed authorization header, should follow format: 'Basic {base64(username:password)}'\"}",
-        errorResponse);
+    OutgoingDataV1 errorResponse = response.bodyToMono(OutgoingDataV1.class).block();
+    Assertions.assertNotNull(errorResponse);
+    Assertions.assertNull(errorResponse.getData());
+    Assertions.assertNotNull(errorResponse.getError());
   }
 
   @Test
   public void successfulLoginReturnsUsableSessionToken() {
     WebClient client = getWebClient();
-    String sessionToken = getSessionToken(standardUser.getEmail(), standardUser.getPassword());
+    String sessionToken = getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
+    System.out.println(sessionToken);
 
     ClientResponse response = client.get()
         .uri("/v1/login/user")
@@ -127,7 +129,7 @@ public class LoginHandlerIT extends BaseTestIT {
   @Test
   public void sessionTokenCanBeUsedToGetOwnUser() {
     WebClient client = getWebClient();
-    String sessionToken = getSessionToken(standardUser.getEmail(), standardUser.getPassword());
+    String sessionToken = getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
 
     ClientResponse response = client.get()
         .uri("/v1/login/user")
@@ -138,7 +140,10 @@ public class LoginHandlerIT extends BaseTestIT {
     Assertions.assertNotNull(response);
     Assertions.assertEquals(HttpStatus.OK, response.statusCode());
 
-    UserV1 retrievedUser = response.bodyToMono(UserV1.class).block();
+    OutgoingDataV1 retrievedData = response.bodyToMono(OutgoingDataV1.class).block();
+    Assertions.assertNotNull(retrievedData);
+
+    UserV1 retrievedUser = retrievedData.parseData(UserV1.class, objectMapper);
 
     Assertions.assertNotNull(retrievedUser);
     Assertions.assertEquals(standardUser.getEmail(), retrievedUser.getEmail());

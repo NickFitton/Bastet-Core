@@ -1,14 +1,18 @@
 package com.nfitton.imagestorage.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.nfitton.imagestorage.ImageStorageApplication;
+import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.api.UserV1;
 import com.nfitton.imagestorage.api.UserV1.Builder;
 import com.nfitton.imagestorage.util.StringUtil;
 import com.nfitton.imagestorage.util.UserUtil;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -59,62 +63,79 @@ public class UserHandlerIT extends BaseTestIT {
     Assertions.assertNotNull(response);
     Assertions.assertEquals(HttpStatus.CREATED, response.statusCode());
 
-    UserV1 savedUserData = response.bodyToMono(UserV1.class).block();
+    OutgoingDataV1 retrievedData = response.bodyToMono(OutgoingDataV1.class).block();
+    Assertions.assertNotNull(retrievedData);
 
-    Assertions.assertNotNull(savedUserData);
-    Assertions.assertEquals(user.getFirstName().toLowerCase(), savedUserData.getFirstName());
-    Assertions.assertEquals(user.getLastName().toLowerCase(), savedUserData.getLastName());
-    Assertions.assertEquals(user.getEmail(), savedUserData.getEmail());
-    Assertions.assertNotNull(savedUserData.getId());
-    Assertions.assertNotNull(savedUserData.getCreatedAt());
-    Assertions.assertNotNull(savedUserData.getUpdatedAt());
-    Assertions.assertNotNull(savedUserData.getLastActive());
-    Assertions.assertNull(savedUserData.getPassword());
+    UserV1 userV1 = retrievedData.parseData(UserV1.class, objectMapper);
+
+    Assertions.assertNotNull(retrievedData);
+    Assertions.assertEquals(user.getFirstName().toLowerCase(), userV1.getFirstName());
+    Assertions.assertEquals(user.getLastName().toLowerCase(), userV1.getLastName());
+    Assertions.assertEquals(user.getEmail(), userV1.getEmail());
+    Assertions.assertNotNull(userV1.getId());
+    Assertions.assertNotNull(userV1.getCreatedAt());
+    Assertions.assertNotNull(userV1.getUpdatedAt());
+    Assertions.assertNotNull(userV1.getLastActive());
+    Assertions.assertNull(userV1.getPassword());
   }
 
   @Test
   public void getUsersIsSuccessful() {
     WebClient client = getWebClient();
-    String sessionToken = getSessionToken(adminUser.getEmail(), userPassword);
+    String sessionToken = getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
     ClientResponse response = UserUtil.getUsers(client, sessionToken);
 
     Assertions.assertNotNull(response);
     Assertions.assertEquals(HttpStatus.OK, response.statusCode());
-    List<UUID> users = response.bodyToFlux(UUID.class).collectList().block();
+    OutgoingDataV1 retrievedData = response.bodyToMono(OutgoingDataV1.class).block();
+
+    Assertions.assertNotNull(retrievedData);
+    List<UUID> users = retrievedData.parseData(new TypeReference<List<UUID>>() {}, objectMapper);
 
     Assertions.assertNotNull(users);
     Assertions.assertTrue(users.size() > 1);
-    Assertions.assertTrue(users.contains(adminUser.getId()));
+
+    Assertions.assertTrue(users.contains(standardUser.getId()));
     Assertions.assertTrue(users.contains(standardUser.getId()));
   }
 
   @Test
   public void getUserIsSuccessful() {
     WebClient client = getWebClient();
-    String sessionToken = getSessionToken(adminUser.getEmail(), userPassword);
+    String sessionToken = getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
 
-    ClientResponse response = UserUtil.getUser(client, sessionToken, standardUser.getId());
+    OutgoingDataV1 dataV1 = UserUtil.createUser(client, UserUtil.generateUser().build()).bodyToMono(OutgoingDataV1.class).block();
+    UserV1 savedUser = dataV1.parseData(UserV1.class, objectMapper);
+    ClientResponse response = UserUtil.getUser(client, sessionToken, savedUser.getId());
 
     Assertions.assertNotNull(response);
     Assertions.assertEquals(HttpStatus.OK, response.statusCode());
-    UserV1 retrievedUser = response.bodyToMono(UserV1.class).block();
+
+    OutgoingDataV1 retrievedData = response.bodyToMono(OutgoingDataV1.class).block();
+    Assertions.assertNotNull(retrievedData);
+
+    UserV1 retrievedUser = retrievedData.parseData(UserV1.class, objectMapper);
     Assertions.assertNotNull(retrievedUser);
-    Assertions.assertEquals(standardUser.getEmail(), retrievedUser.getEmail());
-    Assertions.assertEquals(standardUser.getFirstName(), retrievedUser.getFirstName());
-    Assertions.assertEquals(standardUser.getLastName(), retrievedUser.getLastName());
+    Assertions.assertEquals(savedUser.getEmail(), retrievedUser.getEmail());
+    Assertions.assertEquals(savedUser.getFirstName(), retrievedUser.getFirstName());
+    Assertions.assertEquals(savedUser.getLastName(), retrievedUser.getLastName());
   }
 
   @Test
   public void deleteUserIsSuccessful() {
     WebClient client = getWebClient();
-    String sessionToken = getSessionToken(adminUser.getEmail(), userPassword);
+    String sessionToken = getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
 
-    ClientResponse response = UserUtil.deleteUser(client, sessionToken, standardUser.getId());
+    UserV1 newUserData = UserUtil.generateUser().build();
+    OutgoingDataV1 dataV1 = UserUtil.createUser(client, newUserData).bodyToMono(OutgoingDataV1.class).block();
+    String newUserSessionToken = getSessionToken(newUserData.getEmail(), newUserData.getPassword(), objectMapper);
+    UserV1 savedUser = dataV1.parseData(UserV1.class, objectMapper);
+    ClientResponse response = UserUtil.deleteUser(client, newUserSessionToken, savedUser.getId());
 
     Assertions.assertNotNull(response);
     Assertions.assertEquals(HttpStatus.NO_CONTENT, response.statusCode());
 
-    response = UserUtil.getUser(client, sessionToken, standardUser.getId());
+    response = UserUtil.getUser(client, sessionToken, savedUser.getId());
 
     Assertions.assertNotNull(response);
     Assertions.assertEquals(HttpStatus.NOT_FOUND, response.statusCode());

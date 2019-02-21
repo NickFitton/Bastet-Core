@@ -2,7 +2,11 @@ package com.nfitton.imagestorage.service;
 
 import static com.nfitton.imagestorage.util.StringUtil.randomString;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nfitton.imagestorage.ImageStorageApplication;
+import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.entity.AccountType;
 import com.nfitton.imagestorage.entity.Camera;
 import com.nfitton.imagestorage.entity.User;
@@ -30,10 +34,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class BaseTestIT {
 
   private static final String BASE_URL = "http://localhost";
-  protected User adminUser;
-  protected User standardUser;
-  protected Camera standardCamera;
-  protected String userPassword;
+  User standardUser;
+  Camera standardCamera;
+  String userPassword;
+  ObjectMapper objectMapper;
   @Autowired
   PasswordEncoder encoder;
   @LocalServerPort
@@ -44,7 +48,7 @@ public class BaseTestIT {
   @Autowired
   private CameraRepository cameraRepository;
 
-  protected WebClient getWebClient() {
+  WebClient getWebClient() {
     if (client == null) {
       client = WebClient.create(BASE_URL + ":" + randomServerPort);
     }
@@ -53,18 +57,12 @@ public class BaseTestIT {
 
   @BeforeEach
   void testSetup() {
+    objectMapper = new ObjectMapper()
+        .registerModule(new Jdk8Module())
+        .registerModule(new JavaTimeModule());
     ZonedDateTime now = ZonedDateTime.now();
-    userPassword = randomString(8);
-    adminUser = User.Builder.newBuilder()
-        .withFirstName("auth")
-        .withLastName("user")
-        .withType(AccountType.ADMIN)
-        .withEmail(randomString(10) + "@test.com")
-        .withPassword(encoder.encode(userPassword))
-        .withUpdatedAt(now)
-        .withCreatedAt(now)
-        .withLastActive(now).build();
-    adminUser = accountRepository.save(adminUser);
+//    userPassword = randomString(8);
+    userPassword = "123456";
     standardUser = User.Builder.newBuilder()
         .withFirstName("john")
         .withLastName("doe")
@@ -83,16 +81,17 @@ public class BaseTestIT {
     standardCamera = cameraRepository.save(standardCamera);
   }
 
-  protected String getSessionToken(String email, String password) {
+  protected String getSessionToken(String email, String password, ObjectMapper mapper) {
     ClientResponse response = client
         .post()
         .uri("/v1/login/user")
-        .header(HttpHeaders.AUTHORIZATION, getLoginHeader(standardUser.getEmail(), userPassword))
+        .header(HttpHeaders.AUTHORIZATION, getLoginHeader(email, password))
         .contentType(MediaType.APPLICATION_JSON)
         .exchange()
         .block();
 
-    return response.bodyToMono(String.class).block();
+    OutgoingDataV1 dataV1 = response.bodyToMono(OutgoingDataV1.class).block();
+    return dataV1.parseData(String.class, mapper);
   }
 
   protected String getLoginHeader(String email, String password) {
