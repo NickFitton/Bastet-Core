@@ -6,26 +6,26 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class OutgoingDataV1 {
+public class OutgoingDataV1<T> {
 
-  private final Object data;
+  private final T data;
   private final Object error;
 
   @JsonCreator
-  public OutgoingDataV1(@JsonProperty("data") Object data, @JsonProperty("error") Object error) {
+  public OutgoingDataV1(@JsonProperty("data") T data, @JsonProperty("error") Object error) {
     this.data = data;
     this.error = error;
   }
 
-  public static OutgoingDataV1 dataOnly(Object data) {
-    return new OutgoingDataV1(data, null);
+  public static <T> OutgoingDataV1<T> dataOnly(T data) {
+    return new OutgoingDataV1<>(data, null);
   }
 
   public static OutgoingDataV1 errorOnly(Object error) {
-    return new OutgoingDataV1(null, error);
+    return new OutgoingDataV1<>(null, error);
   }
 
-  public Object getData() {
+  public T getData() {
     return data;
   }
 

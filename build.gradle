@@ -52,7 +52,11 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.2.0"
     testRuntime "org.junit.jupiter:junit-jupiter-engine:5.2.0"
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.hamcrest'
+        exclude group: 'org.skyscreamer'
+        exclude group: 'junit'
+    }
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'io.projectreactor:reactor-test'
 }

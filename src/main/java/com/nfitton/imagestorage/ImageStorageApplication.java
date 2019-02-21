@@ -15,5 +15,4 @@ public class ImageStorageApplication {
   public static void main(String[] args) {
     SpringApplication.run(ImageStorageApplication.class, args);
   }
-
 }

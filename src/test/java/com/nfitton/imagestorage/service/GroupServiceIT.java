@@ -15,17 +15,17 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.validation.Validator;
-import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ActiveProfiles( {"local", "h2"})
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = ImageStorageApplication.class)
 public class GroupServiceIT {
 
@@ -260,7 +260,7 @@ public class GroupServiceIT {
         "Test",
         "User",
         UUID.randomUUID().toString() + "@prod.com",
-        "1234",
+        "123456",
         null,
         null,
         null), encoder, validator);
@@ -273,7 +273,7 @@ public class GroupServiceIT {
                 null,
                 null,
                 null,
-                "1234",
+                "123456",
                 null,
                 null,
                 null),
