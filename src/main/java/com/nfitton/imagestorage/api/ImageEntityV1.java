@@ -8,10 +8,13 @@ import com.nfitton.imagestorage.entity.EntityType;
 import javax.persistence.Enumerated;
 
 public class ImageEntityV1 {
+
   private int x;
   private int y;
   private int width;
   private int height;
+  @Enumerated(value = STRING)
+  private EntityType type;
 
   @JsonCreator
   public ImageEntityV1(
@@ -46,7 +49,4 @@ public class ImageEntityV1 {
   public EntityType getType() {
     return type;
   }
-
-  @Enumerated(value = STRING)
-  private EntityType type;
 }

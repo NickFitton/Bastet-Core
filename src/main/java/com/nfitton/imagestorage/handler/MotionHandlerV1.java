@@ -7,7 +7,6 @@ import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.component.AnalysisQueueMessage;
 import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.exception.NotFoundException;
-import com.nfitton.imagestorage.exception.VerificationException;
 import com.nfitton.imagestorage.mapper.ImageMetadataMapper;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.CameraService;

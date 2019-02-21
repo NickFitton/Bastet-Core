@@ -21,7 +21,8 @@ public class PathConfiguration {
     return location;
   }
 
-  @Value("${storage.location}") public void setLocation(String location) throws StartupException {
+  @Value("${storage.location}")
+  public void setLocation(String location) throws StartupException {
     File folder = new File(location);
 
     if (!folder.exists() && autoCreate) {

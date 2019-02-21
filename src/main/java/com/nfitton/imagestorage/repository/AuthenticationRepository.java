@@ -8,5 +8,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AuthenticationRepository extends JpaRepository<Authentication, UUID> {
+
   Optional<Authentication> findByRandomString(String randomString);
 }

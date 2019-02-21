@@ -26,7 +26,7 @@ public class GroupCamera {
   }
 
   GroupCamera() {
-    
+
   }
 
   public UUID getId() {

@@ -62,6 +62,7 @@ public class User extends Account {
     public static Builder newBuilder() {
       return new Builder();
     }
+
     public Builder withId(UUID val) {
       id = val;
       return this;
@@ -108,7 +109,8 @@ public class User extends Account {
     }
 
     public User build() {
-      return new User(id, firstName, lastName, email, password, type, createdAt, updatedAt, lastActive);
+      return new User(
+          id, firstName, lastName, email, password, type, createdAt, updatedAt, lastActive);
     }
   }
 }

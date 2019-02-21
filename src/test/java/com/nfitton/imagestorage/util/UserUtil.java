@@ -10,6 +10,13 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 public class UserUtil {
 
+  /**
+   * Returns a request to create a user given the client and user to save.
+   *
+   * @param client the client to make the request on
+   * @param user the user to save
+   * @return the response from the server
+   */
   public static ClientResponse createUser(WebClient client, UserV1 user) {
     return client.post()
         .uri("/v1/users")
@@ -19,29 +26,56 @@ public class UserUtil {
         .block();
   }
 
-  public static ClientResponse getUsers(WebClient client, String sessionToken) {
+  /**
+   * Returns a request to gather a list of users.
+   *
+   * @param client the client to make the request on
+   * @return the response from the server
+   */
+  public static ClientResponse getUsers(WebClient client) {
     return client.get()
         .uri("/v1/users")
         .exchange()
         .block();
   }
 
+  /**
+   * Returns a request to receive a specific user by their userId.
+   *
+   * @param client the client to make the request on
+   * @param sessionToken the session token of the user making the request
+   * @param userId the {@link UUID} to get the user by
+   * @return the response from the server
+   */
   public static ClientResponse getUser(WebClient client, String sessionToken, UUID userId) {
     return client.get()
         .uri("/v1/users/" + userId.toString())
-        .header(HttpHeaders.AUTHORIZATION, "Token "+ sessionToken)
+        .header(HttpHeaders.AUTHORIZATION, "Token " + sessionToken)
         .exchange()
         .block();
   }
 
+  /**
+   * Returns a request to delete a specific user by their userId.
+   *
+   * @param client the client to make the request on
+   * @param sessionToken the session token of the user making the request
+   * @param userId the {@link UUID} to identify the user by
+   * @return the response from the server
+   */
   public static ClientResponse deleteUser(WebClient client, String sessionToken, UUID userId) {
     return client.delete()
         .uri("/v1/users/" + userId.toString())
-        .header(HttpHeaders.AUTHORIZATION, "Token "+ sessionToken)
+        .header(HttpHeaders.AUTHORIZATION, "Token " + sessionToken)
         .exchange()
         .block();
   }
 
+  /**
+   * Returns a new {@link UserV1.Builder} to save.
+   *
+   * @return the {@link UserV1.Builder} to manipulate then save
+   */
   public static Builder generateUser() {
     return UserV1.Builder
         .newBuilder()

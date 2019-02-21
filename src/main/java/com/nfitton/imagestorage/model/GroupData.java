@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class GroupData {
+
   private final Group group;
   private final List<UUID> userIds;
   private final List<UUID> cameraIds;
@@ -35,6 +36,7 @@ public class GroupData {
   }
 
   public static final class Builder {
+
     private Group group;
     private List<UUID> userIds;
     private List<UUID> cameraIds;
