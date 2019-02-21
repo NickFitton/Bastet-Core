@@ -1,11 +1,12 @@
-package com.nfitton.imagestorage.service.abstracts;
+package com.nfitton.imagestorage.service;
 
 import com.nfitton.imagestorage.ImageStorageApplication;
-import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.api.UserV1;
 import com.nfitton.imagestorage.api.UserV1.Builder;
 import com.nfitton.imagestorage.util.StringUtil;
 import com.nfitton.imagestorage.util.UserUtil;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -25,15 +25,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @ActiveProfiles( {"test", "local"})
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = ImageStorageApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-public class UserServiceIT {
-
-  private static final String BASE_URL = "http://localhost";
-  @LocalServerPort
-  private int randomServerPort;
-
-  private WebClient getWebClient() {
-    return WebClient.create(BASE_URL + ":" + randomServerPort);
-  }
+public class UserHandlerIT extends BaseTestIT {
 
   private static Stream<Arguments> invalidUsers() {
     return Stream.of(
@@ -67,10 +59,70 @@ public class UserServiceIT {
     Assertions.assertNotNull(response);
     Assertions.assertEquals(HttpStatus.CREATED, response.statusCode());
 
-    OutgoingDataV1 savedUser = response.bodyToMono(OutgoingDataV1.class).block();
+    UserV1 savedUserData = response.bodyToMono(UserV1.class).block();
 
-    Assertions.assertNotNull(savedUser);
-    Assertions.assertTrue(savedUser.getData() instanceof UserV1);
+    Assertions.assertNotNull(savedUserData);
+    Assertions.assertEquals(user.getFirstName().toLowerCase(), savedUserData.getFirstName());
+    Assertions.assertEquals(user.getLastName().toLowerCase(), savedUserData.getLastName());
+    Assertions.assertEquals(user.getEmail(), savedUserData.getEmail());
+    Assertions.assertNotNull(savedUserData.getId());
+    Assertions.assertNotNull(savedUserData.getCreatedAt());
+    Assertions.assertNotNull(savedUserData.getUpdatedAt());
+    Assertions.assertNotNull(savedUserData.getLastActive());
+    Assertions.assertNull(savedUserData.getPassword());
+  }
+
+  @Test
+  public void getUsersIsSuccessful() {
+    WebClient client = getWebClient();
+    String sessionToken = getSessionToken(adminUser.getEmail(), userPassword);
+    ClientResponse response = UserUtil.getUsers(client, sessionToken);
+
+    Assertions.assertNotNull(response);
+    Assertions.assertEquals(HttpStatus.OK, response.statusCode());
+    List<UUID> users = response.bodyToFlux(UUID.class).collectList().block();
+
+    Assertions.assertNotNull(users);
+    Assertions.assertTrue(users.size() > 1);
+    Assertions.assertTrue(users.contains(adminUser.getId()));
+    Assertions.assertTrue(users.contains(standardUser.getId()));
+  }
+
+  @Test
+  public void getUserIsSuccessful() {
+    WebClient client = getWebClient();
+    String sessionToken = getSessionToken(adminUser.getEmail(), userPassword);
+
+    ClientResponse response = UserUtil.getUser(client, sessionToken, standardUser.getId());
+
+    Assertions.assertNotNull(response);
+    Assertions.assertEquals(HttpStatus.OK, response.statusCode());
+    UserV1 retrievedUser = response.bodyToMono(UserV1.class).block();
+    Assertions.assertNotNull(retrievedUser);
+    Assertions.assertEquals(standardUser.getEmail(), retrievedUser.getEmail());
+    Assertions.assertEquals(standardUser.getFirstName(), retrievedUser.getFirstName());
+    Assertions.assertEquals(standardUser.getLastName(), retrievedUser.getLastName());
+  }
+
+  @Test
+  public void deleteUserIsSuccessful() {
+    WebClient client = getWebClient();
+    String sessionToken = getSessionToken(adminUser.getEmail(), userPassword);
+
+    ClientResponse response = UserUtil.deleteUser(client, sessionToken, standardUser.getId());
+
+    Assertions.assertNotNull(response);
+    Assertions.assertEquals(HttpStatus.NO_CONTENT, response.statusCode());
+
+    response = UserUtil.getUser(client, sessionToken, standardUser.getId());
+
+    Assertions.assertNotNull(response);
+    Assertions.assertEquals(HttpStatus.NOT_FOUND, response.statusCode());
+  }
+
+  @Test
+  public void getGroupsForUserIsSuccessful() {
+
   }
 
   @Test
@@ -97,7 +149,5 @@ public class UserServiceIT {
     ClientResponse response = UserUtil.createUser(client, userBuilder.build());
     Assertions.assertNotNull(response);
     Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.statusCode());
-    System.out
-        .println(response.bodyToMono(OutgoingDataV1.class).map(OutgoingDataV1::getError).block());
   }
 }

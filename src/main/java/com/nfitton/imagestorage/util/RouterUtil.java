@@ -73,7 +73,7 @@ public class RouterUtil {
     } else if (e instanceof ValidationException) {
       ValidationException exception = (ValidationException) e;
       return ServerResponse.badRequest()
-          .syncBody(new OutgoingDataV1(null, exception.getViolations()));
+          .syncBody(OutgoingDataV1.errorOnly(exception.getViolations()));
     } else {
       LOGGER.error("Could not consume exception", e);
       return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

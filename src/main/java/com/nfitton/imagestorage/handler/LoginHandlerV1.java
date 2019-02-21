@@ -54,7 +54,6 @@ public class LoginHandlerV1 {
       AccountType type) {
     return parseAuthorization(request, service, type)
         .flatMap(authenticationService::createAuthToken)
-        .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.ok().syncBody(data))
         .onErrorResume(e -> ServerResponse.status(HttpStatus.FORBIDDEN)
             .syncBody(OutgoingDataV1.errorOnly(e.getMessage())));
@@ -66,7 +65,6 @@ public class LoginHandlerV1 {
         .map(optionalUser -> optionalUser
             .orElseThrow(() -> new NotFoundException("User not found by given id")))
         .map(AccountMapper::toV1)
-        .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.ok().syncBody(data));
   }
 
@@ -92,7 +90,7 @@ public class LoginHandlerV1 {
       return service.authenticate(accountId, credentials.split(":")[1], type);
     } catch (IllegalArgumentException e) {
       return Mono.error(new BadRequestException(
-          "Malformed camera ID in authorization header, must be a valid UUID v4"));
+          "Malformed account ID in authorization header, must be a valid UUID v4"));
     }
   }
 
