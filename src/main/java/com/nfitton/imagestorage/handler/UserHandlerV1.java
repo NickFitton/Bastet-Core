@@ -2,6 +2,7 @@ package com.nfitton.imagestorage.handler;
 
 import static com.nfitton.imagestorage.util.RouterUtil.getUUIDParameter;
 
+import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.api.UserV1;
 import com.nfitton.imagestorage.entity.UserGroup;
 import com.nfitton.imagestorage.exception.ForbiddenException;
@@ -50,12 +51,14 @@ public class UserHandlerV1 {
         .map((UserV1 v1) -> AccountMapper.newAccount(v1, encoder, validator))
         .flatMap(userService::save)
         .map(AccountMapper::toV1)
+        .map(OutgoingDataV1::dataOnly)
         .flatMap(account -> ServerResponse.status(HttpStatus.CREATED).syncBody(account))
         .onErrorResume(RouterUtil::handleErrors);
   }
 
   public Mono<ServerResponse> getUsers(ServerRequest request) {
     return userService.getAllIds().collectList()
+        .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.ok().syncBody(data));
   }
 
@@ -75,6 +78,7 @@ public class UserHandlerV1 {
         .map(account -> account.orElseThrow(
             () -> new NotFoundException(String.format("User not found by user ID: %s", userId))))
         .map(AccountMapper::toV1)
+        .map(OutgoingDataV1::dataOnly)
         .flatMap(account -> ServerResponse.ok().syncBody(account))
         .onErrorResume(RouterUtil::handleErrors);
   }
@@ -121,6 +125,7 @@ public class UserHandlerV1 {
         .flatMap(groupService::findGroupDataById)
         .map(GroupMapper::toV1)
         .collectList()
+        .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.status(HttpStatus.OK).syncBody(data))
         .onErrorResume(RouterUtil::handleErrors);
   }

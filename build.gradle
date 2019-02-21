@@ -47,6 +47,8 @@ dependencies {
 
     implementation 'org.apache.activemq:activemq-broker:5.15.8'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.8'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.8'
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.2.0"
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.2.0"

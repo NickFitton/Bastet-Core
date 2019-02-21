@@ -12,7 +12,6 @@ public class CameraUtil {
   public static ClientResponse createCamera(WebClient client, CameraV1 camera) {
     return client.post()
         .uri("/v1/cameras")
-        .contentType(MediaType.APPLICATION_JSON)
         .syncBody(camera)
         .exchange()
         .block();

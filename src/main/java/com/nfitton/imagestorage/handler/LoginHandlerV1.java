@@ -54,6 +54,7 @@ public class LoginHandlerV1 {
       AccountType type) {
     return parseAuthorization(request, service, type)
         .flatMap(authenticationService::createAuthToken)
+        .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.ok().syncBody(data))
         .onErrorResume(e -> ServerResponse.status(HttpStatus.FORBIDDEN)
             .syncBody(OutgoingDataV1.errorOnly(e.getMessage())));
@@ -65,6 +66,7 @@ public class LoginHandlerV1 {
         .map(optionalUser -> optionalUser
             .orElseThrow(() -> new NotFoundException("User not found by given id")))
         .map(AccountMapper::toV1)
+        .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.ok().syncBody(data));
   }
 
