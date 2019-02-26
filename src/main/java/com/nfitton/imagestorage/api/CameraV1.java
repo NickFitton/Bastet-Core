@@ -63,12 +63,12 @@ public class CameraV1 {
       return false;
     }
     CameraV1 cameraV1 = (CameraV1) o;
-    return Objects.equals(id, cameraV1.id) &&
-        Objects.equals(ownedBy, cameraV1.ownedBy) &&
-        Objects.equals(password, cameraV1.password) &&
-        Objects.equals(createdAt, cameraV1.createdAt) &&
-        Objects.equals(updatedAt, cameraV1.updatedAt) &&
-        Objects.equals(lastUpload, cameraV1.lastUpload);
+    return Objects.equals(id, cameraV1.id)
+        && Objects.equals(ownedBy, cameraV1.ownedBy)
+        && Objects.equals(password, cameraV1.password)
+        && Objects.equals(createdAt, cameraV1.createdAt)
+        && Objects.equals(updatedAt, cameraV1.updatedAt)
+        && Objects.equals(lastUpload, cameraV1.lastUpload);
   }
 
   @Override

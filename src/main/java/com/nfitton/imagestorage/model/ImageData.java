@@ -22,6 +22,9 @@ public class ImageData {
   public ImageData() {
   }
 
+  /**
+   * Constructor of image data, taking all items and setting them.
+   */
   public ImageData(
       UUID id,
       UUID cameraId,
@@ -79,6 +82,9 @@ public class ImageData {
     return entities;
   }
 
+  /**
+   * Converts the image data into image metadata.
+   */
   public ImageMetadata asMetadata() {
     return new ImageMetadata(
         id,
@@ -93,17 +99,17 @@ public class ImageData {
 
   @Override
   public String toString() {
-    return "ImageData{" +
-        "id=" + id +
-        ", cameraId=" + cameraId +
-        ", entryTime=" + entryTime +
-        ", exitTime=" + exitTime +
-        ", imageTime=" + imageTime +
-        ", createdAt=" + createdAt +
-        ", updatedAt=" + updatedAt +
-        ", fileExists=" + fileExists +
-        ", entities=" + entities +
-        '}';
+    return "ImageData{"
+        + "id=" + id
+        + ", cameraId=" + cameraId
+        + ", entryTime=" + entryTime
+        + ", exitTime=" + exitTime
+        + ", imageTime=" + imageTime
+        + ", createdAt=" + createdAt
+        + ", updatedAt=" + updatedAt
+        + ", fileExists=" + fileExists
+        + ", entities=" + entities
+        + '}';
   }
 
   public static final class Builder {
@@ -126,6 +132,13 @@ public class ImageData {
       return new Builder();
     }
 
+    /**
+     * Receives an {@link ImageData} class and returns a builder with all the receieved data
+     * hard-copied.
+     *
+     * @param data the data to clone
+     * @return a {@link Builder} with all the received data in it
+     */
     public static Builder clone(ImageData data) {
       return new Builder()
           .withId(data.getId())
@@ -139,6 +152,12 @@ public class ImageData {
           .withEntities(data.getEntities());
     }
 
+    /**
+     * Receives image metadata and a list of entities and returns a {@link ImageData.Builder}.
+     * @param metadata the data to clone
+     * @param entities the data to clone
+     * @return a {@link Builder} with all the received data in it
+     */
     public static Builder clone(ImageMetadata metadata, List<ImageEntity> entities) {
       return new Builder()
           .withId(metadata.getId())

@@ -62,11 +62,11 @@ public class GroupV1 {
       return false;
     }
     GroupV1 groupV1 = (GroupV1) o;
-    return Objects.equals(id, groupV1.id) &&
-        Objects.equals(ownedBy, groupV1.ownedBy) &&
-        Objects.equals(name, groupV1.name) &&
-        Objects.equals(users, groupV1.users) &&
-        Objects.equals(cameras, groupV1.cameras);
+    return Objects.equals(id, groupV1.id)
+        && Objects.equals(ownedBy, groupV1.ownedBy)
+        && Objects.equals(name, groupV1.name)
+        && Objects.equals(users, groupV1.users)
+        && Objects.equals(cameras, groupV1.cameras);
   }
 
   @Override

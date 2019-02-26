@@ -86,9 +86,9 @@ public class Account {
       return false;
     }
     Account that = (Account) o;
-    return Objects.equals(id, that.id) && Objects.equals(password, that.password) &&
-        Objects.equals(createdAt, that.createdAt) &&
-        Objects.equals(updatedAt, that.updatedAt) &&
-        Objects.equals(lastActive, that.lastActive);
+    return Objects.equals(id, that.id) && Objects.equals(password, that.password)
+        && Objects.equals(createdAt, that.createdAt)
+        && Objects.equals(updatedAt, that.updatedAt)
+        && Objects.equals(lastActive, that.lastActive);
   }
 }

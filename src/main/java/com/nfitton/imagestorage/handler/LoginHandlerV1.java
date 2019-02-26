@@ -60,6 +60,13 @@ public class LoginHandlerV1 {
             .syncBody(OutgoingDataV1.errorOnly(e.getMessage())));
   }
 
+  /**
+   * Returns to the requester their user data.
+   *
+   * @param request contains the session token of the requester to find data on.
+   * @return HttpStatus.OK and a {@link com.nfitton.imagestorage.api.UserV1} related to the session
+   *     token
+   */
   public Mono<ServerResponse> getSelf(ServerRequest request) {
     return RouterUtil.parseAuthenticationToken(request, authenticationService)
         .flatMap(userService::findById)
@@ -82,7 +89,8 @@ public class LoginHandlerV1 {
     String[] s = authorization.get(0).split(" ");
     if (s.length != 2 || !s[0].toLowerCase().equals("basic")) {
       return Mono.error(new BadRequestException(
-          "Malformed authorization header, should follow format: 'Basic {base64(username:password)}'"));
+          "Malformed authorization header, "
+              + "should follow format: 'Basic {base64(username:password)}'"));
     }
 
     String credentials = new String(Base64.getDecoder().decode(s[1]));

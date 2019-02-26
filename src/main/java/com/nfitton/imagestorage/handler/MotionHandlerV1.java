@@ -75,6 +75,13 @@ public class MotionHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Attaches an image to a motion object for the server to analyse.
+   *
+   * @param request the {@link ServerRequest} containing the image, motion id and camera
+   *     credentials
+   * @return HttpStatus.ACCEPTED on success
+   */
   public Mono<ServerResponse> patchMotionPicture(ServerRequest request) {
     UUID imageId = UUID.fromString(request.pathVariable("motionId"));
     return Mono.zip(
@@ -104,6 +111,12 @@ public class MotionHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Returns data related to the given cameras.
+   *
+   * @param request the {@link ServerRequest} containing the user credentials and cameraId
+   * @return HttpStatus.OK with a list of {@link ImageMetadataV1}
+   */
   public Mono<ServerResponse> getMotion(ServerRequest request) {
     Stream<UUID> cameraIds = request.queryParam("cameras")
         .map(param -> Arrays.asList(param.split(",")))
@@ -130,12 +143,18 @@ public class MotionHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Returns image metadata related to the given motionId.
+   *
+   * @param request the {@link ServerRequest} containing the user credentials and cameraId
+   * @return HttpStatus.OK with a single {@link ImageMetadataV1}
+   */
   public Mono<ServerResponse> getMotionById(ServerRequest request) {
     return parseAuthenticationToken(request, authenticationService)
         .flatMap(userService::existsById)
         .flatMap(exists -> {
           if (exists) {
-            UUID motionId = RouterUtil.getUUIDParameter(request, "motionId");
+            UUID motionId = RouterUtil.getUuidParameter(request, "motionId");
             return fileMetadataService.findById(motionId);
           } else {
             return Mono.error(ExceptionUtil.badCredentials());
@@ -146,8 +165,14 @@ public class MotionHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Returns the image related to the given motionId.
+   *
+   * @param request the {@link ServerRequest} containing the motionId and user credentials
+   * @return HttpStatus.OK with an image
+   */
   public Mono<ServerResponse> getMotionImageById(ServerRequest request) {
-    UUID motionId = RouterUtil.getUUIDParameter(request, "motionId");
+    UUID motionId = RouterUtil.getUuidParameter(request, "motionId");
 
     Flux<byte[]> image = parseAuthenticationToken(request, authenticationService)
         .flatMap(userService::existsById)

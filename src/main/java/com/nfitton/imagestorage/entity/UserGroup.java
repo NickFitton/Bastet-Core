@@ -49,9 +49,9 @@ public class UserGroup {
       return false;
     }
     UserGroup userGroup = (UserGroup) o;
-    return Objects.equals(id, userGroup.id) &&
-        Objects.equals(userId, userGroup.userId) &&
-        Objects.equals(groupId, userGroup.groupId);
+    return Objects.equals(id, userGroup.id)
+        && Objects.equals(userId, userGroup.userId)
+        && Objects.equals(groupId, userGroup.groupId);
   }
 
   @Override

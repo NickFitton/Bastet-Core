@@ -1,6 +1,6 @@
 package com.nfitton.imagestorage.handler;
 
-import static com.nfitton.imagestorage.util.RouterUtil.getUUIDParameter;
+import static com.nfitton.imagestorage.util.RouterUtil.getUuidParameter;
 
 import com.nfitton.imagestorage.api.GroupV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
@@ -33,6 +33,8 @@ import reactor.core.publisher.Mono;
 public class GroupHandlerV1 {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GroupHandlerV1.class);
+  private static final String GROUP_ID = "groupId";
+  private static final String USER_ID = "userId";
 
   private final GroupService groupService;
   private final UserService userService;
@@ -40,6 +42,9 @@ public class GroupHandlerV1 {
   private final AuthenticationService authenticationService;
   private final Validator validator;
 
+  /**
+   * Group handler constructor.
+   */
   @Autowired
   public GroupHandlerV1(
       GroupService groupService,
@@ -58,6 +63,12 @@ public class GroupHandlerV1 {
     return data.getGroup().getOwnerId().equals(userId) || data.getUserIds().contains(userId);
   }
 
+  /**
+   * Creates a new group given a group name.
+   *
+   * @param request a {@link ServerRequest} holding the requester data and new group name
+   * @return HttpStatus.CREATED and a {@link GroupV1}
+   */
   public Mono<ServerResponse> createGroup(ServerRequest request) {
     return Mono.zip(
         request.bodyToMono(GroupV1.class),
@@ -74,8 +85,15 @@ public class GroupHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Returns information about the group if the requester is a member of the group.
+   *
+   * @param request a {@link ServerRequest} holding the requester data and the id of the user to
+   *     remove
+   * @return HttpStatus.OK and a {@link GroupV1} on success
+   */
   public Mono<ServerResponse> getGroupById(ServerRequest request) {
-    UUID groupId = getUUIDParameter(request, "groupId");
+    UUID groupId = getUuidParameter(request, GROUP_ID);
 
     return Mono.zip(
         RouterUtil.parseAuthenticationToken(request, authenticationService),
@@ -92,9 +110,17 @@ public class GroupHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Removes the user from the given group if the requester is the user to remove or they are the
+   * admin of the group.
+   *
+   * @param request a {@link ServerRequest} holding the requester data and the id of the user to
+   *     remove
+   * @return HttpStatus.ACCEPTED on success
+   */
   public Mono<ServerResponse> removeUserFromGroup(ServerRequest request) {
-    UUID groupId = getUUIDParameter(request, "groupId");
-    UUID userId = getUUIDParameter(request, "userId");
+    UUID groupId = getUuidParameter(request, GROUP_ID);
+    UUID userId = getUuidParameter(request, USER_ID);
 
     return Mono.zip(
         RouterUtil.parseAuthenticationToken(request, authenticationService),
@@ -113,9 +139,15 @@ public class GroupHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Changes the owner of the group if the requester is the current owner of the group.
+   *
+   * @param request a {@link ServerRequest} holding the requester data and new ownerId
+   * @return HttpStatus.ACCEPTED on success
+   */
   public Mono<ServerResponse> changeOwnerOfGroup(ServerRequest request) {
-    UUID groupId = getUUIDParameter(request, "groupId");
-    UUID newOwnerId = getUUIDParameter(request, "userId");
+    UUID groupId = getUuidParameter(request, GROUP_ID);
+    UUID newOwnerId = getUuidParameter(request, USER_ID);
 
     return Mono.zip(
         RouterUtil.parseAuthenticationToken(request, authenticationService),
@@ -134,9 +166,16 @@ public class GroupHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Adds a new camera to the group if the camera is owned by the requester and the camera isn't
+   * already part of the group.
+   *
+   * @param request a {@link ServerRequest} holding the requester data and cameraId
+   * @return HttpStatus.ACCEPTED on success
+   */
   public Mono<ServerResponse> addCameraToGroup(ServerRequest request) {
-    UUID groupId = getUUIDParameter(request, "groupId");
-    UUID cameraId = getUUIDParameter(request, "cameraId");
+    UUID groupId = getUuidParameter(request, GROUP_ID);
+    UUID cameraId = getUuidParameter(request, "cameraId");
 
     return Mono.zip(
         RouterUtil.parseAuthenticationToken(request, authenticationService),
@@ -155,8 +194,14 @@ public class GroupHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Adds a new user to the group if the user isn't already part of the group.
+   *
+   * @param request a {@link ServerRequest} holding the requester data and user email to add
+   * @return HttpStatus.ACCEPTED on success
+   */
   public Mono<ServerResponse> addUserToGroup(ServerRequest request) {
-    UUID groupId = getUUIDParameter(request, "groupId");
+    UUID groupId = getUuidParameter(request, GROUP_ID);
 
     Mono<GroupData> groupUsersMono = groupService.findGroupDataById(groupId);
 
@@ -185,21 +230,29 @@ public class GroupHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * If the requesting user owns the camera or they are the admin of a group & the camera exists in
+   * the group, then the camera is unshared from the group.
+   *
+   * @param request a {@link ServerRequest} holding the requester data and group id to get
+   *     cameras by
+   * @return HttpStatus.ACCEPTED on success
+   */
   public Mono<ServerResponse> removeCameraFromGroup(ServerRequest request) {
-    UUID groupId = getUUIDParameter(request, "groupId");
-    UUID cameraId = getUUIDParameter(request, "cameraId");
+    UUID groupId = getUuidParameter(request, GROUP_ID);
+    UUID cameraId = getUuidParameter(request, "cameraId");
 
     return Mono.zip(
         RouterUtil.parseAuthenticationToken(request, authenticationService),
         groupService.findGroupDataById(groupId), cameraService.findById(cameraId))
         .flatMap(tuple -> {
-          UUID requestorId = tuple.getT1();
+          UUID requesterId = tuple.getT1();
           GroupData data = tuple.getT2();
           Camera selectedCamera = tuple.getT3()
               .orElseThrow(() -> new NotFoundException("Camera not found by given id"));
 
-          if (requestorId.equals(data.getGroup().getOwnerId()) || selectedCamera.getOwnerId()
-              .equals(requestorId)) {
+          if (requesterId.equals(data.getGroup().getOwnerId()) || selectedCamera.getOwnerId()
+              .equals(requesterId)) {
             return groupService.removeCameraFromGroup(cameraId, groupId);
           }
           throw new ForbiddenException("User not admin or doesn't own selected camera");
@@ -210,16 +263,24 @@ public class GroupHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * If the requesting user is a member of the group, then a list of cameras shared to that group
+   * are returned.
+   *
+   * @param request a {@link ServerRequest} holding the requester data and group id to get
+   *     cameras by
+   * @return HttpStatus.OK on success with a list of {@link com.nfitton.imagestorage.api.CameraV1}
+   */
   public Mono<ServerResponse> getGroupCameras(ServerRequest request) {
-    UUID groupId = getUUIDParameter(request, "groupId");
+    UUID groupId = getUuidParameter(request, GROUP_ID);
 
     return Mono.zip(
         RouterUtil.parseAuthenticationToken(request, authenticationService),
         groupService.findGroupDataById(groupId))
         .flatMapIterable(tuple2 -> {
-          UUID requestorId = tuple2.getT1();
+          UUID requesterId = tuple2.getT1();
           GroupData data = tuple2.getT2();
-          if (!data.getUserIds().contains(requestorId)) {
+          if (!data.getUserIds().contains(requesterId)) {
             throw new ForbiddenException("Must be in group to get cameras");
           }
 
@@ -233,9 +294,16 @@ public class GroupHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Removes a group from the platform if the requesting user is the owner of the group.
+   *
+   * @param request a {@link ServerRequest} holding the requester data and group id to delete
+   *     by
+   * @return HttpStatus.ACCEPTED on success, otherwise a Verification or other exception
+   */
   public Mono<ServerResponse> deleteGroup(ServerRequest request) {
     LOGGER.info("Made it here");
-    UUID groupId = getUUIDParameter(request, "groupId");
+    UUID groupId = getUuidParameter(request, GROUP_ID);
     return Mono.zip(
         RouterUtil.parseAuthenticationToken(request, authenticationService),
         groupService.findGroupDataById(groupId))

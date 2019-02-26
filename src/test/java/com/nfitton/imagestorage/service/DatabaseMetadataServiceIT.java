@@ -1,5 +1,6 @@
 package com.nfitton.imagestorage.service;
 
+import com.nfitton.imagestorage.ImageStorageApplication;
 import com.nfitton.imagestorage.entity.EntityType;
 import com.nfitton.imagestorage.entity.ImageEntity;
 import com.nfitton.imagestorage.model.ImageData;
@@ -10,13 +11,16 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+@ActiveProfiles({"local", "h2"})
+@ExtendWith(SpringExtension.class)
+@SpringBootTest(classes = ImageStorageApplication.class)
 public class DatabaseMetadataServiceIT {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseMetadataServiceIT.class);
 
   @Autowired
   DatabaseMetadataService metadataService;

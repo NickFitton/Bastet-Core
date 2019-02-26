@@ -78,16 +78,16 @@ public class ImageMetadata {
 
   @Override
   public String toString() {
-    return "ImageMetadata{" +
-        "id=" + id +
-        ", cameraId=" + cameraId +
-        ", entryTime=" + entryTime +
-        ", exitTime=" + exitTime +
-        ", imageTime=" + imageTime +
-        ", createdAt=" + createdAt +
-        ", updatedAt=" + updatedAt +
-        ", fileExists=" + fileExists +
-        '}';
+    return "ImageMetadata{"
+        + "id=" + id
+        + ", cameraId=" + cameraId
+        + ", entryTime=" + entryTime
+        + ", exitTime=" + exitTime
+        + ", imageTime=" + imageTime
+        + ", createdAt=" + createdAt
+        + ", updatedAt=" + updatedAt
+        + ", fileExists=" + fileExists
+        + '}';
   }
 
   public static final class Builder {

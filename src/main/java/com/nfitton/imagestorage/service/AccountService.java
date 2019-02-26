@@ -5,19 +5,19 @@ import java.util.Optional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public interface AccountService<T, ID> {
+public interface AccountService<T, I> {
 
   Mono<T> save(T account);
 
-  Mono<ID> authenticate(String id, String password, AccountType type);
+  Mono<I> authenticate(String id, String password, AccountType type);
 
-  Mono<Optional<T>> findById(ID id);
+  Mono<Optional<T>> findById(I id);
 
-  Flux<ID> getAllIds();
+  Flux<I> getAllIds();
 
-  Mono<Boolean> existsById(ID id);
+  Mono<Boolean> existsById(I id);
 
-  Mono<Boolean> deleteById(ID id);
+  Mono<Boolean> deleteById(I id);
 
 
 }

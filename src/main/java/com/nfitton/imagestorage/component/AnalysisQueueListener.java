@@ -25,6 +25,11 @@ public class AnalysisQueueListener {
     this.fileMetadataService = fileMetadataService;
   }
 
+  /**
+   * Receives a message from the queue and does analysis on the received image.
+   *
+   * @param message the message received from the queue
+   */
   @JmsListener(destination = "analysisQueue", containerFactory = "jmsFactory")
   public void receiveMessage(AnalysisQueueMessage message) {
     LOGGER.debug("Received by queue: {}", message.getImageId());

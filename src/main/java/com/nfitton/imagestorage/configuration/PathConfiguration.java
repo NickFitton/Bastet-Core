@@ -21,6 +21,12 @@ public class PathConfiguration {
     return location;
   }
 
+  /**
+   * Sets the location for storing/retrieving images.
+   *
+   * @param location the location to store at
+   * @throws StartupException if the storage location is invalid
+   */
   @Value("${storage.location}")
   public void setLocation(String location) throws StartupException {
     File folder = new File(location);
