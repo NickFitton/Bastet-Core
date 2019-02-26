@@ -37,6 +37,7 @@ import reactor.core.publisher.Mono;
 @Component
 public class MotionHandlerV1 {
 
+  private static final String MOTION_ID = "motionId";
   private static final Logger LOGGER = LoggerFactory.getLogger(MotionHandlerV1.class);
 
   private final AuthenticationService authenticationService;
@@ -83,7 +84,7 @@ public class MotionHandlerV1 {
    * @return HttpStatus.ACCEPTED on success
    */
   public Mono<ServerResponse> patchMotionPicture(ServerRequest request) {
-    UUID imageId = UUID.fromString(request.pathVariable("motionId"));
+    UUID imageId = UUID.fromString(request.pathVariable(MOTION_ID));
     return Mono.zip(
         parseAuthenticationToken(request, authenticationService),
         fileMetadataService.findById(imageId))
@@ -154,7 +155,7 @@ public class MotionHandlerV1 {
         .flatMap(userService::existsById)
         .flatMap(exists -> {
           if (exists) {
-            UUID motionId = RouterUtil.getUuidParameter(request, "motionId");
+            UUID motionId = RouterUtil.getUuidParameter(request, MOTION_ID);
             return fileMetadataService.findById(motionId);
           } else {
             return Mono.error(ExceptionUtil.badCredentials());
@@ -172,7 +173,7 @@ public class MotionHandlerV1 {
    * @return HttpStatus.OK with an image
    */
   public Mono<ServerResponse> getMotionImageById(ServerRequest request) {
-    UUID motionId = RouterUtil.getUuidParameter(request, "motionId");
+    UUID motionId = RouterUtil.getUuidParameter(request, MOTION_ID);
 
     Flux<byte[]> image = parseAuthenticationToken(request, authenticationService)
         .flatMap(userService::existsById)

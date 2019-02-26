@@ -37,7 +37,6 @@ public class CameraHandlerV1 {
       Validator validator,
       PasswordEncoder encoder,
       CameraService cameraService,
-      UserService userService,
       AuthenticationService authenticationService) {
     this.validator = validator;
     this.encoder = encoder;
@@ -118,7 +117,7 @@ public class CameraHandlerV1 {
         cameraName,
         RouterUtil.parseAuthenticationToken(request, authenticationService))
         .flatMap(tuple2 -> {
-          LOGGER.debug("Camera {} updated by user", cameraId, tuple2.getT2());
+          LOGGER.debug("Camera {} updated by user {}", cameraId, tuple2.getT2());
           return cameraService.updateCamera(cameraId, tuple2.getT2(), tuple2.getT1());
         })
         .flatMap(camera -> ServerResponse.accepted().build());

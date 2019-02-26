@@ -51,7 +51,7 @@ public class RouterUtil {
 
     String token = authentication.get(0);
     String[] splitToken = token.split(" ");
-    if (!splitToken[0].toLowerCase().equals("token")) {
+    if (!splitToken[0].equalsIgnoreCase("token")) {
       return Mono.error(new BadRequestException(
           "Malformed authorization header, should follow format: 'Token {token}'"));
     }

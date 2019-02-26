@@ -78,16 +78,14 @@ public class LoginHandlerV1 {
   }
 
   private <T> Mono<UUID> parseAuthorization(
-      ServerRequest request,
-      AccountService<T, UUID> service,
-      AccountType type) throws BadRequestException {
+      ServerRequest request, AccountService<T, UUID> service, AccountType type) {
     List<String> authorization = request.headers().header("authorization");
     if (authorization.size() != 1) {
       return Mono.error(new BadRequestException("login must have a single 'authorization' header"));
     }
 
     String[] s = authorization.get(0).split(" ");
-    if (s.length != 2 || !s[0].toLowerCase().equals("basic")) {
+    if (s.length != 2 || !s[0].equalsIgnoreCase("basic")) {
       return Mono.error(new BadRequestException(
           "Malformed authorization header, "
               + "should follow format: 'Basic {base64(username:password)}'"));

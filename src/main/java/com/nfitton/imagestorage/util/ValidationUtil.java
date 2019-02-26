@@ -10,7 +10,7 @@ public class ValidationUtil {
 
   public static <B> void validate(B bean, Validator validator) {
     Set<ConstraintViolation<B>> violations = validator.validate(bean);
-    if (violations.size() > 0) {
+    if (!violations.isEmpty()) {
       Set<String> violationReasons = violations.stream().map(
           ConstraintViolation::getMessage)
           .collect(Collectors.toSet());

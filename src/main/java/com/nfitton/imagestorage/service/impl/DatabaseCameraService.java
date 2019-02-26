@@ -58,14 +58,12 @@ public class DatabaseCameraService implements CameraService {
 
   @Override
   public Mono<UUID> authenticate(String id, String password, AccountType type) {
-    switch (type) {
-      case CAMERA:
-        return authenticationService
-            .authenticate(UUID.fromString(id), password, CAMERA, repository);
-      default:
-        throw new InternalServerException(
-            String.format("User service can't authenticate given type: %s", type));
+    if (type == CAMERA) {
+      return authenticationService
+          .authenticate(UUID.fromString(id), password, CAMERA, repository);
     }
+    throw new InternalServerException(
+        String.format("User service can't authenticate given type: %s", type));
   }
 
   @Override
