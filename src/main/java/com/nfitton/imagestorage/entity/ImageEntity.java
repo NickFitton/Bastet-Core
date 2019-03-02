@@ -2,20 +2,14 @@ package com.nfitton.imagestorage.entity;
 
 import static javax.persistence.EnumType.STRING;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import org.hibernate.annotations.GenericGenerator;
 
 @Entity
-public class ImageEntity {
+public class ImageEntity extends BaseEntity {
 
-  @Id
-  @GeneratedValue(generator = "UUID")
-  @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-  private UUID id;
   private UUID metadataId;
   private int x;
   private int y;
@@ -24,24 +18,6 @@ public class ImageEntity {
   @Enumerated(value = STRING)
   private EntityType type;
 
-  public ImageEntity() {
-  }
-
-  public ImageEntity(
-      UUID metadataId,
-      int x,
-      int y,
-      int width,
-      int height,
-      EntityType type) {
-    this.metadataId = metadataId;
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
-    this.type = type;
-  }
-
   private ImageEntity(
       UUID id,
       UUID metadataId,
@@ -49,8 +25,10 @@ public class ImageEntity {
       int y,
       int width,
       int height,
-      EntityType type) {
-    this.id = id;
+      EntityType type,
+      ZonedDateTime createdDate,
+      ZonedDateTime lastModifiedDate) {
+    super(id, createdDate, lastModifiedDate);
     this.metadataId = metadataId;
     this.x = x;
     this.y = y;
@@ -59,8 +37,7 @@ public class ImageEntity {
     this.type = type;
   }
 
-  public UUID getId() {
-    return id;
+  public ImageEntity() {
   }
 
   public UUID getMetadataId() {
@@ -96,6 +73,8 @@ public class ImageEntity {
     private int width;
     private int height;
     private EntityType type;
+    private ZonedDateTime createdDate;
+    private ZonedDateTime lastModifiedDate;
 
     private Builder() {
     }
@@ -150,6 +129,16 @@ public class ImageEntity {
       return this;
     }
 
+    public Builder withCreatedDate(ZonedDateTime val) {
+      this.createdDate = val;
+      return this;
+    }
+
+    public Builder withLastModifiedDate(ZonedDateTime val) {
+      this.lastModifiedDate = val;
+      return this;
+    }
+
     public ImageEntity build() {
       return new ImageEntity(
           id,
@@ -158,7 +147,9 @@ public class ImageEntity {
           y,
           width,
           height,
-          type);
+          type,
+          createdDate,
+          lastModifiedDate);
     }
   }
 }

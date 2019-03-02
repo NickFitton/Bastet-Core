@@ -50,8 +50,8 @@ public class CameraMapper {
         camera.getOwnerId(),
         camera.getName() == null ? camera.getId().toString() : camera.getName(),
         null,
-        camera.getCreatedAt(),
-        camera.getUpdatedAt(),
+        camera.getCreatedDate(),
+        camera.getLastModifiedDate(),
         camera.getLastActive());
   }
 }

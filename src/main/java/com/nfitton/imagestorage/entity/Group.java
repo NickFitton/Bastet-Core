@@ -1,36 +1,31 @@
 package com.nfitton.imagestorage.entity;
 
+import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.persistence.Table;
-import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "groups")
-public class Group {
+public class Group extends BaseEntity {
 
-  @Id
-  @GeneratedValue(generator = "UUID")
-  @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-  private UUID id;
   private UUID ownerId;
   private String name;
 
-  public Group(UUID id, UUID ownerId, String name) {
-    this.id = id;
+  public Group(
+      UUID id,
+      UUID ownerId,
+      String name,
+      ZonedDateTime createdDate,
+      ZonedDateTime lastModifiedDate) {
+    super(id, createdDate, lastModifiedDate);
     this.ownerId = ownerId;
     this.name = name;
   }
 
   public Group() {
 
-  }
-
-  public UUID getId() {
-    return id;
   }
 
   public UUID getOwnerId() {
@@ -46,18 +41,19 @@ public class Group {
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof Group)) {
+      return false;
+    }
+    if (!super.equals(o)) {
       return false;
     }
     Group group = (Group) o;
-    return Objects.equals(id, group.id)
-        && Objects.equals(ownerId, group.ownerId)
-        && Objects.equals(name, group.name);
+    return Objects.equals(getOwnerId(), group.getOwnerId()) &&
+        Objects.equals(getName(), group.getName());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, ownerId, name);
+    return Objects.hash(super.hashCode(), getOwnerId(), getName());
   }
-
 }

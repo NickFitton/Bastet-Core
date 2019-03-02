@@ -3,8 +3,8 @@ CREATE TABLE image_metadata (
     entry_time TIMESTAMP NOT NULL,
     exit_time TIMESTAMP NOT NULL,
     image_time TIMESTAMP NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
+    created_date TIMESTAMP DEFAULT NOW(),
+    last_modified_date TIMESTAMP DEFAULT NOW(),
     file_exists BOOLEAN DEFAULT TRUE,
     camera_id UUID
 );
@@ -16,8 +16,8 @@ CREATE TABLE users (
     email VARCHAR(128) NOT NULL UNIQUE,
     password VARCHAR(64) NOT NULL,
     type VARCHAR(32) NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
+    created_date TIMESTAMP DEFAULT NOW(),
+    last_modified_date TIMESTAMP DEFAULT NOW(),
     last_active TIMESTAMP DEFAULT NOW()
 );
 
@@ -27,8 +27,8 @@ CREATE TABLE camera (
     name VARCHAR(64),
     password VARCHAR(64) NOT NULL,
     type VARCHAR(32) NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
+    created_date TIMESTAMP DEFAULT NOW(),
+    last_modified_date TIMESTAMP DEFAULT NOW(),
     last_active TIMESTAMP
 );
 
@@ -45,7 +45,9 @@ CREATE TABLE image_entity (
   y SMALLINT,
   width SMALLINT,
   height SMALLINT,
-  type VARCHAR(16)
+  type VARCHAR(16),
+  created_date TIMESTAMP DEFAULT NOW(),
+  last_modified_date TIMESTAMP DEFAULT NOW()
 );
 
 CREATE INDEX idx_token ON authentication(random_string);
@@ -53,13 +55,17 @@ CREATE INDEX idx_token ON authentication(random_string);
 CREATE TABLE groups (
   id UUID PRIMARY KEY,
   owner_id UUID REFERENCES users(id),
-  name VARCHAR(64) NOT NULL
+  name VARCHAR(64) NOT NULL,
+  created_date TIMESTAMP DEFAULT NOW(),
+  last_modified_date TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE users_groups (
   id UUID PRIMARY KEY,
   user_id UUID REFERENCES users(id),
   group_id UUID REFERENCES groups(id),
+    created_date TIMESTAMP DEFAULT NOW(),
+    last_modified_date TIMESTAMP DEFAULT NOW(),
   UNIQUE (user_id, group_id)
 );
 
@@ -67,5 +73,7 @@ CREATE TABLE groups_cameras (
   id UUID PRIMARY KEY,
   group_id UUID REFERENCES groups(id),
   camera_id UUID REFERENCES camera(id),
+  created_date TIMESTAMP DEFAULT NOW(),
+  last_modified_date TIMESTAMP DEFAULT NOW(),
   UNIQUE (camera_id, group_id)
 );

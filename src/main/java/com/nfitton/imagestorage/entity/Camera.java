@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.Entity;
+import javax.persistence.Table;
 
 @Entity
 public class Camera extends Account {
@@ -81,8 +82,8 @@ public class Camera extends Account {
           .withId(camera.getId())
           .withOwnerId(camera.getOwnerId())
           .withPassword(camera.getPassword())
-          .withCreatedAt(camera.getCreatedAt())
-          .withUpdatedAt(camera.getUpdatedAt())
+          .withCreatedAt(camera.getCreatedDate())
+          .withUpdatedAt(camera.getLastModifiedDate())
           .withLastActive(camera.getLastActive());
     }
 

@@ -45,8 +45,8 @@ public class AccountMapper {
         user.getLastName(),
         user.getEmail(),
         null,
-        user.getCreatedAt(),
-        user.getUpdatedAt(),
+        user.getCreatedDate(),
+        user.getLastModifiedDate(),
         user.getLastActive());
   }
 }

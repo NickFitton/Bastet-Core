@@ -165,8 +165,8 @@ public class ImageData {
           .withEntryTime(metadata.getEntryTime())
           .withExitTime(metadata.getExitTime())
           .withImageTime(metadata.getImageTime())
-          .withCreatedAt(metadata.getCreatedAt())
-          .withUpdatedAt(metadata.getUpdatedAt())
+          .withCreatedAt(metadata.getCreatedDate())
+          .withUpdatedAt(metadata.getLastModifiedDate())
           .withExists(metadata.fileExists())
           .withEntities(entities);
 

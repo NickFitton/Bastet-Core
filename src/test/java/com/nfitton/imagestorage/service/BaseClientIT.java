@@ -70,14 +70,10 @@ public class BaseClientIT {
         .withType(AccountType.BASIC)
         .withEmail(randomString(10) + "@test.com")
         .withPassword(encoder.encode(userPassword))
-        .withUpdatedAt(now)
-        .withCreatedAt(now)
         .withLastActive(now).build();
     standardUser = accountRepository.save(standardUser);
     standardCamera = Camera.Builder.newBuilder()
         .withPassword(encoder.encode(userPassword))
-        .withUpdatedAt(now)
-        .withCreatedAt(now)
         .withLastActive(now).build();
     standardCamera = cameraRepository.save(standardCamera);
   }

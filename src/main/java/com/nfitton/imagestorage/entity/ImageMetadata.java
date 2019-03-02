@@ -1,25 +1,17 @@
 package com.nfitton.imagestorage.entity;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import org.hibernate.annotations.GenericGenerator;
 
 @Entity
-public class ImageMetadata {
+public class ImageMetadata extends BaseEntity {
 
-  @Id
-  @GeneratedValue(generator = "UUID")
-  @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-  private UUID id;
   private UUID cameraId;
   private ZonedDateTime entryTime;
   private ZonedDateTime exitTime;
   private ZonedDateTime imageTime;
-  private ZonedDateTime createdAt;
-  private ZonedDateTime updatedAt;
   private boolean fileExists;
 
   public ImageMetadata(
@@ -31,21 +23,15 @@ public class ImageMetadata {
       ZonedDateTime createdAt,
       ZonedDateTime updatedAt,
       boolean fileExists) {
-    this.id = id;
+    super(id, createdAt, updatedAt);
     this.cameraId = cameraId;
     this.entryTime = entryTime;
     this.exitTime = exitTime;
     this.imageTime = imageTime;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
     this.fileExists = fileExists;
   }
 
   public ImageMetadata() {
-  }
-
-  public UUID getId() {
-    return id;
   }
 
   public UUID getCameraId() {
@@ -64,30 +50,34 @@ public class ImageMetadata {
     return imageTime;
   }
 
-  public ZonedDateTime getCreatedAt() {
-    return createdAt;
-  }
-
-  public ZonedDateTime getUpdatedAt() {
-    return updatedAt;
-  }
-
   public boolean fileExists() {
     return fileExists;
   }
 
   @Override
-  public String toString() {
-    return "ImageMetadata{"
-        + "id=" + id
-        + ", cameraId=" + cameraId
-        + ", entryTime=" + entryTime
-        + ", exitTime=" + exitTime
-        + ", imageTime=" + imageTime
-        + ", createdAt=" + createdAt
-        + ", updatedAt=" + updatedAt
-        + ", fileExists=" + fileExists
-        + '}';
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ImageMetadata)) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+    ImageMetadata that = (ImageMetadata) o;
+    return fileExists == that.fileExists &&
+        Objects.equals(getCameraId(), that.getCameraId()) &&
+        Objects.equals(getEntryTime(), that.getEntryTime()) &&
+        Objects.equals(getExitTime(), that.getExitTime()) &&
+        Objects.equals(getImageTime(), that.getImageTime());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects
+        .hash(super.hashCode(), getCameraId(), getEntryTime(), getExitTime(), getImageTime(),
+              fileExists);
   }
 
   public static final class Builder {
@@ -115,8 +105,8 @@ public class ImageMetadata {
           .withEntryTime(metadata.entryTime)
           .withExitTime(metadata.exitTime)
           .withImageTime(metadata.imageTime)
-          .withCreatedAt(metadata.createdAt)
-          .withUpdatedAt(metadata.updatedAt)
+          .withCreatedAt(metadata.getCreatedDate())
+          .withUpdatedAt(metadata.getLastModifiedDate())
           .withFileExists(metadata.fileExists);
     }
 

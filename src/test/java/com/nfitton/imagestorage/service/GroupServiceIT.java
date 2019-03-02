@@ -10,6 +10,7 @@ import com.nfitton.imagestorage.entity.UserGroup;
 import com.nfitton.imagestorage.mapper.AccountMapper;
 import com.nfitton.imagestorage.mapper.CameraMapper;
 import com.nfitton.imagestorage.model.GroupData;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -24,7 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ActiveProfiles({"local", "h2"})
+@ActiveProfiles( {"local", "h2"})
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = ImageStorageApplication.class)
 public class GroupServiceIT {
@@ -52,7 +53,8 @@ public class GroupServiceIT {
    */
   private static GroupData createGroup(UUID ownerId) {
     return GroupData.Builder.newBuilder()
-        .withGroup(new Group(null, ownerId, "Test Group " + UUID.randomUUID().toString())).build();
+        .withGroup(new Group(null, ownerId, "Test Group " + UUID.randomUUID().toString(),
+                             null, null)).build();
   }
 
   @Test

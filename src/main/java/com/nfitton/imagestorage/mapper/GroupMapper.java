@@ -4,6 +4,7 @@ import com.nfitton.imagestorage.api.GroupV1;
 import com.nfitton.imagestorage.entity.Group;
 import com.nfitton.imagestorage.model.GroupData;
 import com.nfitton.imagestorage.util.ValidationUtil;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import javax.validation.Validator;
 
@@ -12,7 +13,7 @@ public class GroupMapper {
   public static GroupData newGroup(GroupV1 v1, UUID owner, Validator validator) {
     ValidationUtil.validate(v1, validator);
 
-    Group newGroup = new Group(null, owner, v1.getName());
+    Group newGroup = new Group(null, owner, v1.getName(), ZonedDateTime.now(), ZonedDateTime.now());
     return GroupData.Builder
         .newBuilder()
         .withGroup(newGroup)

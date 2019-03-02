@@ -15,6 +15,7 @@ import com.nfitton.imagestorage.service.CameraService;
 import com.nfitton.imagestorage.service.GroupService;
 import com.nfitton.imagestorage.service.UserService;
 import com.nfitton.imagestorage.util.ExceptionUtil;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -84,7 +85,7 @@ public class DatabaseGroupService implements GroupService {
           } else if (!tuple2.getT2()) {
             throw ExceptionUtil.userNotFound();
           }
-          return new UserGroup(null, userId, groupId);
+          return new UserGroup(null, userId, groupId, null, null);
         })
         .flatMap(this::saveUserGroup)
         .map(UserGroup::getGroupId)
@@ -135,7 +136,8 @@ public class DatabaseGroupService implements GroupService {
             throw new NotFoundException("User not in group");
           }
           Group differentOwner = new Group(
-              data.getGroup().getId(), newOwnerId, data.getGroup().getName());
+              data.getGroup().getId(), newOwnerId, data.getGroup().getName(), ZonedDateTime.now(),
+              ZonedDateTime.now());
           return saveGroup(differentOwner);
         })
         .flatMap(updatedGroup -> findGroupDataById(updatedGroup.getId()));
@@ -160,7 +162,7 @@ public class DatabaseGroupService implements GroupService {
           if (!tuple2.getT1().getUserIds().contains(requestorId)) {
             throw new ForbiddenException("User is not part of given group");
           }
-          GroupCamera newCamera = new GroupCamera(null, groupId, cameraId);
+          GroupCamera newCamera = new GroupCamera(null, groupId, cameraId, null, null);
           return saveGroupCamera(newCamera);
         })
         .map(GroupCamera::getGroupId)

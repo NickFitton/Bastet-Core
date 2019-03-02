@@ -13,17 +13,11 @@ import javax.persistence.MappedSuperclass;
 import org.hibernate.annotations.GenericGenerator;
 
 @MappedSuperclass
-public class Account {
+public class Account extends BaseEntity {
 
-  @Id
-  @GeneratedValue(generator = "UUID")
-  @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-  private UUID id;
   private String password;
   @Enumerated(value = STRING)
   private AccountType type;
-  private ZonedDateTime createdAt;
-  private ZonedDateTime updatedAt;
   private ZonedDateTime lastActive;
 
   Account(
@@ -33,11 +27,9 @@ public class Account {
       ZonedDateTime createdAt,
       ZonedDateTime updatedAt,
       ZonedDateTime lastActive) {
-    this.id = id;
+    super(id, createdAt, updatedAt);
     this.password = password;
     this.type = type;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
     this.lastActive = lastActive;
   }
 
@@ -52,10 +44,6 @@ public class Account {
     this.lastActive = now();
   }
 
-  public UUID getId() {
-    return id;
-  }
-
   public String getPassword() {
     return password;
   }
@@ -64,31 +52,29 @@ public class Account {
     return type;
   }
 
-  public ZonedDateTime getCreatedAt() {
-    return createdAt;
-  }
-
-  public ZonedDateTime getUpdatedAt() {
-    return updatedAt;
-  }
-
   public ZonedDateTime getLastActive() {
     return lastActive;
   }
-
 
   @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof Account)) {
       return false;
     }
-    Account that = (Account) o;
-    return Objects.equals(id, that.id) && Objects.equals(password, that.password)
-        && Objects.equals(createdAt, that.createdAt)
-        && Objects.equals(updatedAt, that.updatedAt)
-        && Objects.equals(lastActive, that.lastActive);
+    if (!super.equals(o)) {
+      return false;
+    }
+    Account account = (Account) o;
+    return Objects.equals(getPassword(), account.getPassword()) &&
+        getType() == account.getType() &&
+        Objects.equals(getLastActive(), account.getLastActive());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), getPassword(), getType(), getLastActive());
   }
 }
