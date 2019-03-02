@@ -1,7 +1,6 @@
 package com.nfitton.imagestorage.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.nfitton.imagestorage.ImageStorageApplication;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.api.UserV1;
 import com.nfitton.imagestorage.api.UserV1.Builder;
@@ -9,27 +8,17 @@ import com.nfitton.imagestorage.util.StringUtil;
 import com.nfitton.imagestorage.util.UserUtil;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 
-@ActiveProfiles( {"test", "local"})
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = ImageStorageApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-public class UserHandlerIT extends BaseTestIT {
+public class UserHandlerIT extends BaseClientIT {
 
   private static Stream<Arguments> invalidUsers() {
     return Stream.of(
@@ -82,15 +71,15 @@ public class UserHandlerIT extends BaseTestIT {
   @Test
   public void getUsersIsSuccessful() {
     WebClient client = getWebClient();
-    String sessionToken = getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
-    ClientResponse response = UserUtil.getUsers(client, sessionToken);
+    ClientResponse response = UserUtil.getUsers(client);
 
     Assertions.assertNotNull(response);
     Assertions.assertEquals(HttpStatus.OK, response.statusCode());
     OutgoingDataV1 retrievedData = response.bodyToMono(OutgoingDataV1.class).block();
 
     Assertions.assertNotNull(retrievedData);
-    List<UUID> users = retrievedData.parseData(new TypeReference<List<UUID>>() {}, objectMapper);
+    List<UUID> users = retrievedData.parseData(new TypeReference<List<UUID>>() {
+    }, objectMapper);
 
     Assertions.assertNotNull(users);
     Assertions.assertTrue(users.size() > 1);
@@ -104,7 +93,8 @@ public class UserHandlerIT extends BaseTestIT {
     WebClient client = getWebClient();
     String sessionToken = getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
 
-    OutgoingDataV1 dataV1 = UserUtil.createUser(client, UserUtil.generateUser().build()).bodyToMono(OutgoingDataV1.class).block();
+    OutgoingDataV1 dataV1 = UserUtil.createUser(client, UserUtil.generateUser().build())
+        .bodyToMono(OutgoingDataV1.class).block();
     UserV1 savedUser = dataV1.parseData(UserV1.class, objectMapper);
     ClientResponse response = UserUtil.getUser(client, sessionToken, savedUser.getId());
 
@@ -127,8 +117,10 @@ public class UserHandlerIT extends BaseTestIT {
     String sessionToken = getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
 
     UserV1 newUserData = UserUtil.generateUser().build();
-    OutgoingDataV1 dataV1 = UserUtil.createUser(client, newUserData).bodyToMono(OutgoingDataV1.class).block();
-    String newUserSessionToken = getSessionToken(newUserData.getEmail(), newUserData.getPassword(), objectMapper);
+    OutgoingDataV1 dataV1 = UserUtil.createUser(client, newUserData)
+        .bodyToMono(OutgoingDataV1.class).block();
+    String newUserSessionToken = getSessionToken(
+        newUserData.getEmail(), newUserData.getPassword(), objectMapper);
     UserV1 savedUser = dataV1.parseData(UserV1.class, objectMapper);
     ClientResponse response = UserUtil.deleteUser(client, newUserSessionToken, savedUser.getId());
 
@@ -139,11 +131,6 @@ public class UserHandlerIT extends BaseTestIT {
 
     Assertions.assertNotNull(response);
     Assertions.assertEquals(HttpStatus.NOT_FOUND, response.statusCode());
-  }
-
-  @Test
-  public void getGroupsForUserIsSuccessful() {
-
   }
 
   @Test
@@ -162,6 +149,9 @@ public class UserHandlerIT extends BaseTestIT {
     Assertions.assertEquals(HttpStatus.CONFLICT, response.statusCode());
   }
 
+  /**
+   * Tests invalid users should fail to be created.
+   */
   @ParameterizedTest
   @MethodSource("invalidUsers")
   public void invalidUserFails(Builder userBuilder) {

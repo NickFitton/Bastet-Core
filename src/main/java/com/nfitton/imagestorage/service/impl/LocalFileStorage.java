@@ -29,7 +29,7 @@ public class LocalFileStorage implements FileUploadService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalFileStorage.class);
 
-  private static String path;
+  private String path;
 
   public LocalFileStorage(PathConfiguration configuration) {
     path = configuration.getLocation();
@@ -41,25 +41,6 @@ public class LocalFileStorage implements FileUploadService {
     } catch (IOException e) {
       LOGGER.error("Failed to close resource", e);
     }
-  }
-
-  /**
-   * Delete a file at {@code path}.
-   *
-   * @param path Path to be deleted
-   * @return {@link Mono} completed when file is deleted.
-   */
-  private static Mono<Void> delete(Path path) {
-    return Mono.defer(() -> {
-      try {
-        LOGGER.trace("Deleting file=[{}]", path);
-        Files.deleteIfExists(path);
-        return Mono.just(true);
-      } catch (IOException e) {
-        LOGGER.error("Failed to delete path {} with error {}", path, e);
-        return Mono.error(e);
-      }
-    }).then();
   }
 
   @Override

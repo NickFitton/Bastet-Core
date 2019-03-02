@@ -28,10 +28,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 
-@ActiveProfiles( {"test", "local"})
+@ActiveProfiles({"test", "local"})
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = ImageStorageApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-public class BaseTestIT {
+@SpringBootTest(
+    classes = ImageStorageApplication.class,
+    webEnvironment = WebEnvironment.RANDOM_PORT)
+public class BaseClientIT {
 
   private static final String BASE_URL = "http://localhost";
   User standardUser;
@@ -61,8 +63,7 @@ public class BaseTestIT {
         .registerModule(new Jdk8Module())
         .registerModule(new JavaTimeModule());
     ZonedDateTime now = ZonedDateTime.now();
-//    userPassword = randomString(8);
-    userPassword = "123456";
+    userPassword = randomString(8);
     standardUser = User.Builder.newBuilder()
         .withFirstName("john")
         .withLastName("doe")

@@ -26,7 +26,7 @@ public class GroupCamera {
   }
 
   GroupCamera() {
-    
+
   }
 
   public UUID getId() {
@@ -50,9 +50,9 @@ public class GroupCamera {
       return false;
     }
     GroupCamera that = (GroupCamera) o;
-    return Objects.equals(id, that.id) &&
-        Objects.equals(groupId, that.groupId) &&
-        Objects.equals(cameraId, that.cameraId);
+    return Objects.equals(id, that.id)
+        && Objects.equals(groupId, that.groupId)
+        && Objects.equals(cameraId, that.cameraId);
   }
 
   @Override

@@ -10,11 +10,16 @@ buildscript {
     }
 }
 
+plugins {
+    id "org.sonarqube" version "2.7"
+}
+
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'checkstyle'
+apply plugin: 'jacoco'
 
 group = 'com.nfitton'
 version = "${version}"
@@ -61,4 +66,8 @@ dependencies {
     }
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'io.projectreactor:reactor-test'
+}
+
+test {
+    useJUnitPlatform()
 }

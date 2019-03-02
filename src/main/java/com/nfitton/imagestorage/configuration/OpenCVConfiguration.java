@@ -17,7 +17,7 @@ import reactor.util.function.Tuples;
 @Configuration
 public class OpenCVConfiguration {
 
-  private final Logger LOGGER = LoggerFactory.getLogger(OpenCVConfiguration.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(OpenCVConfiguration.class);
 
   @Value(value = "classpath:haar/haarcascade_eye.xml")
   private Resource eye;
@@ -92,6 +92,11 @@ public class OpenCVConfiguration {
     return Tuples.of(upperBody, EntityType.UPPER_BODY);
   }
 
+  /**
+   * Returns a list of all the haar cascades the system can run.
+   *
+   * @return a Flux stream of haar cascades and the type of entity they detect
+   */
   public Flux<Tuple2<CascadeClassifier, EntityType>> getAllCascades() {
     return Flux.fromStream(Stream.of(
         getEye(),

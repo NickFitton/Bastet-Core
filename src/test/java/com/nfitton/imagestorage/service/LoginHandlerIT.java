@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 
-public class LoginHandlerIT extends BaseTestIT {
+public class LoginHandlerIT extends BaseClientIT {
 
   @Test
   public void validUserLoginIsSuccessful() {
@@ -92,7 +92,7 @@ public class LoginHandlerIT extends BaseTestIT {
   }
 
   @Test
-  public void MalformedHeaderIsInvalid() {
+  public void malformedHeaderIsInvalid() {
     WebClient client = getWebClient();
 
     ClientResponse response = client

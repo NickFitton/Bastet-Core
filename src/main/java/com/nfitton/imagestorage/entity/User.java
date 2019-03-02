@@ -1,6 +1,7 @@
 package com.nfitton.imagestorage.entity;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -44,6 +45,28 @@ public class User extends Account {
     return email;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+    User user = (User) o;
+    return Objects.equals(firstName, user.firstName)
+        && Objects.equals(lastName, user.lastName)
+        && Objects.equals(email, user.email);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(firstName, lastName, email);
+  }
+
   public static final class Builder {
 
     private UUID id;
@@ -62,6 +85,7 @@ public class User extends Account {
     public static Builder newBuilder() {
       return new Builder();
     }
+
     public Builder withId(UUID val) {
       id = val;
       return this;
@@ -108,7 +132,8 @@ public class User extends Account {
     }
 
     public User build() {
-      return new User(id, firstName, lastName, email, password, type, createdAt, updatedAt, lastActive);
+      return new User(
+          id, firstName, lastName, email, password, type, createdAt, updatedAt, lastActive);
     }
   }
 }

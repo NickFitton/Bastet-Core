@@ -50,9 +50,9 @@ public class Group {
       return false;
     }
     Group group = (Group) o;
-    return Objects.equals(id, group.id) &&
-        Objects.equals(ownerId, group.ownerId) &&
-        Objects.equals(name, group.name);
+    return Objects.equals(id, group.id)
+        && Objects.equals(ownerId, group.ownerId)
+        && Objects.equals(name, group.name);
   }
 
   @Override

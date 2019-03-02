@@ -7,7 +7,6 @@ import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.component.AnalysisQueueMessage;
 import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.exception.NotFoundException;
-import com.nfitton.imagestorage.exception.VerificationException;
 import com.nfitton.imagestorage.mapper.ImageMetadataMapper;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.CameraService;
@@ -38,6 +37,7 @@ import reactor.core.publisher.Mono;
 @Component
 public class MotionHandlerV1 {
 
+  private static final String MOTION_ID = "motionId";
   private static final Logger LOGGER = LoggerFactory.getLogger(MotionHandlerV1.class);
 
   private final AuthenticationService authenticationService;
@@ -76,8 +76,15 @@ public class MotionHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Attaches an image to a motion object for the server to analyse.
+   *
+   * @param request the {@link ServerRequest} containing the image, motion id and camera
+   *     credentials
+   * @return HttpStatus.ACCEPTED on success
+   */
   public Mono<ServerResponse> patchMotionPicture(ServerRequest request) {
-    UUID imageId = UUID.fromString(request.pathVariable("motionId"));
+    UUID imageId = UUID.fromString(request.pathVariable(MOTION_ID));
     return Mono.zip(
         parseAuthenticationToken(request, authenticationService),
         fileMetadataService.findById(imageId))
@@ -105,6 +112,12 @@ public class MotionHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Returns data related to the given cameras.
+   *
+   * @param request the {@link ServerRequest} containing the user credentials and cameraId
+   * @return HttpStatus.OK with a list of {@link ImageMetadataV1}
+   */
   public Mono<ServerResponse> getMotion(ServerRequest request) {
     Stream<UUID> cameraIds = request.queryParam("cameras")
         .map(param -> Arrays.asList(param.split(",")))
@@ -131,12 +144,18 @@ public class MotionHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Returns image metadata related to the given motionId.
+   *
+   * @param request the {@link ServerRequest} containing the user credentials and cameraId
+   * @return HttpStatus.OK with a single {@link ImageMetadataV1}
+   */
   public Mono<ServerResponse> getMotionById(ServerRequest request) {
     return parseAuthenticationToken(request, authenticationService)
         .flatMap(userService::existsById)
         .flatMap(exists -> {
           if (exists) {
-            UUID motionId = RouterUtil.getUUIDParameter(request, "motionId");
+            UUID motionId = RouterUtil.getUuidParameter(request, MOTION_ID);
             return fileMetadataService.findById(motionId);
           } else {
             return Mono.error(ExceptionUtil.badCredentials());
@@ -147,8 +166,14 @@ public class MotionHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Returns the image related to the given motionId.
+   *
+   * @param request the {@link ServerRequest} containing the motionId and user credentials
+   * @return HttpStatus.OK with an image
+   */
   public Mono<ServerResponse> getMotionImageById(ServerRequest request) {
-    UUID motionId = RouterUtil.getUUIDParameter(request, "motionId");
+    UUID motionId = RouterUtil.getUuidParameter(request, MOTION_ID);
 
     Flux<byte[]> image = parseAuthenticationToken(request, authenticationService)
         .flatMap(userService::existsById)

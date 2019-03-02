@@ -24,7 +24,7 @@ public class RouterUtil {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RouterUtil.class);
 
-  public static UUID getUUIDParameter(ServerRequest request, String name) {
+  public static UUID getUuidParameter(ServerRequest request, String name) {
     try {
       return UUID.fromString(request.pathVariable(name));
     } catch (IllegalArgumentException e) {
@@ -33,6 +33,13 @@ public class RouterUtil {
     }
   }
 
+  /**
+   * Validates an authentication token with a service given that the authentication token exists.
+   *
+   * @param request the incoming request
+   * @param service the service to authenticate with
+   * @return the UUID of the authenticated user
+   */
   public static Mono<UUID> parseAuthenticationToken(
       ServerRequest request,
       AuthenticationService service) {
@@ -44,7 +51,7 @@ public class RouterUtil {
 
     String token = authentication.get(0);
     String[] splitToken = token.split(" ");
-    if (!splitToken[0].toLowerCase().equals("token")) {
+    if (!splitToken[0].equalsIgnoreCase("token")) {
       return Mono.error(new BadRequestException(
           "Malformed authorization header, should follow format: 'Token {token}'"));
     }
@@ -53,6 +60,12 @@ public class RouterUtil {
 
   }
 
+  /**
+   * Handles errors thrown in the system with related statuses.
+   *
+   * @param e the thrown error
+   * @return a server response with a status related to the given error
+   */
   public static Mono<ServerResponse> handleErrors(Throwable e) {
     BodyBuilder status;
 

@@ -3,9 +3,7 @@ package com.nfitton.imagestorage.api;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.ZonedDateTime;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 public class ImageMetadataV1 {

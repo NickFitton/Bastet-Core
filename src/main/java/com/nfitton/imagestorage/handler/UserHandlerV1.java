@@ -1,7 +1,8 @@
 package com.nfitton.imagestorage.handler;
 
-import static com.nfitton.imagestorage.util.RouterUtil.getUUIDParameter;
+import static com.nfitton.imagestorage.util.RouterUtil.getUuidParameter;
 
+import com.nfitton.imagestorage.api.GroupV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.api.UserV1;
 import com.nfitton.imagestorage.entity.UserGroup;
@@ -26,6 +27,8 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class UserHandlerV1 {
+
+  private static final String USER_ID = "userId";
 
   private final PasswordEncoder encoder;
   private final UserService userService;
@@ -62,8 +65,15 @@ public class UserHandlerV1 {
         .flatMap(data -> ServerResponse.ok().syncBody(data));
   }
 
+  /**
+   * Returns a user by the given userId.
+   *
+   * @param request the {@link ServerRequest} containing the userId and requesting users
+   *     credentials
+   * @return HttpStatus.OK and {@link UserV1} related to the given userId
+   */
   public Mono<ServerResponse> getUser(ServerRequest request) {
-    UUID userId = getUUIDParameter(request, "userId");
+    UUID userId = getUuidParameter(request, USER_ID);
 
     return RouterUtil
         .parseAuthenticationToken(request, authenticationService)
@@ -83,8 +93,15 @@ public class UserHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Removes a user from the platform if the user to delete is the requester.
+   *
+   * @param request the {@link ServerRequest} containing the userId and requesting users
+   *     credentials
+   * @return HttpStatus.NO_CONTENT on success
+   */
   public Mono<ServerResponse> deleteUser(ServerRequest request) {
-    UUID userId = getUUIDParameter(request, "userId");
+    UUID userId = getUuidParameter(request, USER_ID);
 
     return RouterUtil
         .parseAuthenticationToken(request, authenticationService)
@@ -110,8 +127,15 @@ public class UserHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Returns a list of groups the given user is associated with.
+   *
+   * @param request the {@link ServerRequest} containing the userId and requesting users
+   *     credentials
+   * @return a Flux stream of {@link GroupV1} related to the given userId
+   */
   public Mono<ServerResponse> getGroupsForUser(ServerRequest request) {
-    UUID userId = getUUIDParameter(request, "userId");
+    UUID userId = getUuidParameter(request, USER_ID);
 
     return RouterUtil
         .parseAuthenticationToken(request, authenticationService)

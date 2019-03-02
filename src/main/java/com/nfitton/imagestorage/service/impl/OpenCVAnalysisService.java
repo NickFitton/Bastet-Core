@@ -40,7 +40,7 @@ public class OpenCVAnalysisService implements AnalysisService {
       absFaceSize = minSize;
     }
 
-//    return Flux.concat(haarAnalysis(grayImage, absFaceSize), hogAnalysis(grayImage));
+    // return Flux.concat(haarAnalysis(grayImage, absFaceSize), hogAnalysis(grayImage));
     return haarAnalysis(grayImage, absFaceSize);
   }
 

@@ -1,24 +1,15 @@
 package com.nfitton.imagestorage.service;
 
-import com.nfitton.imagestorage.ImageStorageApplication;
 import com.nfitton.imagestorage.api.CameraV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.util.CameraUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 
-@ActiveProfiles( {"test", "local"})
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = ImageStorageApplication.class, webEnvironment = WebEnvironment.RANDOM_PORT)
-public class CameraHandlerIT extends BaseTestIT {
+public class CameraHandlerIT extends BaseClientIT {
 
   @Test
   public void creatingValidCameraIsSuccessful() {

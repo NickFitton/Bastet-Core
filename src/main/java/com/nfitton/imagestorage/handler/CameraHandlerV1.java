@@ -30,7 +30,6 @@ public class CameraHandlerV1 {
   private final Validator validator;
   private final PasswordEncoder encoder;
   private final CameraService cameraService;
-  private final UserService userService;
   private final AuthenticationService authenticationService;
 
   @Autowired
@@ -38,12 +37,10 @@ public class CameraHandlerV1 {
       Validator validator,
       PasswordEncoder encoder,
       CameraService cameraService,
-      UserService userService,
       AuthenticationService authenticationService) {
     this.validator = validator;
     this.encoder = encoder;
     this.cameraService = cameraService;
-    this.userService = userService;
     this.authenticationService = authenticationService;
   }
 
@@ -55,6 +52,11 @@ public class CameraHandlerV1 {
     }
   }
 
+  /**
+   * Create a new camera given a password, used by the camera when it starts up.
+   * @param request the {@link ServerRequest} containing the cameras password
+   * @return HttpStatus.CREATED and the created {@link CameraV1} on success
+   */
   public Mono<ServerResponse> postCamera(ServerRequest request) {
     LOGGER.debug("Creating camera");
     return request.bodyToMono(CameraV1.class)
@@ -79,6 +81,11 @@ public class CameraHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Retrieves data about a camera if the requester owns the camera queried.
+   * @param request the {@link ServerRequest} containing the camera id and user credentials
+   * @return HttpStatus.OK and {@link CameraV1} on success
+   */
   public Mono<ServerResponse> getCamera(ServerRequest request) {
     UUID cameraId = getCameraId(request);
 
@@ -95,6 +102,11 @@ public class CameraHandlerV1 {
         .onErrorResume(RouterUtil::handleErrors);
   }
 
+  /**
+   * Assigns a camera to the requesting user if the camera exists and hasn't already been assigned.
+   * @param request the {@link ServerRequest} containing the camera id and user credentials
+   * @return HttpStatus.ACCEPTED on success
+   */
   public Mono<ServerResponse> claimCamera(ServerRequest request) {
     UUID cameraId = getCameraId(request);
 
@@ -105,7 +117,7 @@ public class CameraHandlerV1 {
         cameraName,
         RouterUtil.parseAuthenticationToken(request, authenticationService))
         .flatMap(tuple2 -> {
-          LOGGER.debug("Camera {} updated by user", cameraId, tuple2.getT2());
+          LOGGER.debug("Camera {} updated by user {}", cameraId, tuple2.getT2());
           return cameraService.updateCamera(cameraId, tuple2.getT2(), tuple2.getT1());
         })
         .flatMap(camera -> ServerResponse.accepted().build());

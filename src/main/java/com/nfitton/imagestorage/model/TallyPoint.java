@@ -3,6 +3,7 @@ package com.nfitton.imagestorage.model;
 import java.time.ZonedDateTime;
 
 public class TallyPoint {
+
   private ZonedDateTime time;
   private long count;
 

@@ -1,7 +1,6 @@
 package com.nfitton.imagestorage.service;
 
 import com.nfitton.imagestorage.entity.Group;
-import com.nfitton.imagestorage.entity.GroupCamera;
 import com.nfitton.imagestorage.entity.UserGroup;
 import com.nfitton.imagestorage.model.GroupData;
 import java.util.UUID;

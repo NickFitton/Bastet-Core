@@ -24,7 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-@ActiveProfiles( {"local", "h2"})
+@ActiveProfiles({"local", "h2"})
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = ImageStorageApplication.class)
 public class GroupServiceIT {
@@ -44,13 +44,19 @@ public class GroupServiceIT {
   @Autowired
   PasswordEncoder encoder;
 
+  /**
+   * Returns a group to save with the given owner id.
+   *
+   * @param ownerId the owner of the group
+   * @return a build group to be saved
+   */
   private static GroupData createGroup(UUID ownerId) {
     return GroupData.Builder.newBuilder()
         .withGroup(new Group(null, ownerId, "Test Group " + UUID.randomUUID().toString())).build();
   }
 
   @Test
-  public void aUserCanCreateAGroup() {
+  public void userCanCreateGroup() {
     User userA = generateUser();
 
     User savedUserA = userService.save(userA).block();
@@ -135,7 +141,7 @@ public class GroupServiceIT {
   }
 
   @Test
-  public void aUserCanRetrieveAListOfGroupsTheyAreIn() {
+  public void userCanGetTheirGroups() {
     User userA = generateUser();
 
     User savedUserA = userService.save(userA).block();

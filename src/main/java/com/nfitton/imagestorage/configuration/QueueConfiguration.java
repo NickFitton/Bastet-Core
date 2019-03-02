@@ -14,7 +14,7 @@ import org.springframework.jms.support.converter.MessageType;
 public class QueueConfiguration {
 
   @Bean
-  public JmsListenerContainerFactory<?> jmsFactory(
+  public JmsListenerContainerFactory jmsFactory(
       ConnectionFactory connectionFactory,
       DefaultJmsListenerContainerFactoryConfigurer configurer) {
     DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();

@@ -7,10 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import javax.validation.constraints.Email;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
@@ -20,18 +17,18 @@ public class UserV1 {
   private UUID id;
   @NotBlank(message = "A first name must be given")
   @Pattern(regexp = "[A-Za-z]*")
-  @Size(min=2, max=32)
+  @Size(min = 2, max = 32)
   private String firstName;
   @NotBlank(message = "A last name must be given")
   @Pattern(regexp = "[A-Za-z]*")
-  @Size(min=2, max=32)
+  @Size(min = 2, max = 32)
   private String lastName;
   @NotBlank(message = "An email must be given")
   @Email
-  @Size(min=4, max=64)
+  @Size(min = 4, max = 64)
   private String email;
   @NotBlank(message = "A password must be given")
-  @Size(min=6, max=64)
+  @Size(min = 6, max = 64)
   private String password;
   private ZonedDateTime createdAt;
   private ZonedDateTime updatedAt;

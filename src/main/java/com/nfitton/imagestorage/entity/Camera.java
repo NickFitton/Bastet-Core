@@ -3,6 +3,7 @@ package com.nfitton.imagestorage.entity;
 import static com.nfitton.imagestorage.entity.AccountType.CAMERA;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.Entity;
 
@@ -35,6 +36,27 @@ public class Camera extends Account {
 
   public String getName() {
     return name;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+    Camera camera = (Camera) o;
+    return Objects.equals(ownerId, camera.ownerId)
+        && Objects.equals(name, camera.name);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(ownerId, name);
   }
 
   public static final class Builder {

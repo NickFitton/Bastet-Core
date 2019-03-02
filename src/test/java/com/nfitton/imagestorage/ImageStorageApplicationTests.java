@@ -8,7 +8,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles( {"local", "h2"})
+@ActiveProfiles({"local", "h2"})
 public class ImageStorageApplicationTests {
 
   @Test
