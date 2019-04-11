@@ -27,6 +27,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import reactor.core.publisher.Mono;
 
 /**
  * Regards to jaysridhar for the tutorial on AES and RSA encryption.
@@ -61,17 +62,22 @@ public class EncryptionUtil {
     }
   }
 
-  public static void doGenkey(String fileBase)
-      throws java.security.NoSuchAlgorithmException, java.io.IOException {
-    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-    kpg.initialize(2048);
-    KeyPair kp = kpg.generateKeyPair();
-    try (FileOutputStream out = new FileOutputStream(fileBase + ".key")) {
-      out.write(kp.getPrivate().getEncoded());
-    }
+  public static Mono<KeyPair> generateRsaKeys(String fileBase) {
+    return Mono.fromCallable(() -> {
+      KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+      kpg.initialize(2048);
+      return kpg.generateKeyPair();
+    }).doOnNext(keyPair -> {
+      saveKey(keyPair.getPrivate().getEncoded(), fileBase + ".key");
+      saveKey(keyPair.getPublic().getEncoded(), fileBase + ".pub");
+    });
+  }
 
-    try (FileOutputStream out = new FileOutputStream(fileBase + ".pub")) {
-      out.write(kp.getPublic().getEncoded());
+  public static void saveKey(byte[] encodedKey, String location) {
+    try (FileOutputStream out = new FileOutputStream(location)) {
+      out.write(encodedKey);
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 
@@ -90,7 +96,7 @@ public class EncryptionUtil {
   private static void encrypt(String pvtKeyFile, String inputFile, String outputFile)
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException,
       InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-    PrivateKey pvt = getPrivateKey(pvtKeyFile);
+    PrivateKey pvt = loadPrivateKey(pvtKeyFile);
 
     Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
     cipher.init(Cipher.ENCRYPT_MODE, pvt);
@@ -116,7 +122,7 @@ public class EncryptionUtil {
   private static void decrypt(String pubKeyFile, String inputFile, String outputFile)
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException,
       InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-    PublicKey pub = getPublicKey(pubKeyFile);
+    PublicKey pub = loadPublicKey(pubKeyFile);
 
     Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
     cipher.init(Cipher.DECRYPT_MODE, pub);
@@ -146,7 +152,7 @@ public class EncryptionUtil {
       InvalidKeyException, IllegalBlockSizeException, BadPaddingException,
       InvalidAlgorithmParameterException {
     SecureRandom sRandom = new SecureRandom();
-    PrivateKey pvt = getPrivateKey(pvtKeyFile);
+    PrivateKey pvt = loadPrivateKey(pvtKeyFile);
 
     KeyGenerator kgen = KeyGenerator.getInstance("AES");
     kgen.init(128);
@@ -196,7 +202,7 @@ public class EncryptionUtil {
 
   private static void decryptWithAes(String pubKeyFile, String inputFile, String outputFile)
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
-    PublicKey pub = getPublicKey(pubKeyFile);
+    PublicKey pub = loadPublicKey(pubKeyFile);
 
     try (FileInputStream in = new FileInputStream(inputFile)) {
       SecretKeySpec skey;
@@ -220,7 +226,7 @@ public class EncryptionUtil {
     }
   }
 
-  public static PublicKey getPublicKey(String pubKeyFile)
+  public static PublicKey loadPublicKey(String pubKeyFile)
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
     byte[] bytes = Files.readAllBytes(Paths.get(pubKeyFile));
     X509EncodedKeySpec ks = new X509EncodedKeySpec(bytes);
@@ -228,7 +234,7 @@ public class EncryptionUtil {
     return kf.generatePublic(ks);
   }
 
-  public static PrivateKey getPrivateKey(String pvtKeyFile)
+  public static PrivateKey loadPrivateKey(String pvtKeyFile)
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
     byte[] bytes = Files.readAllBytes(Paths.get(pvtKeyFile));
     PKCS8EncodedKeySpec ks = new PKCS8EncodedKeySpec(bytes);
