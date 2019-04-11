@@ -1,20 +1,28 @@
 package com.nfitton.imagestorage.service.impl;
 
 import com.nfitton.imagestorage.configuration.PathConfiguration;
+import com.nfitton.imagestorage.exception.EncryptionException;
 import com.nfitton.imagestorage.service.FileUploadService;
+import com.nfitton.imagestorage.util.EncryptionUtil;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.CompletionHandler;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -30,9 +38,11 @@ public class LocalFileStorage implements FileUploadService {
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalFileStorage.class);
 
   private String path;
+  private KeyPair rsaKeys;
 
-  public LocalFileStorage(PathConfiguration configuration) {
+  public LocalFileStorage(PathConfiguration configuration) throws NoSuchAlgorithmException {
     path = configuration.getLocation();
+    rsaKeys = EncryptionUtil.generateRsaKeys(path);
   }
 
   private static void close(Closeable closeable) {
@@ -45,14 +55,41 @@ public class LocalFileStorage implements FileUploadService {
 
   @Override
   public Mono<String> uploadFile(FilePart file, UUID imageId) {
-    String imagePath = path + imageId + ".jpg";
-
-    return file.transferTo(new File(imagePath)).then(Mono.just(imagePath));
+    String imagePath = getTempFilePath(imageId) + ".jpg";
+    return file.transferTo(new File(imagePath))
+        .then(Mono.fromCallable(() -> {
+          // Encrypt saved file
+          File tempFile = new File(imagePath);
+          long fileSize = tempFile.getTotalSpace();
+          try {
+//            if (fileSize < 256) {
+//              EncryptionUtil
+//                  .doEncrypt(rsaKeys.getPrivate(), imagePath, getEncryptFilePath(imageId));
+//            } else {
+            EncryptionUtil
+                .doEncryptRSAWithAES(
+                    rsaKeys.getPrivate(), imagePath, getEncryptFilePath(imageId));
+//            }
+          } catch (NoSuchAlgorithmException | IOException | NoSuchPaddingException | InvalidKeyException
+              | BadPaddingException | IllegalBlockSizeException | InvalidAlgorithmParameterException e) {
+            throw new EncryptionException("Failed to encrypt file", e);
+          }
+          return imagePath;
+        }));
   }
 
   @Override
   public Flux<byte[]> downloadFile(UUID imageId) {
-    Path filePath = Paths.get(path + imageId.toString() + ".jpg");
+    try {
+      EncryptionUtil.doDecryptRSAWithAES(
+          rsaKeys.getPublic(), getEncryptFilePath(imageId) + ".enc",
+          getTempFilePath(imageId));
+    } catch (NoSuchAlgorithmException | IOException | NoSuchPaddingException | InvalidKeyException
+        | BadPaddingException | IllegalBlockSizeException | InvalidAlgorithmParameterException e) {
+      throw new EncryptionException("Failed to encrypt file", e);
+    }
+
+    Path filePath = Paths.get(getTempFilePath(imageId) + ".ver");
     ByteBuffer buffer = ByteBuffer.allocate(8192);
 
     return Flux.using(
@@ -107,5 +144,13 @@ public class LocalFileStorage implements FileUploadService {
           });
       return Mono.fromCompletionStage(future);
     });
+  }
+
+  private String getTempFilePath(UUID imageId) {
+    return "/tmp/destructive" + imageId;
+  }
+
+  private String getEncryptFilePath(UUID imageId) {
+    return path + imageId;
   }
 }

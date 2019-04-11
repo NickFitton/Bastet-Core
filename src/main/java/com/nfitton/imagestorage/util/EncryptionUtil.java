@@ -27,7 +27,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import reactor.core.publisher.Mono;
 
 /**
  * Regards to jaysridhar for the tutorial on AES and RSA encryption.
@@ -62,15 +61,13 @@ public class EncryptionUtil {
     }
   }
 
-  public static Mono<KeyPair> generateRsaKeys(String fileBase) {
-    return Mono.fromCallable(() -> {
-      KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-      kpg.initialize(2048);
-      return kpg.generateKeyPair();
-    }).doOnNext(keyPair -> {
-      saveKey(keyPair.getPrivate().getEncoded(), fileBase + ".key");
-      saveKey(keyPair.getPublic().getEncoded(), fileBase + ".pub");
-    });
+  public static KeyPair generateRsaKeys(String fileBase) throws NoSuchAlgorithmException {
+    KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+    kpg.initialize(2048);
+    KeyPair keyPair = kpg.generateKeyPair();
+    saveKey(keyPair.getPrivate().getEncoded(), fileBase + ".key");
+    saveKey(keyPair.getPublic().getEncoded(), fileBase + ".pub");
+    return keyPair;
   }
 
   public static void saveKey(byte[] encodedKey, String location) {
@@ -81,14 +78,14 @@ public class EncryptionUtil {
     }
   }
 
-  public static void doEncrypt(String pvtKeyFile, String inputFile)
-      throws NoSuchAlgorithmException, IOException, InvalidKeySpecException, NoSuchPaddingException,
-      InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
-    encrypt(pvtKeyFile, inputFile, inputFile);
-  }
-
   public static void doEncrypt(String pvtKeyFile, String inputFile, String outputFile)
       throws NoSuchAlgorithmException, IOException, InvalidKeySpecException, NoSuchPaddingException,
+      InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    encrypt(pvtKeyFile, inputFile, outputFile);
+  }
+
+  public static void doEncrypt(PrivateKey pvtKeyFile, String inputFile, String outputFile)
+      throws NoSuchAlgorithmException, IOException, NoSuchPaddingException,
       InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
     encrypt(pvtKeyFile, inputFile, outputFile);
   }
@@ -97,7 +94,12 @@ public class EncryptionUtil {
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException,
       InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
     PrivateKey pvt = loadPrivateKey(pvtKeyFile);
+    encrypt(pvt, inputFile, outputFile);
+  }
 
+  private static void encrypt(PrivateKey pvt, String inputFile, String outputFile)
+      throws IOException, NoSuchAlgorithmException, NoSuchPaddingException,
+      InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
     Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
     cipher.init(Cipher.ENCRYPT_MODE, pvt);
     processFile(cipher, inputFile, outputFile + ".enc");
@@ -129,15 +131,6 @@ public class EncryptionUtil {
     processFile(cipher, inputFile, outputFile + ".ver");
   }
 
-  public static void doEncryptRSAWithAES(String pvtKeyFile, String inputFile)
-      throws java.security.NoSuchAlgorithmException,
-      java.security.InvalidAlgorithmParameterException, java.security.InvalidKeyException,
-      java.security.spec.InvalidKeySpecException, javax.crypto.NoSuchPaddingException,
-      javax.crypto.BadPaddingException, javax.crypto.IllegalBlockSizeException,
-      java.io.IOException {
-    encryptWithAes(pvtKeyFile, inputFile, inputFile);
-  }
-
   public static void doEncryptRSAWithAES(String pvtKeyFile, String inputFile, String outputFile)
       throws java.security.NoSuchAlgorithmException,
       java.security.InvalidAlgorithmParameterException, java.security.InvalidKeyException,
@@ -147,12 +140,27 @@ public class EncryptionUtil {
     encryptWithAes(pvtKeyFile, inputFile, outputFile);
   }
 
+  public static void doEncryptRSAWithAES(PrivateKey pvtKeyFile, String inputFile, String outputFile)
+      throws java.security.NoSuchAlgorithmException,
+      java.security.InvalidAlgorithmParameterException, java.security.InvalidKeyException,
+      javax.crypto.NoSuchPaddingException, javax.crypto.BadPaddingException,
+      javax.crypto.IllegalBlockSizeException, java.io.IOException {
+    encryptWithAes(pvtKeyFile, inputFile, outputFile);
+  }
+
   private static void encryptWithAes(String pvtKeyFile, String inputFile, String outputFile)
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException,
       InvalidKeyException, IllegalBlockSizeException, BadPaddingException,
       InvalidAlgorithmParameterException {
-    SecureRandom sRandom = new SecureRandom();
     PrivateKey pvt = loadPrivateKey(pvtKeyFile);
+    encryptWithAes(pvt, inputFile, outputFile);
+  }
+
+  private static void encryptWithAes(PrivateKey pvt, String inputFile, String outputFile)
+      throws IOException, NoSuchAlgorithmException, NoSuchPaddingException,
+      InvalidKeyException, IllegalBlockSizeException, BadPaddingException,
+      InvalidAlgorithmParameterException {
+    SecureRandom sRandom = new SecureRandom();
 
     KeyGenerator kgen = KeyGenerator.getInstance("AES");
     kgen.init(128);
@@ -200,10 +208,25 @@ public class EncryptionUtil {
     decryptWithAes(pubKeyFile, inputFile, outputFile);
   }
 
+  public static void doDecryptRSAWithAES(PublicKey pubKeyFile, String inputFile, String outputFile)
+      throws java.security.NoSuchAlgorithmException,
+      java.security.InvalidAlgorithmParameterException,
+      java.security.InvalidKeyException,
+      javax.crypto.NoSuchPaddingException,
+      javax.crypto.BadPaddingException,
+      javax.crypto.IllegalBlockSizeException,
+      java.io.IOException {
+    decryptWithAes(pubKeyFile, inputFile, outputFile);
+  }
+
   private static void decryptWithAes(String pubKeyFile, String inputFile, String outputFile)
       throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
     PublicKey pub = loadPublicKey(pubKeyFile);
+    decryptWithAes(pub, inputFile, outputFile);
+  }
 
+  private static void decryptWithAes(PublicKey pub, String inputFile, String outputFile)
+      throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
     try (FileInputStream in = new FileInputStream(inputFile)) {
       SecretKeySpec skey;
       Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");

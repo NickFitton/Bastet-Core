@@ -76,12 +76,12 @@ class EncryptionUtilUnit {
   }
 
   @Test
-  void aesKeysCanBeGenerated() {
+  void aesKeysCanBeGenerated() throws NoSuchAlgorithmException {
     // GIVEN a file path
     String path = testsDir.getPath() + "/key_" + testId;
 
     // WHEN a key pair is generated
-    EncryptionUtil.generateRsaKeys(path).block();
+    EncryptionUtil.generateRsaKeys(path);
 
     // THEN the keys are saved to the given path
     String pvtKeyPath = path + ".key";
@@ -96,7 +96,7 @@ class EncryptionUtilUnit {
       BadPaddingException, InvalidKeySpecException, NoSuchPaddingException {
     // GIVEN an aes key pair exists and a file to encrypt exists
     String path = testsDir.getPath() + "/key_" + testId;
-    EncryptionUtil.generateRsaKeys(path).block();
+    EncryptionUtil.generateRsaKeys(path);
     String fileLocation = testFileA.getPath();
 
     // WHEN a file is encrypted
@@ -114,7 +114,7 @@ class EncryptionUtilUnit {
       BadPaddingException, InvalidKeySpecException, NoSuchPaddingException {
     // GIVEN an aes key pair exists and a file to encrypt exists and has been encrypted
     String path = testsDir.getPath() + "/key_" + testId;
-    EncryptionUtil.generateRsaKeys(path).block();
+    EncryptionUtil.generateRsaKeys(path);
     String fileLocation = testFileA.getPath();
     String encryptedFilePath = testsDir.getPath() + "/encrypted_" + testId;
     EncryptionUtil.doEncrypt(path + ".key", fileLocation, encryptedFilePath);
@@ -145,7 +145,7 @@ class EncryptionUtilUnit {
       InvalidAlgorithmParameterException {
     // GIVEN an aes key pair exists and a file to encrypt exists
     String path = testsDir.getPath() + "/key_" + testId;
-    EncryptionUtil.generateRsaKeys(path).block();
+    EncryptionUtil.generateRsaKeys(path);
     String fileLocation = testFileB.getPath();
 
     // WHEN a file is encrypted
@@ -168,7 +168,7 @@ class EncryptionUtilUnit {
       InvalidAlgorithmParameterException {
     // GIVEN an aes key pair exists and a file to encrypt exists and has been encrypted
     String path = testsDir.getPath() + "/key_" + testId;
-    EncryptionUtil.generateRsaKeys(path).block();
+    EncryptionUtil.generateRsaKeys(path);
     String fileLocation = testFileB.getPath();
     String encryptedFilePath = testsDir.getPath() + "/encrypted_" + testId;
     EncryptionUtil.doEncryptRSAWithAES(path + ".key", fileLocation, encryptedFilePath);
