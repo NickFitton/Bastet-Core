@@ -31,7 +31,7 @@ repositories {
 
 checkstyle {
     configFile = rootProject.file('checkstyle/checkstyle.xml')
-    // maxWarnings = 0
+    maxWarnings = 0
     checkstyleTest.enabled = true
 }
 
@@ -72,3 +72,10 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+task installGitHooks(type: Copy) {
+    from new File(rootProject.rootDir, 'pre-commit')
+    into { new File(rootProject.rootDir, '.git/hooks') }
+}
+
+build.dependsOn installGitHooks
