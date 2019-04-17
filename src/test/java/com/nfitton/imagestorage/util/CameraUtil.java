@@ -6,8 +6,6 @@ import com.nfitton.imagestorage.api.CameraV1;
 import com.nfitton.imagestorage.api.ImageMetadataV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
 import java.io.File;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;

@@ -12,19 +12,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.nfitton.imagestorage.api.CameraV1;
 import com.nfitton.imagestorage.api.ImageMetadataV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
-import com.nfitton.imagestorage.entity.EntityType;
-import com.nfitton.imagestorage.entity.ImageEntity;
-import com.nfitton.imagestorage.model.ImageData;
 import com.nfitton.imagestorage.util.CameraUtil;
 import java.io.File;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -69,7 +64,7 @@ class MotionHandlerIT extends BaseClientIT {
     // THEN upload is successful
     assertEquals(HttpStatus.ACCEPTED, response.statusCode());
   }
-  
+
   @Test
   void userWithAccessToCameraCanListMotion() {
     // GIVEN a camera is claimed and has posted motion data

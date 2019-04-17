@@ -1,17 +1,45 @@
 package com.nfitton.imagestorage.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.net.HttpHeaders;
 import com.nfitton.imagestorage.api.GroupV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.api.UserV1;
+import java.util.LinkedList;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 
 public class GroupUtil {
+
+  public static GroupV1 createAndPopulateGroup(
+      WebClient client,
+      String sessionToken,
+      ObjectMapper objectMapper, int extraMembers) {
+    GroupV1 newGroup = createGroup(client, sessionToken, objectMapper);
+
+    LinkedList<UUID> addedUserIds = new LinkedList<>();
+    for (int i = 0; i < extraMembers; i++) {
+      UserV1 user = UserUtil.createUser(client, objectMapper);
+      addedUserIds.add(user.getId());
+      ClientResponse response = GroupUtil
+          .addUserToGroup(client, sessionToken, newGroup.getId(), user);
+      assertEquals(HttpStatus.ACCEPTED, response.statusCode());
+    }
+
+    GroupV1 filledGroup = getGroup(client, sessionToken, newGroup.getId(), objectMapper);
+    assertNotNull(filledGroup);
+    assertEquals(extraMembers + 1, filledGroup.getUsers().size());
+    assertEquals(filledGroup.getId(), newGroup.getId());
+    assertTrue(filledGroup.getUsers().containsAll(addedUserIds));
+
+    return filledGroup;
+  }
 
   public static ClientResponse createGroup(
       WebClient client, String sessionToken, String groupName) {

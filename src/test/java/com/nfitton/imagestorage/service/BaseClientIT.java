@@ -14,7 +14,6 @@ import com.nfitton.imagestorage.repository.AccountRepository;
 import com.nfitton.imagestorage.repository.CameraRepository;
 import java.time.ZonedDateTime;
 import java.util.Base64;
-import java.util.Collection;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,7 +34,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @SpringBootTest(
     classes = ImageStorageApplication.class,
     webEnvironment = WebEnvironment.RANDOM_PORT)
-public class BaseClientIT {
+class BaseClientIT {
 
   private static final String BASE_URL = "http://localhost";
   User standardUser;
@@ -51,6 +50,11 @@ public class BaseClientIT {
   private AccountRepository accountRepository;
   @Autowired
   private CameraRepository cameraRepository;
+
+  static String getLoginHeader(String email, String password) {
+    return "Basic " + new String(
+        Base64.getEncoder().encode((email + ":" + password).getBytes()));
+  }
 
   WebClient getWebClient() {
     if (client == null) {
@@ -80,11 +84,11 @@ public class BaseClientIT {
     standardCamera = cameraRepository.save(standardCamera);
   }
 
-  protected String getSessionToken() {
+  String getSessionToken() {
     return getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
   }
 
-  protected String getSessionToken(String email, String password, ObjectMapper mapper) {
+  String getSessionToken(String email, String password, ObjectMapper mapper) {
     ClientResponse response = client
         .post()
         .uri("/v1/login/user")
@@ -97,7 +101,7 @@ public class BaseClientIT {
     return dataV1.parseData(String.class, mapper);
   }
 
-  protected String getCameraToken(UUID cameraId, String password, ObjectMapper mapper) {
+  String getCameraToken(UUID cameraId, String password, ObjectMapper mapper) {
     ClientResponse response = client
         .post()
         .uri("/v1/login/camera")
@@ -110,12 +114,7 @@ public class BaseClientIT {
     return dataV1.parseData(String.class, mapper);
   }
 
-  public static String getLoginHeader(String email, String password) {
-    return "Basic " + new String(
-        Base64.getEncoder().encode((email + ":" + password).getBytes()));
-  }
-
-  protected String getTokenHeader(String token) {
+  String getTokenHeader(String token) {
     return "Token " + token;
   }
 }

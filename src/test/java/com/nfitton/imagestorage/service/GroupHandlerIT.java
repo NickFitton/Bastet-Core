@@ -3,6 +3,7 @@ package com.nfitton.imagestorage.service;
 import static com.nfitton.imagestorage.util.GroupUtil.addCameraToGroup;
 import static com.nfitton.imagestorage.util.GroupUtil.addUserToGroup;
 import static com.nfitton.imagestorage.util.GroupUtil.changeOwnerOfGroup;
+import static com.nfitton.imagestorage.util.GroupUtil.createAndPopulateGroup;
 import static com.nfitton.imagestorage.util.GroupUtil.createGroup;
 import static com.nfitton.imagestorage.util.GroupUtil.deleteGroup;
 import static com.nfitton.imagestorage.util.GroupUtil.getGroup;
@@ -16,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nfitton.imagestorage.api.CameraV1;
 import com.nfitton.imagestorage.api.GroupV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
@@ -35,30 +35,6 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 
 class GroupHandlerIT extends BaseClientIT {
-
-  private static GroupV1 createAndPopulateGroup(
-      WebClient client,
-      String sessionToken,
-      ObjectMapper objectMapper, int extraMembers) {
-    GroupV1 newGroup = createGroup(client, sessionToken, objectMapper);
-
-    LinkedList<UUID> addedUserIds = new LinkedList<>();
-    for (int i = 0; i < extraMembers; i++) {
-      UserV1 user = UserUtil.createUser(client, objectMapper);
-      addedUserIds.add(user.getId());
-      ClientResponse response = GroupUtil
-          .addUserToGroup(client, sessionToken, newGroup.getId(), user);
-      assertEquals(HttpStatus.ACCEPTED, response.statusCode());
-    }
-
-    GroupV1 filledGroup = getGroup(client, sessionToken, newGroup.getId(), objectMapper);
-    assertNotNull(filledGroup);
-    assertEquals(extraMembers + 1, filledGroup.getUsers().size());
-    assertEquals(filledGroup.getId(), newGroup.getId());
-    assertTrue(filledGroup.getUsers().containsAll(addedUserIds));
-
-    return filledGroup;
-  }
 
   @Test
   void userCanCreateGroup() {
@@ -255,7 +231,8 @@ class GroupHandlerIT extends BaseClientIT {
         .block()
         .parseData(new TypeReference<List<CameraV1>>() {
         }, objectMapper);
-    assertTrue(groupCameras.stream().anyMatch(cameraV1 -> cameraV1.getId().equals(standardCamera.getId())));
+    assertTrue(groupCameras.stream()
+                   .anyMatch(cameraV1 -> cameraV1.getId().equals(standardCamera.getId())));
   }
 
   @Test
