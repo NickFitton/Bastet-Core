@@ -14,6 +14,19 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 public class UserUtil {
 
+  public static UserV1 createUser(WebClient client, ObjectMapper mapper) {
+    UserV1 newUser = generateUser().build();
+    OutgoingDataV1 receivedData = createUser(client, newUser).bodyToMono(OutgoingDataV1.class)
+        .block();
+    assertNotNull(receivedData);
+    UserV1 savedUser = receivedData.parseData(UserV1.class, mapper);
+
+    return new UserV1(
+        savedUser.getId(), savedUser.getFirstName(), savedUser.getLastName(), savedUser.getEmail(),
+        newUser.getPassword(), savedUser.getCreatedAt(), savedUser.getUpdatedAt(),
+        savedUser.getLastActive());
+  }
+
   /**
    * Returns a request to create a user given the client and user to save.
    *
@@ -87,18 +100,5 @@ public class UserUtil {
         .withLastName("Doe")
         .withEmail(StringUtil.randomString(10) + "-test@nfitton.com")
         .withPassword("123456");
-  }
-
-  public static UserV1 createUser(WebClient client, ObjectMapper mapper) {
-    UserV1 newUser = generateUser().build();
-    OutgoingDataV1 receivedData = createUser(client, newUser).bodyToMono(OutgoingDataV1.class)
-        .block();
-    assertNotNull(receivedData);
-    UserV1 savedUser = receivedData.parseData(UserV1.class, mapper);
-
-    return new UserV1(
-        savedUser.getId(), savedUser.getFirstName(), savedUser.getLastName(), savedUser.getEmail(),
-        newUser.getPassword(), savedUser.getCreatedAt(), savedUser.getUpdatedAt(),
-        savedUser.getLastActive());
   }
 }

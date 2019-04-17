@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.Entity;
-import javax.persistence.Table;
 
 @Entity
 public class Camera extends Account {

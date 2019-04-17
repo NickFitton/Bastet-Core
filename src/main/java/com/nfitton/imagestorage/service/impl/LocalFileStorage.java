@@ -58,20 +58,12 @@ public class LocalFileStorage implements FileUploadService {
     String imagePath = getTempFilePath(imageId) + ".jpg";
     return file.transferTo(new File(imagePath))
         .then(Mono.fromCallable(() -> {
-          // Encrypt saved file
-          File tempFile = new File(imagePath);
-          long fileSize = tempFile.getTotalSpace();
           try {
-//            if (fileSize < 256) {
-//              EncryptionUtil
-//                  .doEncrypt(rsaKeys.getPrivate(), imagePath, getEncryptFilePath(imageId));
-//            } else {
-            EncryptionUtil
-                .doEncryptRSAWithAES(
-                    rsaKeys.getPrivate(), imagePath, getEncryptFilePath(imageId));
-//            }
-          } catch (NoSuchAlgorithmException | IOException | NoSuchPaddingException | InvalidKeyException
-              | BadPaddingException | IllegalBlockSizeException | InvalidAlgorithmParameterException e) {
+            EncryptionUtil.encryptWithRsaAes(
+                rsaKeys.getPrivate(), imagePath, getEncryptFilePath(imageId));
+          } catch (NoSuchAlgorithmException | IOException | NoSuchPaddingException
+              | InvalidKeyException | BadPaddingException | IllegalBlockSizeException
+              | InvalidAlgorithmParameterException e) {
             throw new EncryptionException("Failed to encrypt file", e);
           }
           return imagePath;
@@ -80,14 +72,10 @@ public class LocalFileStorage implements FileUploadService {
 
   @Override
   public Flux<byte[]> downloadFile(UUID imageId) {
-    try {
-      EncryptionUtil.doDecryptRSAWithAES(
-          rsaKeys.getPublic(), getEncryptFilePath(imageId) + ".enc",
-          getTempFilePath(imageId));
-    } catch (NoSuchAlgorithmException | IOException | NoSuchPaddingException | InvalidKeyException
-        | BadPaddingException | IllegalBlockSizeException | InvalidAlgorithmParameterException e) {
-      throw new EncryptionException("Failed to encrypt file", e);
-    }
+    EncryptionUtil.decryptWithRsaAes(
+        rsaKeys.getPublic(),
+        getEncryptFilePath(imageId) + ".enc",
+        getTempFilePath(imageId));
 
     Path filePath = Paths.get(getTempFilePath(imageId) + ".ver");
     ByteBuffer buffer = ByteBuffer.allocate(8192);

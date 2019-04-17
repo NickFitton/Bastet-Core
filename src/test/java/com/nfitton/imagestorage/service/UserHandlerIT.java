@@ -200,7 +200,7 @@ class UserHandlerIT extends BaseClientIT {
     WebClient client = getWebClient();
     String sessionToken = getSessionToken();
 
-    GroupV1 savedGroup = createGroup(client, sessionToken, objectMapper);
+    final GroupV1 savedGroup = createGroup(client, sessionToken, objectMapper);
 
     ClientResponse response = getGroups(client, sessionToken, standardUser.getId());
     assertNotNull(response);

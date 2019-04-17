@@ -8,12 +8,12 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.UUID;
 import javax.crypto.BadPaddingException;
@@ -22,14 +22,12 @@ import javax.crypto.NoSuchPaddingException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class EncryptionUtilUnit {
 
   private static final File testsDir = new File("build/resources/test");
   private static final File testFileA = new File("build/resources/test/a.txt");
-  private static final File testFileB = new File("build/resources/test/b.jpg");
 
   private static final UUID inputUuid = UUID.randomUUID();
 
@@ -37,9 +35,6 @@ class EncryptionUtilUnit {
 
   @BeforeAll
   static void preconditions() throws IOException {
-//    URL url = new URL("https://via.placeholder.com/1920x1080.jpg");
-//    BufferedImage image = ImageIO.read(url);
-//    ImageIO.write(image, "jpg", testFileB);
     if (!testsDir.exists()) {
       testsDir.mkdir();
     }
@@ -90,7 +85,7 @@ class EncryptionUtilUnit {
   @Test
   void aesPrivateKeyCanBeUsedForEncryption()
       throws IOException, NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException,
-      BadPaddingException, InvalidKeySpecException, NoSuchPaddingException {
+      BadPaddingException, NoSuchPaddingException {
     // GIVEN an aes key pair exists and a file to encrypt exists
     String path = testsDir.getPath() + "/key_" + testId;
     EncryptionUtil.generateRsaKeys(path);
@@ -108,7 +103,7 @@ class EncryptionUtilUnit {
   @Test
   void encryptedFilesCanBeDecryptedWithAesPublicKey()
       throws IOException, NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException,
-      BadPaddingException, InvalidKeySpecException, NoSuchPaddingException {
+      BadPaddingException, NoSuchPaddingException {
     // GIVEN an aes key pair exists and a file to encrypt exists and has been encrypted
     String path = testsDir.getPath() + "/key_" + testId;
     EncryptionUtil.generateRsaKeys(path);
@@ -131,56 +126,50 @@ class EncryptionUtilUnit {
     assertEquals(originalFile, decryptedFile);
   }
 
-  /**
-   * Disabled as url request fails in gradlew build
-   */
   @Test
-  @Disabled
   void aesPrivateKeyCanBeUsedForEncryptingLargeFiles()
       throws IOException, NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException,
-      BadPaddingException, InvalidKeySpecException, NoSuchPaddingException,
-      InvalidAlgorithmParameterException {
+      BadPaddingException, NoSuchPaddingException, InvalidAlgorithmParameterException {
     // GIVEN an aes key pair exists and a file to encrypt exists
+    URL url = Thread.currentThread().getContextClassLoader().getResource("motion/imageA.jpeg");
+    File file = new File(url.getPath());
     String path = testsDir.getPath() + "/key_" + testId;
     EncryptionUtil.generateRsaKeys(path);
-    String fileLocation = testFileB.getPath();
+    String fileLocation = file.getPath();
 
     // WHEN a file is encrypted
     String encryptedFilePath = testsDir.getPath() + "/encrypted_" + testId;
-    EncryptionUtil.doEncryptRSAWithAES(path + ".key", fileLocation, encryptedFilePath);
+    EncryptionUtil.encryptWithRsaAes(path + ".key", fileLocation, encryptedFilePath);
 
     // THEN the encrypted file exists
     encryptedFilePath = encryptedFilePath + ".enc";
     assertTrue(Files.exists(Paths.get(encryptedFilePath)));
   }
 
-  /**
-   * Disabled as url request fails in gradlew build
-   */
   @Test
-  @Disabled
   void largeEncryptedFilesCanBeDecryptedWithAesPublicKey()
       throws IOException, NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException,
-      BadPaddingException, InvalidKeySpecException, NoSuchPaddingException,
-      InvalidAlgorithmParameterException {
+      BadPaddingException, NoSuchPaddingException, InvalidAlgorithmParameterException {
     // GIVEN an aes key pair exists and a file to encrypt exists and has been encrypted
+    URL url = Thread.currentThread().getContextClassLoader().getResource("motion/imageA.jpeg");
+    File file = new File(url.getPath());
     String path = testsDir.getPath() + "/key_" + testId;
     EncryptionUtil.generateRsaKeys(path);
-    String fileLocation = testFileB.getPath();
+    String fileLocation = file.getPath();
     String encryptedFilePath = testsDir.getPath() + "/encrypted_" + testId;
-    EncryptionUtil.doEncryptRSAWithAES(path + ".key", fileLocation, encryptedFilePath);
+    EncryptionUtil.encryptWithRsaAes(path + ".key", fileLocation, encryptedFilePath);
     encryptedFilePath = encryptedFilePath + ".enc";
 
     // WHEN the file is decrypted
     String decryptedFilePath = testsDir.getPath() + "/decrypted_" + testId;
-    EncryptionUtil.doDecryptRSAWithAES(path + ".pub", encryptedFilePath, decryptedFilePath);
+    EncryptionUtil.decryptWithRsaAes(path + ".pub", encryptedFilePath, decryptedFilePath);
 
     // THEN the decrypted file exists
     decryptedFilePath = decryptedFilePath + ".ver";
     assertTrue(Files.exists(Paths.get(decryptedFilePath)));
 
     // AND the contents of the file matches the contents of the original file
-    HashCode originalFile = asByteSource(testFileB).hash(Hashing.md5());
+    HashCode originalFile = asByteSource(file).hash(Hashing.md5());
     HashCode decryptedFile = asByteSource(new File(decryptedFilePath)).hash(Hashing.md5());
     assertEquals(originalFile, decryptedFile);
   }

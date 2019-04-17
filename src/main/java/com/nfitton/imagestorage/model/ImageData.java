@@ -154,6 +154,7 @@ public class ImageData {
 
     /**
      * Receives image metadata and a list of entities and returns a {@link ImageData.Builder}.
+     *
      * @param metadata the data to clone
      * @param entities the data to clone
      * @return a {@link Builder} with all the received data in it

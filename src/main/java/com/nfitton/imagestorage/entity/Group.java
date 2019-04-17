@@ -48,8 +48,8 @@ public class Group extends BaseEntity {
       return false;
     }
     Group group = (Group) o;
-    return Objects.equals(getOwnerId(), group.getOwnerId()) &&
-        Objects.equals(getName(), group.getName());
+    return Objects.equals(getOwnerId(), group.getOwnerId())
+        && Objects.equals(getName(), group.getName());
   }
 
   @Override

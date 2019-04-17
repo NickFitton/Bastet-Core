@@ -3,7 +3,6 @@ package com.nfitton.imagestorage.entity;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.UUID;
-import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
@@ -23,13 +22,14 @@ public class BaseEntity {
   @LastModifiedDate
   private ZonedDateTime lastModifiedDate;
 
-  public BaseEntity(UUID id, ZonedDateTime createdDate, ZonedDateTime lastModifiedDate) {
+  BaseEntity(UUID id, ZonedDateTime createdDate, ZonedDateTime lastModifiedDate) {
     this.id = id;
     this.createdDate = createdDate;
     this.lastModifiedDate = lastModifiedDate;
   }
 
-  public BaseEntity() {}
+  BaseEntity() {
+  }
 
   public UUID getId() {
     return id;
@@ -52,9 +52,9 @@ public class BaseEntity {
       return false;
     }
     BaseEntity that = (BaseEntity) o;
-    return Objects.equals(getId(), that.getId()) &&
-        Objects.equals(getCreatedDate(), that.getCreatedDate()) &&
-        Objects.equals(getLastModifiedDate(), that.getLastModifiedDate());
+    return Objects.equals(getId(), that.getId())
+        && Objects.equals(getCreatedDate(), that.getCreatedDate())
+        && Objects.equals(getLastModifiedDate(), that.getLastModifiedDate());
   }
 
   @Override

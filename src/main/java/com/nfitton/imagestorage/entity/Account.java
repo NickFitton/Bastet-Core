@@ -7,10 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
-import org.hibernate.annotations.GenericGenerator;
 
 @MappedSuperclass
 public class Account extends BaseEntity {
@@ -68,9 +65,9 @@ public class Account extends BaseEntity {
       return false;
     }
     Account account = (Account) o;
-    return Objects.equals(getPassword(), account.getPassword()) &&
-        getType() == account.getType() &&
-        Objects.equals(getLastActive(), account.getLastActive());
+    return Objects.equals(getPassword(), account.getPassword())
+        && getType() == account.getType()
+        && Objects.equals(getLastActive(), account.getLastActive());
   }
 
   @Override
