@@ -74,8 +74,10 @@ test {
 }
 
 task installGitHooks(type: Copy) {
-    from new File(rootProject.rootDir, 'git-hooks/*')
-    into { new File(rootProject.rootDir, '.git/hooks/') }
+    from new File(rootProject.rootDir, 'git-hooks/pre-commit')
+    into { new File(rootProject.rootDir, '.git/hooks') }
+    from new File(rootProject.rootDir, 'git-hooks/pre-push')
+    into { new File(rootProject.rootDir, '.git/hooks') }
 }
 
 build.dependsOn installGitHooks
