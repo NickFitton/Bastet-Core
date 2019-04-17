@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public class ImageMetadataV1 {
@@ -74,5 +75,32 @@ public class ImageMetadataV1 {
 
   public List<ImageEntityV1> getImageEntities() {
     return imageEntities;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ImageMetadataV1 that = (ImageMetadataV1) o;
+    return isFileExists() == that.isFileExists() &&
+        Objects.equals(getId(), that.getId()) &&
+        Objects.equals(getCameraId(), that.getCameraId()) &&
+        Objects.equals(getEntryTime(), that.getEntryTime()) &&
+        Objects.equals(getExitTime(), that.getExitTime()) &&
+        Objects.equals(getImageTime(), that.getImageTime()) &&
+        Objects.equals(getCreatedAt(), that.getCreatedAt()) &&
+        Objects.equals(getUpdatedAt(), that.getUpdatedAt()) &&
+        Objects.equals(getImageEntities(), that.getImageEntities());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects
+        .hash(getId(), getCameraId(), getEntryTime(), getExitTime(), getImageTime(), getCreatedAt(),
+              getUpdatedAt(), isFileExists(), getImageEntities());
   }
 }

@@ -173,24 +173,23 @@ public class MotionHandlerV1 {
    * @return HttpStatus.OK with an image
    */
   public Mono<ServerResponse> getMotionImageById(ServerRequest request) {
-    UUID motionId = RouterUtil.getUuidParameter(request, MOTION_ID);
+    Mono<UUID> motionId = Mono.just(RouterUtil.getUuidParameter(request, MOTION_ID));
 
     Flux<byte[]> image = parseAuthenticationToken(request, authenticationService)
-        .flatMap(userService::existsById)
-        .flatMap(exists -> {
-          if (exists) {
-            return fileMetadataService.findById(motionId);
+        .flatMap(userService::existsById).zipWith(motionId)
+        .flatMap(tuple2 -> {
+          if (tuple2.getT1()) {
+            return fileMetadataService.findById(tuple2.getT2())
+                .zipWith(Mono.just(tuple2.getT2()));
           } else {
             return Mono.error(ExceptionUtil.badCredentials());
           }
         })
-        .flatMapMany(metadata -> {
-          if (metadata.fileExists()) {
-            return fileUploadService.downloadFile(motionId);
+        .flatMapMany(tuple2 -> {
+          if (tuple2.getT1().fileExists()) {
+            return fileUploadService.downloadFile(tuple2.getT2());
           }
-          return Mono
-              .error(
-                  new NotFoundException("Motion does not have allocated image"));
+          throw new NotFoundException("Motion does not have allocated image");
         });
     return ServerResponse.ok().contentType(MediaType.IMAGE_JPEG).body(image, byte[].class)
         .onErrorResume(RouterUtil::handleErrors);

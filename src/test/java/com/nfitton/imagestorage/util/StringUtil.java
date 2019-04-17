@@ -6,6 +6,7 @@ public class StringUtil {
 
   /**
    * Generates a random string of letters as long as the given length.
+   *
    * @param length the length the returned string should be
    * @return a randomly generated string of given length
    */

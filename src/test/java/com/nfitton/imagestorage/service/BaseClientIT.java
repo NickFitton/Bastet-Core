@@ -14,6 +14,7 @@ import com.nfitton.imagestorage.repository.AccountRepository;
 import com.nfitton.imagestorage.repository.CameraRepository;
 import java.time.ZonedDateTime;
 import java.util.Base64;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @SpringBootTest(
     classes = ImageStorageApplication.class,
     webEnvironment = WebEnvironment.RANDOM_PORT)
-public class BaseClientIT {
+class BaseClientIT {
 
   private static final String BASE_URL = "http://localhost";
   User standardUser;
@@ -49,6 +50,11 @@ public class BaseClientIT {
   private AccountRepository accountRepository;
   @Autowired
   private CameraRepository cameraRepository;
+
+  static String getLoginHeader(String email, String password) {
+    return "Basic " + new String(
+        Base64.getEncoder().encode((email + ":" + password).getBytes()));
+  }
 
   WebClient getWebClient() {
     if (client == null) {
@@ -78,7 +84,11 @@ public class BaseClientIT {
     standardCamera = cameraRepository.save(standardCamera);
   }
 
-  protected String getSessionToken(String email, String password, ObjectMapper mapper) {
+  String getSessionToken() {
+    return getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
+  }
+
+  String getSessionToken(String email, String password, ObjectMapper mapper) {
     ClientResponse response = client
         .post()
         .uri("/v1/login/user")
@@ -91,12 +101,20 @@ public class BaseClientIT {
     return dataV1.parseData(String.class, mapper);
   }
 
-  protected String getLoginHeader(String email, String password) {
-    return "Basic " + new String(
-        Base64.getEncoder().encode((email + ":" + password).getBytes()));
+  String getCameraToken(UUID cameraId, String password, ObjectMapper mapper) {
+    ClientResponse response = client
+        .post()
+        .uri("/v1/login/camera")
+        .header(HttpHeaders.AUTHORIZATION, getLoginHeader(cameraId.toString(), password))
+        .contentType(MediaType.APPLICATION_JSON)
+        .exchange()
+        .block();
+
+    OutgoingDataV1 dataV1 = response.bodyToMono(OutgoingDataV1.class).block();
+    return dataV1.parseData(String.class, mapper);
   }
 
-  protected String getTokenHeader(String token) {
+  String getTokenHeader(String token) {
     return "Token " + token;
   }
 }

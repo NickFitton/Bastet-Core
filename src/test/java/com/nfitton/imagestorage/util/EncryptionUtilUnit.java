@@ -6,10 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.InvalidAlgorithmParameterException;
@@ -21,7 +19,6 @@ import java.util.UUID;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import javax.imageio.ImageIO;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,9 +37,9 @@ class EncryptionUtilUnit {
 
   @BeforeAll
   static void preconditions() throws IOException {
-    URL url = new URL("https://via.placeholder.com/1920x1080.jpg");
-    BufferedImage image = ImageIO.read(url);
-    ImageIO.write(image, "jpg", testFileB);
+//    URL url = new URL("https://via.placeholder.com/1920x1080.jpg");
+//    BufferedImage image = ImageIO.read(url);
+//    ImageIO.write(image, "jpg", testFileB);
     if (!testsDir.exists()) {
       testsDir.mkdir();
     }
@@ -138,7 +135,7 @@ class EncryptionUtilUnit {
    * Disabled as url request fails in gradlew build
    */
   @Test
-//  @Disabled
+  @Disabled
   void aesPrivateKeyCanBeUsedForEncryptingLargeFiles()
       throws IOException, NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException,
       BadPaddingException, InvalidKeySpecException, NoSuchPaddingException,
@@ -161,7 +158,7 @@ class EncryptionUtilUnit {
    * Disabled as url request fails in gradlew build
    */
   @Test
-//  @Disabled
+  @Disabled
   void largeEncryptedFilesCanBeDecryptedWithAesPublicKey()
       throws IOException, NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException,
       BadPaddingException, InvalidKeySpecException, NoSuchPaddingException,
