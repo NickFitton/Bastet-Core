@@ -75,7 +75,7 @@ test {
 
 task installGitHooks(type: Copy) {
     from new File(rootProject.rootDir, 'git-hooks/*')
-    into { new File(rootProject.rootDir, '.git/hooks') }
+    into { new File(rootProject.rootDir, '.git/hooks/') }
 }
 
 build.dependsOn installGitHooks
