@@ -47,8 +47,8 @@ public class UserGroup extends BaseEntity {
       return false;
     }
     UserGroup userGroup = (UserGroup) o;
-    return Objects.equals(getUserId(), userGroup.getUserId()) &&
-        Objects.equals(getGroupId(), userGroup.getGroupId());
+    return Objects.equals(getUserId(), userGroup.getUserId())
+        && Objects.equals(getGroupId(), userGroup.getGroupId());
   }
 
   @Override

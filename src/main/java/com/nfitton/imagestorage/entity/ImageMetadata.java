@@ -66,11 +66,11 @@ public class ImageMetadata extends BaseEntity {
       return false;
     }
     ImageMetadata that = (ImageMetadata) o;
-    return fileExists == that.fileExists &&
-        Objects.equals(getCameraId(), that.getCameraId()) &&
-        Objects.equals(getEntryTime(), that.getEntryTime()) &&
-        Objects.equals(getExitTime(), that.getExitTime()) &&
-        Objects.equals(getImageTime(), that.getImageTime());
+    return fileExists == that.fileExists
+        && Objects.equals(getCameraId(), that.getCameraId())
+        && Objects.equals(getEntryTime(), that.getEntryTime())
+        && Objects.equals(getExitTime(), that.getExitTime())
+        && Objects.equals(getImageTime(), that.getImageTime());
   }
 
   @Override

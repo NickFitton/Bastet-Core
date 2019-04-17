@@ -47,8 +47,8 @@ public class GroupCamera extends BaseEntity {
       return false;
     }
     GroupCamera that = (GroupCamera) o;
-    return Objects.equals(getGroupId(), that.getGroupId()) &&
-        Objects.equals(getCameraId(), that.getCameraId());
+    return Objects.equals(getGroupId(), that.getGroupId())
+        && Objects.equals(getCameraId(), that.getCameraId());
   }
 
   @Override

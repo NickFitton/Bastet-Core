@@ -130,7 +130,8 @@ public class GroupHandlerV1 {
         .flatMap(tuple -> {
           UUID requestingUser = tuple.getT1();
           GroupData group = tuple.getT2();
-          if (group.getGroup().getOwnerId().equals(requestingUser) || userId.equals(requestingUser)) {
+          if (group.getGroup().getOwnerId().equals(requestingUser)
+              || userId.equals(requestingUser)) {
             return groupService.removeUserFromGroup(userId, groupId);
           }
           throw new ForbiddenException("Must be owner to remove other users");

@@ -86,15 +86,15 @@ public class ImageMetadataV1 {
       return false;
     }
     ImageMetadataV1 that = (ImageMetadataV1) o;
-    return isFileExists() == that.isFileExists() &&
-        Objects.equals(getId(), that.getId()) &&
-        Objects.equals(getCameraId(), that.getCameraId()) &&
-        Objects.equals(getEntryTime(), that.getEntryTime()) &&
-        Objects.equals(getExitTime(), that.getExitTime()) &&
-        Objects.equals(getImageTime(), that.getImageTime()) &&
-        Objects.equals(getCreatedAt(), that.getCreatedAt()) &&
-        Objects.equals(getUpdatedAt(), that.getUpdatedAt()) &&
-        Objects.equals(getImageEntities(), that.getImageEntities());
+    return isFileExists() == that.isFileExists()
+        && Objects.equals(getId(), that.getId())
+        && Objects.equals(getCameraId(), that.getCameraId())
+        && Objects.equals(getEntryTime(), that.getEntryTime())
+        && Objects.equals(getExitTime(), that.getExitTime())
+        && Objects.equals(getImageTime(), that.getImageTime())
+        && Objects.equals(getCreatedAt(), that.getCreatedAt())
+        && Objects.equals(getUpdatedAt(), that.getUpdatedAt())
+        && Objects.equals(getImageEntities(), that.getImageEntities());
   }
 
   @Override
