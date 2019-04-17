@@ -54,13 +54,11 @@ public class DatabaseAuthenticationService implements AuthenticationService {
 
   @Override
   public Mono<UUID> parseAuthentication(String authToken) {
-    return findByToken(authToken).flatMap(optionalAuth -> {
-      if (optionalAuth.isPresent()) {
-        return Mono.just(optionalAuth.get());
-      } else {
-        return Mono.error(new NotFoundException("Auth token does not exist"));
-      }
-    }).map(Authentication::getUserId);
+    return findByToken(authToken)
+        .filter(Optional::isPresent)
+        .switchIfEmpty(Mono.error(new NotFoundException("Auth token does not exist")))
+        .map(Optional::get)
+        .map(Authentication::getUserId);
   }
 
   private Mono<Optional<Authentication>> findById(UUID userId) {
@@ -99,15 +97,11 @@ public class DatabaseAuthenticationService implements AuthenticationService {
       AccountType requiredType,
       JpaRepository<T, UUID> externalRepository) {
     return Mono.fromCallable(() -> externalRepository.findById(userId))
-        .flatMap(account -> {
-          if (account.isPresent()) {
-            boolean matches = encoder.matches(password, account.get().getPassword());
-            if (matches && requiredType.equals(account.get().getType())) {
-              return Mono.just(account.get().getId());
-            }
-          }
-          return Mono.error(new BadRequestException("Invalid username/password combination"));
-        }).subscribeOn(Schedulers.elastic());
+        .filter(Optional::isPresent)
+        .switchIfEmpty(Mono.error(new BadRequestException("Invalid username/password combination")))
+        .map(Optional::get)
+        .map(account -> authenticateAccount(account, password, requiredType))
+        .subscribeOn(Schedulers.elastic());
   }
 
   @Override
@@ -117,14 +111,18 @@ public class DatabaseAuthenticationService implements AuthenticationService {
       AccountType requiredType,
       AccountRepository repository) {
     return Mono.fromCallable(() -> repository.findByEmail(emailAddress))
-        .flatMap(account -> {
-          if (account.isPresent()) {
-            boolean matches = encoder.matches(password, account.get().getPassword());
-            if (matches && requiredType.equals(account.get().getType())) {
-              return Mono.just(account.get().getId());
-            }
-          }
-          return Mono.error(new BadRequestException("Invalid username/password combination"));
-        }).subscribeOn(Schedulers.elastic());
+        .filter(Optional::isPresent)
+        .switchIfEmpty(Mono.error(new BadRequestException("Invalid username/password combination")))
+        .map(Optional::get)
+        .map(account -> authenticateAccount(account, password, requiredType))
+        .subscribeOn(Schedulers.elastic());
+  }
+
+  private UUID authenticateAccount(Account account, String password, AccountType requiredType) {
+    boolean matches = encoder.matches(password, account.getPassword());
+    if (matches && requiredType.equals(account.getType())) {
+      return account.getId();
+    }
+    throw new BadRequestException("Invalid username/password combination");
   }
 }

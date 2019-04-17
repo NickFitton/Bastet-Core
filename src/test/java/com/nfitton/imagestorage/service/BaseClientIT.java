@@ -14,6 +14,8 @@ import com.nfitton.imagestorage.repository.AccountRepository;
 import com.nfitton.imagestorage.repository.CameraRepository;
 import java.time.ZonedDateTime;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,6 +80,10 @@ public class BaseClientIT {
     standardCamera = cameraRepository.save(standardCamera);
   }
 
+  protected String getSessionToken() {
+    return getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
+  }
+
   protected String getSessionToken(String email, String password, ObjectMapper mapper) {
     ClientResponse response = client
         .post()
@@ -91,7 +97,20 @@ public class BaseClientIT {
     return dataV1.parseData(String.class, mapper);
   }
 
-  protected String getLoginHeader(String email, String password) {
+  protected String getCameraToken(UUID cameraId, String password, ObjectMapper mapper) {
+    ClientResponse response = client
+        .post()
+        .uri("/v1/login/camera")
+        .header(HttpHeaders.AUTHORIZATION, getLoginHeader(cameraId.toString(), password))
+        .contentType(MediaType.APPLICATION_JSON)
+        .exchange()
+        .block();
+
+    OutgoingDataV1 dataV1 = response.bodyToMono(OutgoingDataV1.class).block();
+    return dataV1.parseData(String.class, mapper);
+  }
+
+  public static String getLoginHeader(String email, String password) {
     return "Basic " + new String(
         Base64.getEncoder().encode((email + ":" + password).getBytes()));
   }

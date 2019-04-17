@@ -1,6 +1,10 @@
 package com.nfitton.imagestorage.util;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.net.HttpHeaders;
+import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.api.UserV1;
 import com.nfitton.imagestorage.api.UserV1.Builder;
 import java.util.UUID;
@@ -83,5 +87,18 @@ public class UserUtil {
         .withLastName("Doe")
         .withEmail(StringUtil.randomString(10) + "-test@nfitton.com")
         .withPassword("123456");
+  }
+
+  public static UserV1 createUser(WebClient client, ObjectMapper mapper) {
+    UserV1 newUser = generateUser().build();
+    OutgoingDataV1 receivedData = createUser(client, newUser).bodyToMono(OutgoingDataV1.class)
+        .block();
+    assertNotNull(receivedData);
+    UserV1 savedUser = receivedData.parseData(UserV1.class, mapper);
+
+    return new UserV1(
+        savedUser.getId(), savedUser.getFirstName(), savedUser.getLastName(), savedUser.getEmail(),
+        newUser.getPassword(), savedUser.getCreatedAt(), savedUser.getUpdatedAt(),
+        savedUser.getLastActive());
   }
 }

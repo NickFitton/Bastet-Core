@@ -17,6 +17,8 @@ import com.nfitton.imagestorage.service.UserService;
 import com.nfitton.imagestorage.util.RouterUtil;
 import java.util.UUID;
 import javax.validation.Validator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +30,7 @@ import reactor.core.publisher.Mono;
 @Component
 public class UserHandlerV1 {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(UserHandlerV1.class);
   private static final String USER_ID = "userId";
 
   private final PasswordEncoder encoder;
@@ -50,6 +53,7 @@ public class UserHandlerV1 {
   }
 
   public Mono<ServerResponse> createUser(ServerRequest request) {
+    LOGGER.debug("Creating user");
     return request.bodyToMono(UserV1.class)
         .map((UserV1 v1) -> AccountMapper.newAccount(v1, encoder, validator))
         .flatMap(userService::save)
@@ -60,6 +64,7 @@ public class UserHandlerV1 {
   }
 
   public Mono<ServerResponse> getUsers(ServerRequest request) {
+    LOGGER.debug("Retrieving user list");
     return userService.getAllIds().collectList()
         .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.ok().syncBody(data));
@@ -73,14 +78,21 @@ public class UserHandlerV1 {
    * @return HttpStatus.OK and {@link UserV1} related to the given userId
    */
   public Mono<ServerResponse> getUser(ServerRequest request) {
+    LOGGER.debug("Retrieving user information");
     UUID userId = getUuidParameter(request, USER_ID);
 
     return RouterUtil
         .parseAuthenticationToken(request, authenticationService)
         .flatMap(authorizedUserId -> {
           if (authorizedUserId != null) {
+            if (!userId.equals(authorizedUserId)) {
+              LOGGER.debug("{} is retrieving {} data", authorizedUserId, userId);
+            } else {
+              LOGGER.debug("{} is retrieving their data", authorizedUserId);
+            }
             return userService.findById(userId);
           } else {
+            LOGGER.debug("User not verified");
             return Mono
                 .error(new VerificationException("Must be authorized to perform this request"));
           }
@@ -101,21 +113,19 @@ public class UserHandlerV1 {
    * @return HttpStatus.NO_CONTENT on success
    */
   public Mono<ServerResponse> deleteUser(ServerRequest request) {
+    LOGGER.debug("Deleting user");
     UUID userId = getUuidParameter(request, USER_ID);
 
     return RouterUtil
         .parseAuthenticationToken(request, authenticationService)
         .flatMap(authorizedUserId -> {
           if (userId.equals(authorizedUserId)) {
-            return Mono.just(true);
-          }
-          return userService.idIsAdmin(authorizedUserId);
-        })
-        .flatMap(isAuthenticated -> {
-          if (isAuthenticated) {
+            LOGGER.debug("{} is deleting their own account", authorizedUserId, userId);
             return userService.deleteById(userId);
           } else {
-            return Mono.error(new VerificationException("Must be admin to perform this request"));
+            LOGGER.warn(
+                "Unauthorized user {} attempted to delete account {}", authorizedUserId, userId);
+            return Mono.error(new ForbiddenException("Cannot delete other users account"));
           }
         }).flatMap(deleted -> {
           if (deleted) {
@@ -135,13 +145,16 @@ public class UserHandlerV1 {
    * @return a Flux stream of {@link GroupV1} related to the given userId
    */
   public Mono<ServerResponse> getGroupsForUser(ServerRequest request) {
+    LOGGER.debug("Retreiving user groups");
     UUID userId = getUuidParameter(request, USER_ID);
 
     return RouterUtil
         .parseAuthenticationToken(request, authenticationService)
-        .flatMapMany(authorizedUserId -> {
-          if (userId.equals(authorizedUserId)) {
-            return groupService.getGroupsByUserId(userId);
+        .zipWith(Mono.just(userId))
+        .flatMapMany(tuple2 -> {
+          if (tuple2.getT2().equals(tuple2.getT1())) {
+            LOGGER.info("User {} retrieving their group data", tuple2.getT1());
+            return groupService.getGroupsByUserId(tuple2.getT1());
           }
           throw new ForbiddenException("Cannot request other users groups");
         })

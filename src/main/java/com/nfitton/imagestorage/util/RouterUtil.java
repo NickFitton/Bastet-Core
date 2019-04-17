@@ -56,8 +56,8 @@ public class RouterUtil {
           "Malformed authorization header, should follow format: 'Token {token}'"));
     }
 
-    return service.parseAuthentication(splitToken[1]);
-
+    return service.parseAuthentication(splitToken[1])
+        .doOnSuccess(uuid -> LOGGER.debug("Requesting user {} is authorized", uuid));
   }
 
   /**

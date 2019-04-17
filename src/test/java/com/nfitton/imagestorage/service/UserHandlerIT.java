@@ -1,6 +1,14 @@
 package com.nfitton.imagestorage.service;
 
+import static com.nfitton.imagestorage.util.GroupUtil.createGroup;
+import static com.nfitton.imagestorage.util.GroupUtil.getGroups;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nfitton.imagestorage.api.GroupV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.api.UserV1;
 import com.nfitton.imagestorage.api.UserV1.Builder;
@@ -18,7 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 
-public class UserHandlerIT extends BaseClientIT {
+class UserHandlerIT extends BaseClientIT {
 
   private static Stream<Arguments> invalidUsers() {
     return Stream.of(
@@ -42,54 +50,63 @@ public class UserHandlerIT extends BaseClientIT {
     );
   }
 
+  private static UUID createUser(WebClient client, ObjectMapper mapper) {
+    UserV1 user = UserUtil.generateUser().build();
+    ClientResponse response = UserUtil.createUser(client, user);
+    OutgoingDataV1 retrievedData = response.bodyToMono(OutgoingDataV1.class).block();
+    assertNotNull(retrievedData);
+
+    return retrievedData.parseData(UserV1.class, mapper).getId();
+  }
+
   @Test
-  public void creatingValidUserIsSuccessful() {
+  void creatingValidUserIsSuccessful() {
     WebClient client = getWebClient();
     UserV1 user = UserUtil.generateUser().build();
 
     ClientResponse response = UserUtil.createUser(client, user);
 
-    Assertions.assertNotNull(response);
-    Assertions.assertEquals(HttpStatus.CREATED, response.statusCode());
+    assertNotNull(response);
+    assertEquals(HttpStatus.CREATED, response.statusCode());
 
     OutgoingDataV1 retrievedData = response.bodyToMono(OutgoingDataV1.class).block();
-    Assertions.assertNotNull(retrievedData);
+    assertNotNull(retrievedData);
 
     UserV1 userV1 = retrievedData.parseData(UserV1.class, objectMapper);
 
-    Assertions.assertNotNull(retrievedData);
-    Assertions.assertEquals(user.getFirstName().toLowerCase(), userV1.getFirstName());
-    Assertions.assertEquals(user.getLastName().toLowerCase(), userV1.getLastName());
-    Assertions.assertEquals(user.getEmail(), userV1.getEmail());
-    Assertions.assertNotNull(userV1.getId());
-    Assertions.assertNotNull(userV1.getCreatedAt());
-    Assertions.assertNotNull(userV1.getUpdatedAt());
-    Assertions.assertNotNull(userV1.getLastActive());
+    assertNotNull(retrievedData);
+    assertEquals(user.getFirstName().toLowerCase(), userV1.getFirstName());
+    assertEquals(user.getLastName().toLowerCase(), userV1.getLastName());
+    assertEquals(user.getEmail(), userV1.getEmail());
+    assertNotNull(userV1.getId());
+    assertNotNull(userV1.getCreatedAt());
+    assertNotNull(userV1.getUpdatedAt());
+    assertNotNull(userV1.getLastActive());
     Assertions.assertNull(userV1.getPassword());
   }
 
   @Test
-  public void getUsersIsSuccessful() {
+  void getUsersIsSuccessful() {
     WebClient client = getWebClient();
     ClientResponse response = UserUtil.getUsers(client);
 
-    Assertions.assertNotNull(response);
-    Assertions.assertEquals(HttpStatus.OK, response.statusCode());
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.statusCode());
     OutgoingDataV1 retrievedData = response.bodyToMono(OutgoingDataV1.class).block();
 
-    Assertions.assertNotNull(retrievedData);
+    assertNotNull(retrievedData);
     List<UUID> users = retrievedData.parseData(new TypeReference<List<UUID>>() {
     }, objectMapper);
 
-    Assertions.assertNotNull(users);
-    Assertions.assertTrue(users.size() > 1);
+    assertNotNull(users);
+    assertTrue(users.size() > 1);
 
-    Assertions.assertTrue(users.contains(standardUser.getId()));
-    Assertions.assertTrue(users.contains(standardUser.getId()));
+    assertTrue(users.contains(standardUser.getId()));
+    assertTrue(users.contains(standardUser.getId()));
   }
 
   @Test
-  public void getUserIsSuccessful() {
+  void getUserIsSuccessful() {
     WebClient client = getWebClient();
     String sessionToken = getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
 
@@ -98,21 +115,47 @@ public class UserHandlerIT extends BaseClientIT {
     UserV1 savedUser = dataV1.parseData(UserV1.class, objectMapper);
     ClientResponse response = UserUtil.getUser(client, sessionToken, savedUser.getId());
 
-    Assertions.assertNotNull(response);
-    Assertions.assertEquals(HttpStatus.OK, response.statusCode());
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.statusCode());
 
     OutgoingDataV1 retrievedData = response.bodyToMono(OutgoingDataV1.class).block();
-    Assertions.assertNotNull(retrievedData);
+    assertNotNull(retrievedData);
 
     UserV1 retrievedUser = retrievedData.parseData(UserV1.class, objectMapper);
-    Assertions.assertNotNull(retrievedUser);
-    Assertions.assertEquals(savedUser.getEmail(), retrievedUser.getEmail());
-    Assertions.assertEquals(savedUser.getFirstName(), retrievedUser.getFirstName());
-    Assertions.assertEquals(savedUser.getLastName(), retrievedUser.getLastName());
+    assertNotNull(retrievedUser);
+    assertEquals(savedUser.getEmail(), retrievedUser.getEmail());
+    assertEquals(savedUser.getFirstName(), retrievedUser.getFirstName());
+    assertEquals(savedUser.getLastName(), retrievedUser.getLastName());
   }
 
   @Test
-  public void deleteUserIsSuccessful() {
+  void getUserSelfIsSuccessful() {
+    WebClient client = getWebClient();
+
+    UserV1 newUser = UserUtil.generateUser().build();
+    OutgoingDataV1 dataV1 = UserUtil.createUser(client, newUser).bodyToMono(OutgoingDataV1.class)
+        .block();
+    assertNotNull(dataV1);
+    UserV1 savedUser = dataV1.parseData(UserV1.class, objectMapper);
+    String savedUserSessionToken = getSessionToken(
+        newUser.getEmail(), newUser.getPassword(), objectMapper);
+    ClientResponse response = UserUtil.getUser(client, savedUserSessionToken, savedUser.getId());
+
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.statusCode());
+
+    OutgoingDataV1 retrievedData = response.bodyToMono(OutgoingDataV1.class).block();
+    assertNotNull(retrievedData);
+
+    UserV1 retrievedUser = retrievedData.parseData(UserV1.class, objectMapper);
+    assertNotNull(retrievedUser);
+    assertEquals(savedUser.getEmail(), retrievedUser.getEmail());
+    assertEquals(savedUser.getFirstName(), retrievedUser.getFirstName());
+    assertEquals(savedUser.getLastName(), retrievedUser.getLastName());
+  }
+
+  @Test
+  void deleteUserIsSuccessful() {
     WebClient client = getWebClient();
     String sessionToken = getSessionToken(standardUser.getEmail(), userPassword, objectMapper);
 
@@ -124,29 +167,29 @@ public class UserHandlerIT extends BaseClientIT {
     UserV1 savedUser = dataV1.parseData(UserV1.class, objectMapper);
     ClientResponse response = UserUtil.deleteUser(client, newUserSessionToken, savedUser.getId());
 
-    Assertions.assertNotNull(response);
-    Assertions.assertEquals(HttpStatus.NO_CONTENT, response.statusCode());
+    assertNotNull(response);
+    assertEquals(HttpStatus.NO_CONTENT, response.statusCode());
 
     response = UserUtil.getUser(client, sessionToken, savedUser.getId());
 
-    Assertions.assertNotNull(response);
-    Assertions.assertEquals(HttpStatus.NOT_FOUND, response.statusCode());
+    assertNotNull(response);
+    assertEquals(HttpStatus.NOT_FOUND, response.statusCode());
   }
 
   @Test
-  public void duplicatingUsersFails() {
+  void duplicatingUsersFails() {
     WebClient client = getWebClient();
     UserV1 user = UserUtil.generateUser().build();
 
     ClientResponse response = UserUtil.createUser(client, user);
 
-    Assertions.assertNotNull(response);
-    Assertions.assertEquals(HttpStatus.CREATED, response.statusCode());
+    assertNotNull(response);
+    assertEquals(HttpStatus.CREATED, response.statusCode());
 
     response = UserUtil.createUser(client, user);
 
-    Assertions.assertNotNull(response);
-    Assertions.assertEquals(HttpStatus.CONFLICT, response.statusCode());
+    assertNotNull(response);
+    assertEquals(HttpStatus.CONFLICT, response.statusCode());
   }
 
   /**
@@ -154,11 +197,50 @@ public class UserHandlerIT extends BaseClientIT {
    */
   @ParameterizedTest
   @MethodSource("invalidUsers")
-  public void invalidUserFails(Builder userBuilder) {
+  void invalidUserFails(Builder userBuilder) {
     WebClient client = getWebClient();
 
     ClientResponse response = UserUtil.createUser(client, userBuilder.build());
-    Assertions.assertNotNull(response);
-    Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.statusCode());
+    assertNotNull(response);
+    assertEquals(HttpStatus.BAD_REQUEST, response.statusCode());
+  }
+
+  @Test
+  void existingUserCanGetGroupsTheyArePartOf() {
+    WebClient client = getWebClient();
+    String sessionToken = getSessionToken();
+
+    GroupV1 savedGroup = createGroup(client, sessionToken, objectMapper);
+
+    ClientResponse response = getGroups(client, sessionToken, standardUser.getId());
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.statusCode());
+
+    OutgoingDataV1 receivedData = response.bodyToMono(OutgoingDataV1.class).block();
+    assertNotNull(receivedData);
+    List<GroupV1> groups = receivedData.parseData(
+        new TypeReference<List<GroupV1>>() {
+        },
+        objectMapper);
+    assertNotNull(groups);
+    assertEquals(1, groups.size());
+    assertEquals(savedGroup, groups.get(0));
+  }
+
+  @Test
+  void userCanNotGetOtherUsersGroups() {
+    // GIVEN a user exists and is part of a group
+    WebClient client = getWebClient();
+    String sessionToken = getSessionToken();
+    createGroup(client, sessionToken, objectMapper);
+
+    // WHEN a different user tries to get the first users group
+    UserV1 maliciousUser = UserUtil.createUser(client, objectMapper);
+    sessionToken = getSessionToken(
+        maliciousUser.getEmail(), maliciousUser.getPassword(), objectMapper);
+    ClientResponse response = getGroups(client, sessionToken, standardUser.getId());
+
+    // THEN the server returns forbidden
+    assertEquals(HttpStatus.FORBIDDEN, response.statusCode());
   }
 }

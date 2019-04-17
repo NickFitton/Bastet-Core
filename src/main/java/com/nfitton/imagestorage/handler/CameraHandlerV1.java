@@ -7,7 +7,6 @@ import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.mapper.CameraMapper;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.CameraService;
-import com.nfitton.imagestorage.service.UserService;
 import com.nfitton.imagestorage.util.RouterUtil;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,16 +43,18 @@ public class CameraHandlerV1 {
     this.authenticationService = authenticationService;
   }
 
-  private static UUID getCameraId(ServerRequest request) {
+  private static Mono<UUID> getCameraId(ServerRequest request) {
     try {
-      return UUID.fromString(request.pathVariable("cameraId"));
+      UUID cameraId = UUID.fromString(request.pathVariable("cameraId"));
+      return Mono.just(cameraId);
     } catch (IllegalArgumentException e) {
-      throw new BadRequestException("Camera ID must be a valid UUID v4");
+      return Mono.error(new BadRequestException("Camera ID must be a valid UUID v4"));
     }
   }
 
   /**
    * Create a new camera given a password, used by the camera when it starts up.
+   *
    * @param request the {@link ServerRequest} containing the cameras password
    * @return HttpStatus.CREATED and the created {@link CameraV1} on success
    */
@@ -73,6 +74,7 @@ public class CameraHandlerV1 {
 
   public Mono<ServerResponse> getCameras(ServerRequest request) {
     return RouterUtil.parseAuthenticationToken(request, authenticationService)
+        .doOnSuccess(uuid -> LOGGER.debug("User {} retrieving their camera info", uuid))
         .flatMapMany(cameraService::findAllOwnedById)
         .map(CameraMapper::toApiBean)
         .collectList()
@@ -83,51 +85,48 @@ public class CameraHandlerV1 {
 
   /**
    * Retrieves data about a camera if the requester owns the camera queried.
+   *
    * @param request the {@link ServerRequest} containing the camera id and user credentials
    * @return HttpStatus.OK and {@link CameraV1} on success
    */
   public Mono<ServerResponse> getCamera(ServerRequest request) {
-    UUID cameraId = getCameraId(request);
-
     return RouterUtil.parseAuthenticationToken(request, authenticationService)
-        .flatMap(userId -> cameraService.findById(cameraId))
+        .zipWith(getCameraId(request))
+        .flatMap(tuple2 -> cameraService.findById(tuple2.getT2()))
         .flatMap(optionalCamera -> {
           Optional<OutgoingDataV1> output = optionalCamera.map(CameraMapper::toApiBean)
               .map(OutgoingDataV1::dataOnly);
-          if (output.isPresent()) {
-            return ServerResponse.ok().syncBody(output.get());
-          }
-          return ServerResponse.notFound().build();
+          return output.map(outgoingDataV1 -> ServerResponse.ok().syncBody(outgoingDataV1))
+              .orElseGet(() -> ServerResponse.notFound().build());
         })
         .onErrorResume(RouterUtil::handleErrors);
   }
 
   /**
    * Assigns a camera to the requesting user if the camera exists and hasn't already been assigned.
+   *
    * @param request the {@link ServerRequest} containing the camera id and user credentials
    * @return HttpStatus.ACCEPTED on success
    */
   public Mono<ServerResponse> claimCamera(ServerRequest request) {
-    UUID cameraId = getCameraId(request);
-
     Mono<Camera> cameraName = request.bodyToMono(CameraV1.class).map(CameraMapper::toEntity)
         .switchIfEmpty(Mono.just(new Camera()));
 
     return Mono.zip(
         cameraName,
-        RouterUtil.parseAuthenticationToken(request, authenticationService))
-        .flatMap(tuple2 -> {
-          LOGGER.debug("Camera {} updated by user {}", cameraId, tuple2.getT2());
-          return cameraService.updateCamera(cameraId, tuple2.getT2(), tuple2.getT1());
+        RouterUtil.parseAuthenticationToken(request, authenticationService),
+        getCameraId(request))
+        .flatMap(tuple3 -> {
+          LOGGER.debug("Camera {} claimed by user {}", tuple3.getT3(), tuple3.getT2());
+          return cameraService.updateCamera(tuple3.getT3(), tuple3.getT2(), tuple3.getT1());
         })
         .flatMap(camera -> ServerResponse.accepted().build());
   }
 
   public Mono<ServerResponse> deleteCamera(ServerRequest request) {
-    UUID cameraId = getCameraId(request);
-
     return RouterUtil.parseAuthenticationToken(request, authenticationService)
-        .flatMap(userId -> cameraService.deleteById(cameraId))
+        .zipWith(getCameraId(request))
+        .flatMap(tuple2 -> cameraService.deleteById(tuple2.getT2()))
         .then(ServerResponse.noContent().build())
         .onErrorResume(RouterUtil::handleErrors);
   }

@@ -40,9 +40,9 @@ class EncryptionUtilUnit {
 
   @BeforeAll
   static void preconditions() throws IOException {
-    URL url = new URL("https://via.placeholder.com/1920x1080.jpg");
-    BufferedImage image = ImageIO.read(url);
-    ImageIO.write(image, "jpg", testFileB);
+//    URL url = new URL("https://via.placeholder.com/1920x1080.jpg");
+//    BufferedImage image = ImageIO.read(url);
+//    ImageIO.write(image, "jpg", testFileB);
     if (!testsDir.exists()) {
       testsDir.mkdir();
     }
@@ -138,7 +138,7 @@ class EncryptionUtilUnit {
    * Disabled as url request fails in gradlew build
    */
   @Test
-//  @Disabled
+  @Disabled
   void aesPrivateKeyCanBeUsedForEncryptingLargeFiles()
       throws IOException, NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException,
       BadPaddingException, InvalidKeySpecException, NoSuchPaddingException,
@@ -161,7 +161,7 @@ class EncryptionUtilUnit {
    * Disabled as url request fails in gradlew build
    */
   @Test
-//  @Disabled
+  @Disabled
   void largeEncryptedFilesCanBeDecryptedWithAesPublicKey()
       throws IOException, NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException,
       BadPaddingException, InvalidKeySpecException, NoSuchPaddingException,

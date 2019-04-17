@@ -1,304 +1,278 @@
 package com.nfitton.imagestorage.service;
 
-import com.nfitton.imagestorage.ImageStorageApplication;
+import static com.nfitton.imagestorage.util.GroupUtil.addCameraToGroup;
+import static com.nfitton.imagestorage.util.GroupUtil.addUserToGroup;
+import static com.nfitton.imagestorage.util.GroupUtil.changeOwnerOfGroup;
+import static com.nfitton.imagestorage.util.GroupUtil.createGroup;
+import static com.nfitton.imagestorage.util.GroupUtil.deleteGroup;
+import static com.nfitton.imagestorage.util.GroupUtil.getGroup;
+import static com.nfitton.imagestorage.util.GroupUtil.groupCameras;
+import static com.nfitton.imagestorage.util.GroupUtil.removeCameraFromGroup;
+import static com.nfitton.imagestorage.util.GroupUtil.removeMember;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nfitton.imagestorage.api.CameraV1;
+import com.nfitton.imagestorage.api.GroupV1;
+import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.api.UserV1;
-import com.nfitton.imagestorage.entity.Camera;
-import com.nfitton.imagestorage.entity.Group;
-import com.nfitton.imagestorage.entity.User;
-import com.nfitton.imagestorage.entity.UserGroup;
-import com.nfitton.imagestorage.mapper.AccountMapper;
-import com.nfitton.imagestorage.mapper.CameraMapper;
-import com.nfitton.imagestorage.model.GroupData;
-import java.time.ZonedDateTime;
+import com.nfitton.imagestorage.util.CameraUtil;
+import com.nfitton.imagestorage.util.GroupUtil;
+import com.nfitton.imagestorage.util.UserUtil;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import javax.validation.Validator;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
 
-@ActiveProfiles( {"local", "h2"})
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(classes = ImageStorageApplication.class)
-public class GroupServiceIT {
+class GroupHandlerIT extends BaseClientIT {
 
-  @Autowired
-  UserService userService;
+  private static GroupV1 createAndPopulateGroup(
+      WebClient client,
+      String sessionToken,
+      ObjectMapper objectMapper, int extraMembers) {
+    GroupV1 newGroup = createGroup(client, sessionToken, objectMapper);
 
-  @Autowired
-  CameraService cameraService;
+    LinkedList<UUID> addedUserIds = new LinkedList<>();
+    for (int i = 0; i < extraMembers; i++) {
+      UserV1 user = UserUtil.createUser(client, objectMapper);
+      addedUserIds.add(user.getId());
+      ClientResponse response = GroupUtil
+          .addUserToGroup(client, sessionToken, newGroup.getId(), user);
+      assertEquals(HttpStatus.ACCEPTED, response.statusCode());
+    }
 
-  @Autowired
-  GroupService groupService;
+    GroupV1 filledGroup = getGroup(client, sessionToken, newGroup.getId(), objectMapper);
+    assertNotNull(filledGroup);
+    assertEquals(extraMembers + 1, filledGroup.getUsers().size());
+    assertEquals(filledGroup.getId(), newGroup.getId());
+    assertTrue(filledGroup.getUsers().containsAll(addedUserIds));
 
-  @Autowired
-  Validator validator;
-
-  @Autowired
-  PasswordEncoder encoder;
-
-  /**
-   * Returns a group to save with the given owner id.
-   *
-   * @param ownerId the owner of the group
-   * @return a build group to be saved
-   */
-  private static GroupData createGroup(UUID ownerId) {
-    return GroupData.Builder.newBuilder()
-        .withGroup(new Group(null, ownerId, "Test Group " + UUID.randomUUID().toString(),
-                             null, null)).build();
+    return filledGroup;
   }
 
   @Test
-  public void userCanCreateGroup() {
-    User userA = generateUser();
+  void userCanCreateGroup() {
+    // GIVEN a user exists
+    WebClient client = getWebClient();
+    String sessionToken = getSessionToken();
 
-    User savedUserA = userService.save(userA).block();
-    Assertions.assertNotNull(savedUserA);
+    // WHEN they register a group
+    ClientResponse groupA = createGroup(client, sessionToken, "Group A");
 
-    GroupData savedGroup = groupService.createGroup(createGroup(savedUserA.getId())).block();
-
-    Assertions.assertNotNull(savedGroup);
-    Assertions.assertEquals(0, savedGroup.getCameraIds().size());
-    Assertions.assertEquals(1, savedGroup.getUserIds().size());
-    Assertions.assertEquals(savedUserA.getId(), savedGroup.getGroup().getOwnerId());
-    Assertions.assertTrue(savedGroup.getUserIds().contains(savedUserA.getId()));
-  }
-
-  @Test
-  public void usersCanBeAddedToAGroup() {
-    User userA = generateUser();
-    User savedUserA = userService.save(userA).block();
-    Assertions.assertNotNull(savedUserA);
-
-    User userB = generateUser();
-    User savedUserB = userService.save(userB).block();
-    Assertions.assertNotNull(savedUserB);
-
-    GroupData savedGroup = groupService.createGroup(createGroup(savedUserA.getId())).block();
-    Assertions.assertNotNull(savedGroup);
-
-    GroupData updatedData = groupService
-        .addUserToGroup(userB.getId(), savedGroup.getGroup().getId()).block();
-    Assertions.assertNotNull(updatedData);
-    Assertions.assertEquals(2, updatedData.getUserIds().size());
-    Assertions.assertEquals(savedGroup.getGroup().getId(), updatedData.getGroup().getId());
-    Assertions.assertTrue(updatedData.getUserIds().contains(savedUserB.getId()));
-    Assertions.assertTrue(updatedData.getUserIds().contains(savedUserA.getId()));
-    Assertions.assertNotSame(updatedData.getGroup().getOwnerId(), savedUserB.getId());
-  }
-
-  @Test
-  public void groupMemberCanBeRemovedFromGroup() {
-    User userA = generateUser();
-    User savedUserA = userService.save(userA).block();
-    Assertions.assertNotNull(savedUserA);
-
-    User userB = generateUser();
-    User savedUserB = userService.save(userB).block();
-    Assertions.assertNotNull(savedUserB);
-
-    GroupData savedGroup = groupService.createGroup(createGroup(savedUserA.getId())).block();
-    Assertions.assertNotNull(savedGroup);
-
-    GroupData updatedData = groupService
-        .addUserToGroup(userB.getId(), savedGroup.getGroup().getId()).block();
-    Assertions.assertNotNull(updatedData);
-
-    updatedData = groupService
-        .removeUserFromGroup(savedUserB.getId(), savedGroup.getGroup().getId()).block();
-    Assertions.assertNotNull(updatedData);
-    Assertions.assertEquals(1, updatedData.getUserIds().size());
-  }
-
-  @Test
-  public void groupOwnerCanBeChanged() {
-    User userA = generateUser();
-    User savedUserA = userService.save(userA).block();
-    Assertions.assertNotNull(savedUserA);
-
-    User userB = generateUser();
-    User savedUserB = userService.save(userB).block();
-    Assertions.assertNotNull(savedUserB);
-
-    GroupData savedGroup = groupService.createGroup(createGroup(savedUserA.getId())).block();
-    Assertions.assertNotNull(savedGroup);
-
-    GroupData updatedData = groupService
-        .addUserToGroup(userB.getId(), savedGroup.getGroup().getId()).block();
-    Assertions.assertNotNull(updatedData);
-
-    updatedData = groupService.changeOwnerOfGroup(savedUserB.getId(), savedGroup.getGroup().getId())
+    // THEN the group is successfully registered
+    assertEquals(HttpStatus.CREATED, groupA.statusCode());
+    GroupV1 savedGroup = groupA
+        .bodyToMono(OutgoingDataV1.class)
+        .map(data -> data.parseData(GroupV1.class, objectMapper))
         .block();
-    Assertions.assertNotNull(updatedData);
-    Assertions.assertEquals(savedUserB.getId(), updatedData.getGroup().getOwnerId());
+    assertNotNull(savedGroup);
+    assertEquals(0, savedGroup.getCameras().size());
+    assertEquals(1, savedGroup.getUsers().size());
+    assertEquals(standardUser.getId(), savedGroup.getOwnedBy());
+    assertTrue(savedGroup.getUsers().contains(standardUser.getId()));
   }
 
   @Test
-  public void userCanGetTheirGroups() {
-    User userA = generateUser();
+  void usersCanBeAddedToAGroup() {
+    WebClient client = getWebClient();
+    String sessionToken = getSessionToken();
+    GroupV1 newGroup = createGroup(client, sessionToken, objectMapper);
 
-    User savedUserA = userService.save(userA).block();
-    Assertions.assertNotNull(savedUserA);
+    Collection<UUID> addedUserIds = new LinkedList<>();
+    for (int i = 0; i < 5; i++) {
+      UserV1 user = UserUtil.createUser(client, objectMapper);
+      addedUserIds.add(user.getId());
+      ClientResponse response = GroupUtil
+          .addUserToGroup(client, sessionToken, newGroup.getId(), user);
+      assertEquals(HttpStatus.ACCEPTED, response.statusCode());
+    }
 
-    List<UUID> groupIdList = IntStream.range(1, 4)
-        .mapToObj(i -> createGroup(savedUserA.getId()))
-        .map(group -> groupService.createGroup(group).block())
-        .peek(Assertions::assertNotNull)
-        .map(GroupData::getGroup)
-        .map(Group::getId).collect(Collectors.toList());
-
-    List<UUID> groupIds = groupService.getGroupsByUserId(savedUserA.getId())
-        .map(UserGroup::getGroupId).collectList().block();
-    Assertions.assertNotNull(groupIds);
-
-    List<UUID> collect = groupIdList.stream()
-        .peek(groupId -> Assertions.assertTrue(groupIds.contains(groupId)))
-        .collect(Collectors.toList());
-    Assertions.assertEquals(collect.size(), groupIds.size());
+    GroupV1 filledGroup = getGroup(client, sessionToken, newGroup.getId(), objectMapper);
+    assertNotNull(filledGroup);
+    assertEquals(6, filledGroup.getUsers().size());
+    assertEquals(filledGroup.getId(), newGroup.getId());
+    assertTrue(filledGroup.getUsers().containsAll(addedUserIds));
   }
 
   @Test
-  public void cameraCanBeAddedToGroup() {
-    User userA = generateUser();
+  void groupMemberCanBeRemovedFromGroup() {
+    // GIVEN a group with 6 members
+    WebClient client = getWebClient();
+    String sessionToken = getSessionToken();
+    GroupV1 newGroup = createGroup(client, sessionToken, objectMapper);
 
-    User savedUserA = userService.save(userA).block();
-    Assertions.assertNotNull(savedUserA);
+    LinkedList<UUID> addedUserIds = new LinkedList<>();
+    for (int i = 0; i < 5; i++) {
+      UserV1 user = UserUtil.createUser(client, objectMapper);
+      addedUserIds.add(user.getId());
+      ClientResponse response = GroupUtil
+          .addUserToGroup(client, sessionToken, newGroup.getId(), user);
+      assertEquals(HttpStatus.ACCEPTED, response.statusCode());
+    }
 
-    GroupData savedGroup = groupService.createGroup(createGroup(savedUserA.getId())).block();
-    Assertions.assertNotNull(savedGroup);
+    GroupV1 filledGroup = getGroup(client, sessionToken, newGroup.getId(), objectMapper);
+    assertNotNull(filledGroup);
+    assertEquals(6, filledGroup.getUsers().size());
+    assertEquals(filledGroup.getId(), newGroup.getId());
+    assertTrue(filledGroup.getUsers().containsAll(addedUserIds));
 
-    Camera cameraA = generateCamera();
-    Camera savedCamera = cameraService.save(cameraA).block();
-    Assertions.assertNotNull(savedCamera);
+    // WHEN a member is removed
+    ClientResponse deleteResponse = GroupUtil
+        .removeMember(client, sessionToken, newGroup.getId(), addedUserIds.pop());
+    GroupV1 updatedGroup = getGroup(client, sessionToken, newGroup.getId(), objectMapper);
 
-    savedCamera = cameraService
-        .updateCamera(savedCamera.getId(), savedUserA.getId(), generateCamera("Test Camera"))
-        .block();
-    Assertions.assertNotNull(savedCamera);
-
-    savedGroup = groupService
-        .addCameraToGroup(savedUserA.getId(), savedCamera.getId(), savedGroup.getGroup().getId())
-        .block();
-    Assertions.assertNotNull(savedGroup);
-    Assertions.assertEquals(1, savedGroup.getCameraIds().size());
-    Assertions.assertTrue(savedGroup.getCameraIds().contains(savedCamera.getId()));
+    // THEN the request is successful and the user is no longer listed
+    assertEquals(HttpStatus.ACCEPTED, deleteResponse.statusCode());
+    assertEquals(addedUserIds.size() + 1, updatedGroup.getUsers().size());
   }
 
   @Test
-  public void cameraCanBeRemovedFromGroup() {
-    User userA = generateUser();
+  void groupOwnerCanBeChanged() {
+    // GIVEN an existing group
+    WebClient client = getWebClient();
+    String sessionToken = getSessionToken();
 
-    User savedUserA = userService.save(userA).block();
-    Assertions.assertNotNull(savedUserA);
+    GroupV1 group = createAndPopulateGroup(client, sessionToken, objectMapper, 5);
 
-    GroupData savedGroup = groupService.createGroup(createGroup(savedUserA.getId())).block();
-    Assertions.assertNotNull(savedGroup);
+    // WHEN the admin changes to a different member
+    UUID nonAdminMemberId = group.getUsers().stream().filter(id -> !id.equals(standardUser.getId()))
+        .collect(Collectors.toList()).get(0);
+    ClientResponse response = changeOwnerOfGroup(
+        client, sessionToken, group.getId(), nonAdminMemberId);
 
-    Camera cameraA = generateCamera();
-    Camera savedCamera = cameraService.save(cameraA).block();
-    Assertions.assertNotNull(savedCamera);
-
-    savedCamera = cameraService
-        .updateCamera(savedCamera.getId(), savedUserA.getId(), generateCamera("Test Camera"))
-        .block();
-    Assertions.assertNotNull(savedCamera);
-
-    savedGroup = groupService
-        .addCameraToGroup(savedUserA.getId(), savedCamera.getId(), savedGroup.getGroup().getId())
-        .block();
-    Assertions.assertNotNull(savedGroup);
-
-    savedGroup = groupService
-        .removeCameraFromGroup(savedCamera.getId(), savedGroup.getGroup().getId()).block();
-    Assertions.assertNotNull(savedGroup);
-    Assertions.assertEquals(0, savedGroup.getCameraIds().size());
-    Assertions.assertFalse(savedGroup.getCameraIds().contains(savedCamera.getId()));
+    // THEN the request is accepted and the given member is now admin
+    assertEquals(HttpStatus.ACCEPTED, response.statusCode());
+    GroupV1 updatedGroup = response.bodyToMono(OutgoingDataV1.class).block()
+        .parseData(GroupV1.class, objectMapper);
+    assertNotEquals(standardUser.getId(), updatedGroup.getOwnedBy());
+    assertEquals(nonAdminMemberId, updatedGroup.getOwnedBy());
   }
 
   @Test
-  public void whenGroupMemberIsRemovedCamerasRemovedAlso() {
-    User userA = generateUser();
-    User savedUserA = userService.save(userA).block();
-    Assertions.assertNotNull(savedUserA);
+  void cameraCanBeAddedToGroup() {
+    // GIVEN a preexisting group and a user that has registered a camera
+    WebClient client = getWebClient();
+    String sessionToken = getSessionToken();
 
-    User userB = generateUser();
-    User savedUserB = userService.save(userB).block();
-    Assertions.assertNotNull(savedUserB);
+    GroupV1 group = createAndPopulateGroup(client, sessionToken, objectMapper, 5);
+    CameraUtil.claimCamera(client, sessionToken, standardCamera.getId(), "Camera A");
 
-    GroupData savedGroup = groupService.createGroup(createGroup(savedUserA.getId())).block();
-    Assertions.assertNotNull(savedGroup);
+    // WHEN the user adds the camera to the group
+    ClientResponse response = addCameraToGroup(
+        client, sessionToken, group.getId(), standardCamera.getId());
 
-    GroupData updatedData = groupService
-        .addUserToGroup(userB.getId(), savedGroup.getGroup().getId()).block();
-    Assertions.assertNotNull(updatedData);
-
-    Camera cameraB = generateCamera();
-    Camera savedCamera = cameraService.save(cameraB).block();
-    Assertions.assertNotNull(savedCamera);
-
-    savedCamera = cameraService
-        .updateCamera(savedCamera.getId(), savedUserB.getId(), generateCamera("Test Camera"))
-        .block();
-    Assertions.assertNotNull(savedCamera);
-
-    savedGroup = groupService
-        .addCameraToGroup(savedUserB.getId(), savedCamera.getId(), savedGroup.getGroup().getId())
-        .block();
-    Assertions.assertNotNull(savedGroup);
-
-    updatedData = groupService
-        .removeUserFromGroup(savedUserB.getId(), savedGroup.getGroup().getId()).block();
-    Assertions.assertNotNull(updatedData);
-    Assertions.assertEquals(1, updatedData.getUserIds().size());
-    Assertions.assertEquals(0, updatedData.getCameraIds().size());
+    // THEN the addition is successful
+    assertEquals(HttpStatus.ACCEPTED, response.statusCode());
+    // AND the camera id is added to the group information
+    GroupV1 updatedGroup = response
+        .bodyToMono(OutgoingDataV1.class)
+        .block()
+        .parseData(GroupV1.class, objectMapper);
+    assertTrue(updatedGroup.getCameras().contains(standardCamera.getId()));
   }
 
-  private User generateUser() {
-    return AccountMapper.newAccount(new UserV1(
-        null,
-        "Test",
-        "User",
-        UUID.randomUUID().toString() + "@prod.com",
-        "123456",
-        null,
-        null,
-        null), encoder, validator);
+  @Test
+  void cameraCanBeRemovedFromGroup() {
+    // GIVEN a preexisting group with a registered camera
+    WebClient client = getWebClient();
+    String sessionToken = getSessionToken();
+
+    GroupV1 group = createAndPopulateGroup(client, sessionToken, objectMapper, 5);
+    CameraUtil.claimCamera(client, sessionToken, standardCamera.getId(), "Camera A");
+    addCameraToGroup(client, sessionToken, group.getId(), standardCamera.getId());
+
+    // WHEN the camera is removed
+    ClientResponse response = removeCameraFromGroup(
+        client, sessionToken, group.getId(), standardCamera.getId());
+
+    // THEN the request is successful
+    assertEquals(HttpStatus.ACCEPTED, response.statusCode());
+    // AND the camera id is not in the group information anymore
+    GroupV1 updatedGroup = response.bodyToMono(OutgoingDataV1.class).block()
+        .parseData(GroupV1.class, objectMapper);
+    assertFalse(updatedGroup.getCameras().contains(standardCamera.getId()));
   }
 
-  private Camera generateCamera() {
-    return CameraMapper
-        .toEntity(
-            new CameraV1(
-                null,
-                null,
-                null,
-                "123456",
-                null,
-                null,
-                null),
-            encoder,
-            validator);
+  @Test
+  void whenGroupMemberIsRemovedCamerasRemovedAlso() {
+    // GIVEN a preexisting group with a registered camera
+    WebClient client = getWebClient();
+    String sessionToken = getSessionToken();
+
+    GroupV1 group = createAndPopulateGroup(client, sessionToken, objectMapper, 0);
+    UserV1 removableUser = UserUtil.createUser(client, objectMapper);
+    addUserToGroup(client, sessionToken, group.getId(), removableUser);
+    String remUserSessionToken = getSessionToken(
+        removableUser.getEmail(), removableUser.getPassword(), objectMapper);
+    CameraUtil.claimCamera(client, remUserSessionToken, standardCamera.getId(), "Camera A");
+    GroupV1 updatedGroup = addCameraToGroup(
+        client, remUserSessionToken, group.getId(), standardCamera.getId(), objectMapper);
+    assertEquals(2, updatedGroup.getUsers().size());
+    assertEquals(1, updatedGroup.getCameras().size());
+
+    // WHEN the user that owns the camera is removed from the group
+    ClientResponse response = removeMember(
+        client, sessionToken, group.getId(), removableUser.getId());
+
+    // THEN the request is successful
+    assertEquals(HttpStatus.ACCEPTED, response.statusCode());
+
+    // AND the users camera is also removed from the group
+    updatedGroup = response.bodyToMono(OutgoingDataV1.class)
+        .block()
+        .parseData(GroupV1.class, objectMapper);
+    assertEquals(0, updatedGroup.getCameras().size());
   }
 
-  private Camera generateCamera(String name) {
-    return CameraMapper
-        .toEntity(
-            new CameraV1(
-                null,
-                null,
-                name,
-                null,
-                null,
-                null,
-                null));
+  @Test
+  void groupWithCamerasCanRetrieveTheDetailsOfCameras() {
+    // GIVEN a preexisting group with a registered camera
+    WebClient client = getWebClient();
+    String sessionToken = getSessionToken();
+
+    GroupV1 group = createAndPopulateGroup(client, sessionToken, objectMapper, 5);
+    CameraUtil.claimCamera(client, sessionToken, standardCamera.getId(), "Camera A");
+    addCameraToGroup(client, sessionToken, group.getId(), standardCamera.getId());
+
+    // WHEN the camera list is retrieved
+    ClientResponse response = groupCameras(client, sessionToken, group.getId());
+
+    // THEN the request is successful
+    assertEquals(HttpStatus.OK, response.statusCode());
+
+    // AND the camera information is retrieved
+    List<CameraV1> groupCameras = response.bodyToMono(OutgoingDataV1.class)
+        .block()
+        .parseData(new TypeReference<List<CameraV1>>() {
+        }, objectMapper);
+    assertTrue(groupCameras.stream().anyMatch(cameraV1 -> cameraV1.getId().equals(standardCamera.getId())));
+  }
+
+  @Test
+  void whenGroupIsDeletedDataCanNotBeAccessed() {
+    // GIVEN an existing group
+    WebClient client = getWebClient();
+    String sessionToken = getSessionToken();
+    GroupV1 group = createAndPopulateGroup(client, sessionToken, objectMapper, 5);
+
+    // WHEN the group is deleted
+    ClientResponse deleteResponse = deleteGroup(client, sessionToken, group.getId());
+    ClientResponse getResponse = getGroup(client, sessionToken, group.getId());
+
+    // THEN the deletion is successful
+    assertEquals(HttpStatus.ACCEPTED, deleteResponse.statusCode());
+
+    // AND further get requests return not found
+    assertEquals(HttpStatus.NOT_FOUND, getResponse.statusCode());
   }
 }

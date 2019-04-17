@@ -11,6 +11,7 @@ import com.nfitton.imagestorage.exception.ConflictException;
 import com.nfitton.imagestorage.exception.ForbiddenException;
 import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.exception.VerificationException;
+import com.nfitton.imagestorage.mapper.CameraMapper;
 import com.nfitton.imagestorage.mapper.GroupMapper;
 import com.nfitton.imagestorage.model.GroupData;
 import com.nfitton.imagestorage.service.AuthenticationService;
@@ -18,6 +19,7 @@ import com.nfitton.imagestorage.service.CameraService;
 import com.nfitton.imagestorage.service.GroupService;
 import com.nfitton.imagestorage.service.UserService;
 import com.nfitton.imagestorage.util.RouterUtil;
+import java.util.Optional;
 import java.util.UUID;
 import javax.validation.Validator;
 import org.slf4j.Logger;
@@ -128,7 +130,7 @@ public class GroupHandlerV1 {
         .flatMap(tuple -> {
           UUID requestingUser = tuple.getT1();
           GroupData group = tuple.getT2();
-          if (group.getGroup().getOwnerId() == requestingUser || userId == requestingUser) {
+          if (group.getGroup().getOwnerId().equals(requestingUser) || userId.equals(requestingUser)) {
             return groupService.removeUserFromGroup(userId, groupId);
           }
           throw new ForbiddenException("Must be owner to remove other users");
@@ -155,7 +157,7 @@ public class GroupHandlerV1 {
         .flatMap(tuple -> {
           UUID requestingUser = tuple.getT1();
           GroupData group = tuple.getT2();
-          if (group.getGroup().getOwnerId() == requestingUser) {
+          if (group.getGroup().getOwnerId().equals(requestingUser)) {
             return groupService.changeOwnerOfGroup(newOwnerId, groupId);
           }
           throw new ForbiddenException("Must be owner to change owner");
@@ -285,12 +287,14 @@ public class GroupHandlerV1 {
           }
 
           return data.getCameraIds();
-        }).flatMap(cameraService::findById)
-        .map(optionalCamera -> optionalCamera
-            .orElseThrow(() -> new NotFoundException("Camera not found by given id")))
+        })
+        .flatMap(cameraService::findById)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .map(CameraMapper::toApiBean)
         .collectList()
         .map(OutgoingDataV1::dataOnly)
-        .flatMap(data -> ServerResponse.status(HttpStatus.ACCEPTED).syncBody(data))
+        .flatMap(data -> ServerResponse.status(HttpStatus.OK).syncBody(data))
         .onErrorResume(RouterUtil::handleErrors);
   }
 
