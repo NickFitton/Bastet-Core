@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nfitton.imagestorage.api.GroupV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.api.UserV1;
@@ -48,15 +47,6 @@ class UserHandlerIT extends BaseClientIT {
         Arguments.of(UserUtil.generateUser().withPassword(StringUtil.randomString(5))),
         Arguments.of(UserUtil.generateUser().withPassword(StringUtil.randomString(65)))
     );
-  }
-
-  private static UUID createUser(WebClient client, ObjectMapper mapper) {
-    UserV1 user = UserUtil.generateUser().build();
-    ClientResponse response = UserUtil.createUser(client, user);
-    OutgoingDataV1 retrievedData = response.bodyToMono(OutgoingDataV1.class).block();
-    assertNotNull(retrievedData);
-
-    return retrievedData.parseData(UserV1.class, mapper).getId();
   }
 
   @Test
