@@ -137,7 +137,7 @@ class MotionHandlerIT extends BaseClientIT {
     URL url = Thread.currentThread().getContextClassLoader().getResource("motion/imageA.jpeg");
     File file = new File(url.getPath());
     patchMotionData(client, sessionToken, receivedMetadata.getId(), file);
-    Thread.sleep(1000);
+    Thread.sleep(2000);
     // WHEN a user that can access the data requests the image
     ClientResponse motionImageData = getMotionImageData(
         client, userSessionToken, receivedMetadata.getId());

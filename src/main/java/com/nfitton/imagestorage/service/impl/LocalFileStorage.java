@@ -135,7 +135,7 @@ public class LocalFileStorage implements FileUploadService {
   }
 
   private String getTempFilePath(UUID imageId) {
-    return "/tmp/destructive" + imageId;
+    return path + imageId.toString();
   }
 
   private String getEncryptFilePath(UUID imageId) {

@@ -71,7 +71,7 @@ public class EncryptionUtil {
     try (FileOutputStream out = new FileOutputStream(location)) {
       out.write(encodedKey);
     } catch (IOException e) {
-      e.printStackTrace();
+      throw new EncryptionException("Failed to save given key at location: " + location, e);
     }
   }
 

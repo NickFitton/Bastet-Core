@@ -4,10 +4,10 @@ import static com.nfitton.imagestorage.util.RouterUtil.parseAuthenticationToken;
 
 import com.nfitton.imagestorage.api.ImageMetadataV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
-import com.nfitton.imagestorage.component.AnalysisQueueMessage;
 import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.mapper.ImageMetadataMapper;
+import com.nfitton.imagestorage.model.AnalysisQueueMessage;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.CameraService;
 import com.nfitton.imagestorage.service.FileMetadataService;
@@ -61,6 +61,14 @@ public class MotionHandlerV1 {
     this.cameraService = cameraService;
     this.userService = userService;
     this.jmsTemplate = jmsTemplate;
+  }
+
+  private static Stream<UUID> getCamerasParam(ServerRequest request) {
+    return request.queryParam("cameras")
+        .map(param -> Arrays.asList(param.split(",")))
+        .orElse(Collections.emptyList())
+        .stream()
+        .map(UUID::fromString);
   }
 
   public Mono<ServerResponse> postMotion(ServerRequest request) {
@@ -119,11 +127,7 @@ public class MotionHandlerV1 {
    * @return HttpStatus.OK with a list of {@link ImageMetadataV1}
    */
   public Mono<ServerResponse> getMotion(ServerRequest request) {
-    Stream<UUID> cameraIds = request.queryParam("cameras")
-        .map(param -> Arrays.asList(param.split(",")))
-        .orElse(Collections.emptyList())
-        .stream()
-        .map(UUID::fromString);
+
     return parseAuthenticationToken(request, authenticationService)
         .flatMap(userService::existsById)
         .flatMapMany(exists -> {
@@ -132,7 +136,7 @@ public class MotionHandlerV1 {
             ZonedDateTime from = request.queryParam("from").map(ZonedDateTime::parse)
                 .orElse(now.minusDays(7));
             ZonedDateTime to = request.queryParam("to").map(ZonedDateTime::parse).orElse(now);
-            return Flux.fromStream(cameraIds)
+            return Flux.fromStream(getCamerasParam(request))
                 .flatMap(cameraId -> fileMetadataService.findAllByCameraId(cameraId, from, to));
           } else {
             return Mono.error(ExceptionUtil.badCredentials());

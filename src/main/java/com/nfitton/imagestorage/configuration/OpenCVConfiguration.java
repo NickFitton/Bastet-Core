@@ -1,6 +1,5 @@
 package com.nfitton.imagestorage.configuration;
 
-import com.nfitton.imagestorage.entity.EntityType;
 import java.io.IOException;
 import java.util.stream.Stream;
 import org.opencv.objdetect.CascadeClassifier;
@@ -44,52 +43,52 @@ public class OpenCVConfiguration {
   @Value(value = "classpath:haar/haarcascade_upperbody.xml")
   private Resource upperBody;
 
-  public Tuple2<Resource, EntityType> getEye() {
-    return Tuples.of(eye, EntityType.EYE);
+  public Tuple2<Resource, String> getEye() {
+    return Tuples.of(eye, "EYE");
   }
 
-  public Tuple2<Resource, EntityType> getEyeTreeEyeglasses() {
-    return Tuples.of(eyeTreeEyeglasses, EntityType.EYE);
+  public Tuple2<Resource, String> getEyeTreeEyeglasses() {
+    return Tuples.of(eyeTreeEyeglasses, "EYE");
   }
 
-  public Tuple2<Resource, EntityType> getFrontalFaceAlt() {
-    return Tuples.of(frontalFaceAlt, EntityType.FACE);
+  public Tuple2<Resource, String> getFrontalFaceAlt() {
+    return Tuples.of(frontalFaceAlt, "FACE");
   }
 
-  public Tuple2<Resource, EntityType> getFrontalFaceAltTwo() {
-    return Tuples.of(frontalFaceAltTwo, EntityType.FACE);
+  public Tuple2<Resource, String> getFrontalFaceAltTwo() {
+    return Tuples.of(frontalFaceAltTwo, "FACE");
   }
 
-  public Tuple2<Resource, EntityType> getFrontalFaceAltTree() {
-    return Tuples.of(frontalFaceAltTree, EntityType.FACE);
+  public Tuple2<Resource, String> getFrontalFaceAltTree() {
+    return Tuples.of(frontalFaceAltTree, "FACE");
   }
 
-  public Tuple2<Resource, EntityType> getFrontalFaceDefault() {
-    return Tuples.of(frontalFaceDefault, EntityType.FACE);
+  public Tuple2<Resource, String> getFrontalFaceDefault() {
+    return Tuples.of(frontalFaceDefault, "FACE");
   }
 
-  public Tuple2<Resource, EntityType> getFullBody() {
-    return Tuples.of(fullBody, EntityType.FULL_BODY);
+  public Tuple2<Resource, String> getFullBody() {
+    return Tuples.of(fullBody, "BODY");
   }
 
-  public Tuple2<Resource, EntityType> getLeftEyeTwoSplits() {
-    return Tuples.of(leftEyeTwoSplits, EntityType.EYE);
+  public Tuple2<Resource, String> getLeftEyeTwoSplits() {
+    return Tuples.of(leftEyeTwoSplits, "EYE");
   }
 
-  public Tuple2<Resource, EntityType> getLowerBody() {
-    return Tuples.of(lowerBody, EntityType.LOWER_BODY);
+  public Tuple2<Resource, String> getLowerBody() {
+    return Tuples.of(lowerBody, "LOWER_BODY");
   }
 
-  public Tuple2<Resource, EntityType> getProfileFace() {
-    return Tuples.of(profileFace, EntityType.FACE);
+  public Tuple2<Resource, String> getProfileFace() {
+    return Tuples.of(profileFace, "FACE");
   }
 
-  public Tuple2<Resource, EntityType> getRightEyeTwoSplits() {
-    return Tuples.of(rightEyeTwoSplits, EntityType.EYE);
+  public Tuple2<Resource, String> getRightEyeTwoSplits() {
+    return Tuples.of(rightEyeTwoSplits, "EYE");
   }
 
-  public Tuple2<Resource, EntityType> getUpperBody() {
-    return Tuples.of(upperBody, EntityType.UPPER_BODY);
+  public Tuple2<Resource, String> getUpperBody() {
+    return Tuples.of(upperBody, "UPPER_BODY");
   }
 
   /**
@@ -97,7 +96,7 @@ public class OpenCVConfiguration {
    *
    * @return a Flux stream of haar cascades and the type of entity they detect
    */
-  public Flux<Tuple2<CascadeClassifier, EntityType>> getAllCascades() {
+  public Flux<Tuple2<CascadeClassifier, String>> getAllCascades() {
     return Flux.fromStream(Stream.of(
         getEye(),
         getEyeTreeEyeglasses(),
@@ -114,8 +113,8 @@ public class OpenCVConfiguration {
     ))
         .flatMap(tuple2 -> {
           try {
-            String absolutePath = tuple2.getT1().getFile().getAbsolutePath();
-            Tuple2<CascadeClassifier, EntityType> tuple = Tuples
+            java.lang.String absolutePath = tuple2.getT1().getFile().getAbsolutePath();
+            Tuple2<CascadeClassifier, String> tuple = Tuples
                 .of(new CascadeClassifier(absolutePath), tuple2.getT2());
             return Mono.just(tuple);
           } catch (IOException e) {

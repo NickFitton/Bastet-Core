@@ -209,12 +209,9 @@ public class DatabaseGroupService implements GroupService {
       groupCameraRepository.deleteByCameraIdAndGroupId(cameraId, groupId);
       return true;
     })
-        .doOnError(
-            e -> LOGGER
-                .error(
-                    "Threw error when removing camera {} from group {}: {}", cameraId, groupId, e))
+        .doOnError(e -> LOGGER.error(
+            "Threw error when removing camera {} from group {}: {}", cameraId, groupId, e))
         .onErrorReturn(false);
-
   }
 
   private Mono<List<UserGroup>> findUsersInGroup(UUID groupId) {

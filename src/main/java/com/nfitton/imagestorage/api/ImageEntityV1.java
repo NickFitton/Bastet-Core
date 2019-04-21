@@ -4,7 +4,6 @@ import static javax.persistence.EnumType.STRING;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.nfitton.imagestorage.entity.EntityType;
 import javax.persistence.Enumerated;
 
 public class ImageEntityV1 {
@@ -14,7 +13,7 @@ public class ImageEntityV1 {
   private int width;
   private int height;
   @Enumerated(value = STRING)
-  private EntityType type;
+  private String type;
 
   @JsonCreator
   public ImageEntityV1(
@@ -22,7 +21,7 @@ public class ImageEntityV1 {
       @JsonProperty("y") int y,
       @JsonProperty("width") int width,
       @JsonProperty("height") int height,
-      @JsonProperty("type") EntityType type) {
+      @JsonProperty("type") String type) {
     this.x = x;
     this.y = y;
     this.width = width;
@@ -46,7 +45,7 @@ public class ImageEntityV1 {
     return height;
   }
 
-  public EntityType getType() {
+  public String getType() {
     return type;
   }
 }

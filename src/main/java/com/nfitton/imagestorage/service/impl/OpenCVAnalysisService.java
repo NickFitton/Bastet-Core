@@ -1,7 +1,6 @@
 package com.nfitton.imagestorage.service.impl;
 
 import com.nfitton.imagestorage.configuration.OpenCVConfiguration;
-import com.nfitton.imagestorage.entity.EntityType;
 import com.nfitton.imagestorage.entity.ImageEntity;
 import com.nfitton.imagestorage.service.AnalysisService;
 import org.opencv.core.Mat;
@@ -28,7 +27,7 @@ public class OpenCVAnalysisService implements AnalysisService {
   }
 
   @Override
-  public Flux<ImageEntity> analyzeImage(String file) {
+  public Flux<ImageEntity> analyzeImage(java.lang.String file) {
     Mat image = Imgcodecs.imread(file);
     Mat grayImage = new Mat();
     Imgproc.cvtColor(image, grayImage, Imgproc.COLOR_BGR2GRAY);
@@ -79,7 +78,7 @@ public class OpenCVAnalysisService implements AnalysisService {
                      .withY(rect.y)
                      .withWidth(rect.width)
                      .withHeight(rect.height)
-                     .withType(EntityType.OTHER)
+                     .withType("OTHER")
                      .build()
         );
   }
