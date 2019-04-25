@@ -50,8 +50,11 @@ public class RouterConfiguration {
                     .andRoute(GET("/image"), motionHandlerV1::getMotionImageById)))
         .andNest(
             path("/users"),
-            route(POST("/"), userHandlerV1::createUser).andRoute(GET("/"), userHandlerV1::getUsers)
+            route(POST("/"), userHandlerV1::createUser)
+                .andRoute(GET("/"), userHandlerV1::getUsers)
                 .andRoute(GET("/{userId}"), userHandlerV1::getUser)
+                .andRoute(PATCH("/{userId}"), userHandlerV1::updateUser)
+                .andRoute(PATCH("/{userId}/password"), userHandlerV1::updateUserPassword)
                 .andRoute(DELETE("/{userId}"), userHandlerV1::deleteUser)
                 .andRoute(GET("/{userId}/groups"), userHandlerV1::getGroupsForUser))
         .andNest(

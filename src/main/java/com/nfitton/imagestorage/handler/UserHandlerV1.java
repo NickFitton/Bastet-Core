@@ -1,10 +1,14 @@
 package com.nfitton.imagestorage.handler;
 
+import static com.nfitton.imagestorage.util.ExceptionUtil.userNotFound;
 import static com.nfitton.imagestorage.util.RouterUtil.getUuidParameter;
 
 import com.nfitton.imagestorage.api.GroupV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
+import com.nfitton.imagestorage.api.PasswordV1;
 import com.nfitton.imagestorage.api.UserV1;
+import com.nfitton.imagestorage.entity.User;
+import com.nfitton.imagestorage.entity.User.Builder;
 import com.nfitton.imagestorage.entity.UserGroup;
 import com.nfitton.imagestorage.exception.ForbiddenException;
 import com.nfitton.imagestorage.exception.NotFoundException;
@@ -67,7 +71,8 @@ public class UserHandlerV1 {
     LOGGER.debug("Retrieving user list");
     return userService.getAllIds().collectList()
         .map(OutgoingDataV1::dataOnly)
-        .flatMap(data -> ServerResponse.ok().syncBody(data));
+        .flatMap(data -> ServerResponse.ok().syncBody(data))
+        .onErrorResume(RouterUtil::handleErrors);
   }
 
   /**
@@ -102,6 +107,72 @@ public class UserHandlerV1 {
         .map(AccountMapper::toV1)
         .map(OutgoingDataV1::dataOnly)
         .flatMap(account -> ServerResponse.ok().syncBody(account))
+        .onErrorResume(RouterUtil::handleErrors);
+  }
+
+  /**
+   * Updates a users key information including name and email address.
+   *
+   * @param request the {@link ServerRequest} containing the userId and requesting users
+   *     credentials
+   * @return HttpStatus.ACCEPTED on success
+   */
+  public Mono<ServerResponse> updateUser(ServerRequest request) {
+    LOGGER.debug("Updating user information");
+    UUID userId = getUuidParameter(request, USER_ID);
+
+    return getAuthenticatedUserIsChanging(request)
+        .zipWith(request.bodyToMono(UserV1.class))
+        .flatMap(tuple2 -> {
+          User existingDetails = tuple2.getT1();
+          UserV1 newDetails = tuple2.getT2();
+          Builder updatedUserDetails = User.Builder.clone(existingDetails);
+          if (newDetails.getFirstName() != null) {
+            updatedUserDetails.withFirstName(newDetails.getFirstName());
+          }
+          if (newDetails.getLastName() != null) {
+            updatedUserDetails.withLastName(newDetails.getLastName());
+          }
+          if (newDetails.getEmail() != null) {
+            updatedUserDetails.withEmail(newDetails.getEmail());
+          }
+          return userService.save(updatedUserDetails.build());
+        })
+        .map(AccountMapper::toV1)
+        .map(OutgoingDataV1::dataOnly)
+        .flatMap(updatedUser -> ServerResponse.accepted().syncBody(updatedUser))
+        .onErrorResume(RouterUtil::handleErrors);
+  }
+
+  /**
+   * Updates a users password once the current password is validated.
+   *
+   * @param request the {@link ServerRequest} containing the userId and requesting users
+   *     credentials
+   * @return HttpStatus.ACCEPTED on success
+   */
+  public Mono<ServerResponse> updateUserPassword(ServerRequest request) {
+    LOGGER.debug("Updating user password");
+
+    return getAuthenticatedUserIsChanging(request)
+        .zipWith(request.bodyToMono(PasswordV1.class))
+        .flatMap(tuple2 -> {
+          User existingDetails = tuple2.getT1();
+          if (!encoder
+              .matches(tuple2.getT2().getCurrentPassword(), existingDetails.getPassword())) {
+            throw new ForbiddenException("Given password is incorrect");
+          } else if (encoder
+              .matches(tuple2.getT2().getNewPassword(), existingDetails.getPassword())) {
+            throw new ForbiddenException("Password has not changed");
+          }
+          String newEncodedPassword = encoder.encode(tuple2.getT2().getNewPassword());
+          User updatedDetails = User.Builder.clone(existingDetails).withPassword(newEncodedPassword)
+              .build();
+          return userService.save(updatedDetails);
+        })
+        .map(AccountMapper::toV1)
+        .map(OutgoingDataV1::dataOnly)
+        .flatMap(updatedUser -> ServerResponse.accepted().syncBody(updatedUser))
         .onErrorResume(RouterUtil::handleErrors);
   }
 
@@ -165,5 +236,29 @@ public class UserHandlerV1 {
         .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.status(HttpStatus.OK).syncBody(data))
         .onErrorResume(RouterUtil::handleErrors);
+  }
+
+  private Mono<User> getAuthenticatedUserIsChanging(ServerRequest request) {
+    UUID userId = getUuidParameter(request, USER_ID);
+
+    return RouterUtil
+        .parseAuthenticationToken(request, authenticationService)
+        .flatMap(authorizedUserId -> {
+          if (authorizedUserId != null && authorizedUserId.equals(userId)) {
+            return userService.findById(userId);
+          } else {
+            LOGGER.debug("User {} not verified to update {}'s information",
+                         authorizedUserId, userId);
+            return Mono.error(
+                new VerificationException("Must be authorized to perform this request"));
+          }
+        })
+        .map(optionalUser -> {
+          if (!optionalUser.isPresent()) {
+            throw userNotFound();
+          } else {
+            return optionalUser.get();
+          }
+        });
   }
 }

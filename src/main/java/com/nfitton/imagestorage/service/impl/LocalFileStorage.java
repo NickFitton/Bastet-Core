@@ -1,7 +1,10 @@
 package com.nfitton.imagestorage.service.impl;
 
+import static com.nfitton.imagestorage.util.EncryptionUtil.loadRsaKeys;
+
 import com.nfitton.imagestorage.configuration.PathConfiguration;
 import com.nfitton.imagestorage.exception.EncryptionException;
+import com.nfitton.imagestorage.exception.StartupException;
 import com.nfitton.imagestorage.service.FileUploadService;
 import com.nfitton.imagestorage.util.EncryptionUtil;
 import java.io.Closeable;
@@ -40,9 +43,15 @@ public class LocalFileStorage implements FileUploadService {
   private String path;
   private KeyPair rsaKeys;
 
-  public LocalFileStorage(PathConfiguration configuration) throws NoSuchAlgorithmException {
+  public LocalFileStorage(PathConfiguration configuration) {
     path = configuration.getLocation();
-    rsaKeys = EncryptionUtil.generateRsaKeys(path);
+    rsaKeys = loadRsaKeys(path).orElseGet(() -> {
+      try {
+        return EncryptionUtil.generateRsaKeys(path);
+      } catch (NoSuchAlgorithmException e) {
+        throw new StartupException("Failed to create new RSA keys");
+      }
+    });
   }
 
   private static void close(Closeable closeable) {
@@ -135,7 +144,7 @@ public class LocalFileStorage implements FileUploadService {
   }
 
   private String getTempFilePath(UUID imageId) {
-    return "/tmp/destructive" + imageId;
+    return path + imageId.toString();
   }
 
   private String getEncryptFilePath(UUID imageId) {

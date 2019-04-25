@@ -86,6 +86,19 @@ public class User extends Account {
       return new Builder();
     }
 
+    public static Builder clone(User user) {
+      return new Builder()
+          .withId(user.getId())
+          .withFirstName(user.getFirstName())
+          .withLastName(user.getLastName())
+          .withEmail(user.getEmail())
+          .withPassword(user.getPassword())
+          .withType(user.getType())
+          .withCreatedAt(user.getCreatedDate())
+          .withUpdatedAt(user.getLastModifiedDate())
+          .withLastActive(user.getLastActive());
+    }
+
     public Builder withId(UUID val) {
       id = val;
       return this;

@@ -1,6 +1,7 @@
 package com.nfitton.imagestorage.service;
 
 import com.nfitton.imagestorage.entity.Group;
+import com.nfitton.imagestorage.entity.GroupCamera;
 import com.nfitton.imagestorage.entity.UserGroup;
 import com.nfitton.imagestorage.model.GroupData;
 import java.util.UUID;
@@ -24,6 +25,8 @@ public interface GroupService {
   Mono<GroupData> removeUserFromGroup(UUID userId, UUID groupId);
 
   Flux<UserGroup> getGroupsByUserId(UUID userId);
+
+  Flux<GroupCamera> getGroupsByCameraId(UUID cameraId);
 
   Mono<GroupData> addCameraToGroup(UUID requestorId, UUID cameraId, UUID groupId);
 

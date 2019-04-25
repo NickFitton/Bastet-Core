@@ -5,8 +5,10 @@ import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.entity.Camera;
 import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.mapper.CameraMapper;
+import com.nfitton.imagestorage.model.GroupData;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.CameraService;
+import com.nfitton.imagestorage.service.GroupService;
 import com.nfitton.imagestorage.util.RouterUtil;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Component
@@ -30,17 +33,20 @@ public class CameraHandlerV1 {
   private final PasswordEncoder encoder;
   private final CameraService cameraService;
   private final AuthenticationService authenticationService;
+  private GroupService groupService;
 
   @Autowired
   public CameraHandlerV1(
       Validator validator,
       PasswordEncoder encoder,
       CameraService cameraService,
-      AuthenticationService authenticationService) {
+      AuthenticationService authenticationService,
+      GroupService groupService) {
     this.validator = validator;
     this.encoder = encoder;
     this.cameraService = cameraService;
     this.authenticationService = authenticationService;
+    this.groupService = groupService;
   }
 
   private static Mono<UUID> getCameraId(ServerRequest request) {
@@ -75,12 +81,23 @@ public class CameraHandlerV1 {
   public Mono<ServerResponse> getCameras(ServerRequest request) {
     return RouterUtil.parseAuthenticationToken(request, authenticationService)
         .doOnSuccess(uuid -> LOGGER.debug("User {} retrieving their camera info", uuid))
-        .flatMapMany(cameraService::findAllOwnedById)
+        .flatMapMany(userId -> Flux
+            .concat(cameraService.findAllOwnedById(userId), findAllGroupCameras(userId)))
         .map(CameraMapper::toApiBean)
         .collectList()
         .map(OutgoingDataV1::dataOnly)
         .flatMap(data -> ServerResponse.ok().syncBody(data))
         .onErrorResume(RouterUtil::handleErrors);
+  }
+
+  private Flux<Camera> findAllGroupCameras(UUID userId) {
+    return groupService.getGroupsByUserId(userId)
+        .flatMap(group -> groupService.findGroupDataById(group.getGroupId()))
+        .flatMapIterable(GroupData::getCameraIds)
+        .flatMap(cameraService::findById)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .filter(camera -> !camera.getOwnerId().equals(userId));
   }
 
   /**
@@ -126,7 +143,12 @@ public class CameraHandlerV1 {
   public Mono<ServerResponse> deleteCamera(ServerRequest request) {
     return RouterUtil.parseAuthenticationToken(request, authenticationService)
         .zipWith(getCameraId(request))
-        .flatMap(tuple2 -> cameraService.deleteById(tuple2.getT2()))
+        .flatMap(tuple2 -> groupService
+            .getGroupsByCameraId(tuple2.getT2())
+            .flatMap(groupCamera -> groupService.removeCameraFromGroup(
+                groupCamera.getCameraId(), groupCamera.getGroupId()))
+            .collectList()
+            .then(cameraService.deleteById(tuple2.getT2())))
         .then(ServerResponse.noContent().build())
         .onErrorResume(RouterUtil::handleErrors);
   }

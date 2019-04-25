@@ -5,3 +5,5 @@ spring:
     temp.use_jdbc_metadata_defaults: false
     enable_lazy_load_no_trans: true
   jackson.serialization.WRITE_DATES_AS_TIMESTAMPS: false
+
+key.clarifai: 4990fb85e85647ad9c51b339c8ae55a7

@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple3;
 
@@ -150,6 +151,13 @@ public class DatabaseGroupService implements GroupService {
   }
 
   @Override
+  public Flux<GroupCamera> getGroupsByCameraId(UUID cameraId) {
+    return Mono.fromCallable(() -> groupCameraRepository.findAllByCameraId(cameraId))
+        .subscribeOn(Schedulers.elastic())
+        .flatMapIterable(groupCameras -> groupCameras);
+  }
+
+  @Override
   public Mono<GroupData> addCameraToGroup(UUID requestorId, UUID cameraId, UUID groupId) {
     return Mono.zip(findGroupDataById(groupId), cameraService.findById(cameraId))
         .flatMap(tuple2 -> {
@@ -209,12 +217,9 @@ public class DatabaseGroupService implements GroupService {
       groupCameraRepository.deleteByCameraIdAndGroupId(cameraId, groupId);
       return true;
     })
-        .doOnError(
-            e -> LOGGER
-                .error(
-                    "Threw error when removing camera {} from group {}: {}", cameraId, groupId, e))
+        .doOnError(e -> LOGGER.error(
+            "Threw error when removing camera {} from group {}: {}", cameraId, groupId, e))
         .onErrorReturn(false);
-
   }
 
   private Mono<List<UserGroup>> findUsersInGroup(UUID groupId) {

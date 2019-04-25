@@ -92,7 +92,6 @@ class UserHandlerIT extends BaseClientIT {
     assertTrue(users.size() > 1);
 
     assertTrue(users.contains(standardUser.getId()));
-    assertTrue(users.contains(standardUser.getId()));
   }
 
   @Test

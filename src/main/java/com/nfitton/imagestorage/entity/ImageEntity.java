@@ -1,11 +1,8 @@
 package com.nfitton.imagestorage.entity;
 
-import static javax.persistence.EnumType.STRING;
-
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import javax.persistence.Entity;
-import javax.persistence.Enumerated;
 
 @Entity
 public class ImageEntity extends BaseEntity {
@@ -15,8 +12,7 @@ public class ImageEntity extends BaseEntity {
   private int y;
   private int width;
   private int height;
-  @Enumerated(value = STRING)
-  private EntityType type;
+  private String type;
 
   private ImageEntity(
       UUID id,
@@ -25,7 +21,7 @@ public class ImageEntity extends BaseEntity {
       int y,
       int width,
       int height,
-      EntityType type,
+      String type,
       ZonedDateTime createdDate,
       ZonedDateTime lastModifiedDate) {
     super(id, createdDate, lastModifiedDate);
@@ -60,7 +56,7 @@ public class ImageEntity extends BaseEntity {
     return height;
   }
 
-  public EntityType getType() {
+  public String getType() {
     return type;
   }
 
@@ -72,7 +68,7 @@ public class ImageEntity extends BaseEntity {
     private int y;
     private int width;
     private int height;
-    private EntityType type;
+    private String type;
     private ZonedDateTime createdDate;
     private ZonedDateTime lastModifiedDate;
 
@@ -124,7 +120,7 @@ public class ImageEntity extends BaseEntity {
       return this;
     }
 
-    public Builder withType(EntityType val) {
+    public Builder withType(String val) {
       type = val;
       return this;
     }

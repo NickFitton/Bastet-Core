@@ -3,6 +3,7 @@ package com.nfitton.imagestorage.util;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
 import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.exception.ConflictException;
+import com.nfitton.imagestorage.exception.EncryptionException;
 import com.nfitton.imagestorage.exception.ForbiddenException;
 import com.nfitton.imagestorage.exception.InternalServerException;
 import com.nfitton.imagestorage.exception.NotFoundException;
@@ -79,7 +80,7 @@ public class RouterUtil {
       status = ServerResponse.status(HttpStatus.CONFLICT);
     } else if (e instanceof OversizeException) {
       status = ServerResponse.status(HttpStatus.PAYLOAD_TOO_LARGE);
-    } else if (e instanceof InternalServerException) {
+    } else if (e instanceof InternalServerException || e instanceof EncryptionException) {
       status = ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR);
     } else if (e instanceof ForbiddenException) {
       status = ServerResponse.status(HttpStatus.FORBIDDEN);

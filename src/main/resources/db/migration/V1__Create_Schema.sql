@@ -45,7 +45,7 @@ CREATE TABLE image_entity (
   y SMALLINT,
   width SMALLINT,
   height SMALLINT,
-  type VARCHAR(16),
+  type VARCHAR(32),
   created_date TIMESTAMP DEFAULT NOW(),
   last_modified_date TIMESTAMP DEFAULT NOW()
 );
