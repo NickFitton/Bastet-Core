@@ -18,6 +18,4 @@ public interface AccountService<T, I> {
   Mono<Boolean> existsById(I id);
 
   Mono<Boolean> deleteById(I id);
-
-
 }

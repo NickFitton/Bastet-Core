@@ -10,6 +10,7 @@ import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.repository.AccountRepository;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.UserService;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import org.hibernate.exception.ConstraintViolationException;
@@ -40,7 +41,9 @@ public class DatabaseUserService implements UserService {
 
   @Override
   public Mono<User> save(User account) {
-    return Mono.fromCallable(() -> repository.save(account))
+    final User accountUpdated = User
+        .Builder.clone(account).withUpdatedAt(ZonedDateTime.now()).build();
+    return Mono.fromCallable(() -> repository.save(accountUpdated))
         .onErrorResume(e -> {
           if (e instanceof DataIntegrityViolationException) {
             ConstraintViolationException exception = (ConstraintViolationException) e.getCause();

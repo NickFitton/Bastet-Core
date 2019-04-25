@@ -12,6 +12,8 @@ public interface GroupCameraRepository extends JpaRepository<GroupCamera, UUID> 
 
   List<GroupCamera> findAllByGroupId(UUID groupId);
 
+  List<GroupCamera> findAllByCameraId(UUID cameraId);
+
   @Transactional
   void deleteByCameraIdAndGroupId(UUID cameraId, UUID groupId);
 

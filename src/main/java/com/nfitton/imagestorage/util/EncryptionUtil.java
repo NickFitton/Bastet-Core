@@ -1,6 +1,7 @@
 package com.nfitton.imagestorage.util;
 
 import com.nfitton.imagestorage.exception.EncryptionException;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -20,6 +21,7 @@ import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Optional;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -28,11 +30,14 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Regards to jaysridhar for the tutorial on AES and RSA encryption.
  */
 public class EncryptionUtil {
+  private static final Logger LOGGER = LoggerFactory.getLogger(EncryptionUtil.class);
 
   private static void processFile(Cipher ci, InputStream in, OutputStream out)
       throws IllegalBlockSizeException, BadPaddingException, IOException {
@@ -59,12 +64,26 @@ public class EncryptionUtil {
   }
 
   public static KeyPair generateRsaKeys(String fileBase) throws NoSuchAlgorithmException {
+    LOGGER.debug("Creating new keypair");
     KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
     kpg.initialize(2048);
     KeyPair keyPair = kpg.generateKeyPair();
     saveKey(keyPair.getPrivate().getEncoded(), fileBase + ".key");
     saveKey(keyPair.getPublic().getEncoded(), fileBase + ".pub");
     return keyPair;
+  }
+
+  public static Optional<KeyPair> loadRsaKeys(String fileBase) {
+    try {
+      PrivateKey privateKey = loadPrivateKey(fileBase + ".key");
+      PublicKey publicKey = loadPublicKey(fileBase + ".pub");
+      KeyPair pair = new KeyPair(publicKey, privateKey);
+      LOGGER.debug("Found keys and returning them");
+      return Optional.of(pair);
+    } catch (EncryptionException e) {
+      LOGGER.error("Keys not found in given location", e);
+      return Optional.empty();
+    }
   }
 
   private static void saveKey(byte[] encodedKey, String location) {

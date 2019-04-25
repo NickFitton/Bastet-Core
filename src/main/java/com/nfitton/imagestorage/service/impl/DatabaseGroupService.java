@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple3;
 
@@ -147,6 +148,13 @@ public class DatabaseGroupService implements GroupService {
   public Flux<UserGroup> getGroupsByUserId(UUID userId) {
     return Mono.fromCallable(() -> userGroupRepository.findAllByUserId(userId))
         .flatMapIterable(userGroups -> userGroups);
+  }
+
+  @Override
+  public Flux<GroupCamera> getGroupsByCameraId(UUID cameraId) {
+    return Mono.fromCallable(() -> groupCameraRepository.findAllByCameraId(cameraId))
+        .subscribeOn(Schedulers.elastic())
+        .flatMapIterable(groupCameras -> groupCameras);
   }
 
   @Override
