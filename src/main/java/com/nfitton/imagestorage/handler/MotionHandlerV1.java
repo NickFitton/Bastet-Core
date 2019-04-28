@@ -4,6 +4,7 @@ import static com.nfitton.imagestorage.util.RouterUtil.parseAuthenticationToken;
 
 import com.nfitton.imagestorage.api.ImageMetadataV1;
 import com.nfitton.imagestorage.api.OutgoingDataV1;
+import com.nfitton.imagestorage.entity.ImageEntity;
 import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.mapper.ImageMetadataMapper;
@@ -18,6 +19,8 @@ import com.nfitton.imagestorage.util.RouterUtil;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
@@ -61,14 +64,6 @@ public class MotionHandlerV1 {
     this.cameraService = cameraService;
     this.userService = userService;
     this.jmsTemplate = jmsTemplate;
-  }
-
-  private static Stream<UUID> getCamerasParam(ServerRequest request) {
-    return request.queryParam("cameras")
-        .map(param -> Arrays.asList(param.split(",")))
-        .orElse(Collections.emptyList())
-        .stream()
-        .map(UUID::fromString);
   }
 
   public Mono<ServerResponse> postMotion(ServerRequest request) {
@@ -127,6 +122,7 @@ public class MotionHandlerV1 {
    * @return HttpStatus.OK with a list of {@link ImageMetadataV1}
    */
   public Mono<ServerResponse> getMotion(ServerRequest request) {
+    List<String> tags = getQueryTags(request);
 
     return parseAuthenticationToken(request, authenticationService)
         .flatMap(userService::existsById)
@@ -141,7 +137,18 @@ public class MotionHandlerV1 {
           } else {
             return Mono.error(ExceptionUtil.badCredentials());
           }
-        }).map(ImageMetadataMapper::toV1)
+        })
+        .filter(imageData -> {
+          if (tags.size() > 0) {
+            return imageData
+                .getEntities()
+                .stream()
+                .map(ImageEntity::getType)
+                .anyMatch(tags::contains);
+          }
+          return true;
+        })
+        .map(ImageMetadataMapper::toV1)
         .collectList()
         .map(OutgoingDataV1::dataOnly)
         .flatMap(outgoingData -> ServerResponse.ok().syncBody(outgoingData))
@@ -197,5 +204,21 @@ public class MotionHandlerV1 {
         });
     return ServerResponse.ok().contentType(MediaType.IMAGE_JPEG).body(image, byte[].class)
         .onErrorResume(RouterUtil::handleErrors);
+  }
+
+  private static Stream<UUID> getCamerasParam(ServerRequest request) {
+    return request.queryParam("cameras")
+        .map(param -> Arrays.asList(param.split(",")))
+        .orElse(Collections.emptyList())
+        .stream()
+        .map(UUID::fromString);
+  }
+
+  private static List<String> getQueryTags(ServerRequest request) {
+    return request
+        .queryParam("tags")
+        .map(tags -> tags.split(","))
+        .map(Arrays::asList)
+        .orElseGet(LinkedList::new);
   }
 }
