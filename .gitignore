@@ -14,7 +14,7 @@ build
 
 # Libraries
 libs/*
-src/main/resources/haar
+server/src/main/resources/haar
 
 # SonarQube
 .scannerwork
