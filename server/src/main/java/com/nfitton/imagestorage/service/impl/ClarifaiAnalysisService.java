@@ -47,7 +47,8 @@ public class ClarifaiAnalysisService implements AnalysisService {
               .flatMapIterable(ClarifaiOutput::data)
               .filter(prediction -> prediction.value() >= 0.9f)
               .map(prediction -> {
-                LOGGER.info("Prediction {} has ensurance of {}", prediction.name(), prediction.value());
+                LOGGER.info("Prediction {} has ensurance of {}",
+                        prediction.name(), prediction.value());
                 return Builder.newBuilder().withType(prediction.name()).build();
               });
     } catch (NoSuchElementException e) {
