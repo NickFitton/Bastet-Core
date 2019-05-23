@@ -1,5 +1,5 @@
 spring:
-  profiles.active: local
+  profiles.active: private
   flyway.locations: classpath:db/migration
   jpa.properties.hibernate:
     temp.use_jdbc_metadata_defaults: false
