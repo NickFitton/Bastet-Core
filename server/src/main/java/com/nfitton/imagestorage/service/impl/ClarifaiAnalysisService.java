@@ -11,6 +11,8 @@ import com.nfitton.imagestorage.entity.ImageEntity.Builder;
 import com.nfitton.imagestorage.service.AnalysisService;
 import java.io.File;
 import java.util.List;
+import java.util.NoSuchElementException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,18 +37,23 @@ public class ClarifaiAnalysisService implements AnalysisService {
   public Flux<ImageEntity> analyzeImage(String file) {
     LOGGER.info("Sending file [{}] to clarifai", file);
 
-    PredictRequest<Concept> request = generalModel
-        .predict()
-        .withInputs(ClarifaiInput.forImage(new File(file)));
+    try {
+      PredictRequest<Concept> request = generalModel
+              .predict()
+              .withInputs(ClarifaiInput.forImage(new File(file)));
 
-    List<ClarifaiOutput<Concept>> result = request.executeSync().get();
-
-    return Flux.fromStream(result.stream())
-        .flatMapIterable(ClarifaiOutput::data)
-        .filter(prediction -> prediction.value() >= 0.9f)
-        .map(prediction -> {
-          LOGGER.info("Prediction {} has ensurance of {}", prediction.name(), prediction.value());
-          return Builder.newBuilder().withType(prediction.name()).build();
-        });
+      List<ClarifaiOutput<Concept>> result = request.executeSync().get();
+      return Flux.fromStream(result.stream())
+              .flatMapIterable(ClarifaiOutput::data)
+              .filter(prediction -> prediction.value() >= 0.9f)
+              .map(prediction -> {
+                LOGGER.info("Prediction {} has ensurance of {}",
+                        prediction.name(), prediction.value());
+                return Builder.newBuilder().withType(prediction.name()).build();
+              });
+    } catch (NoSuchElementException e) {
+      LOGGER.warn("Failed to retrieve data from Clarifai");
+      return Flux.empty();
+    }
   }
 }

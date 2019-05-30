@@ -107,9 +107,10 @@ public class MotionHandlerV1 {
               cameraService.imageTaken(tuple.getT1()),
               fileUploadService.uploadFile(file, imageId));
         }).flatMap(tuple2 -> {
-          LOGGER.debug("Sending to queue: {}", imageId);
-          jmsTemplate
-              .convertAndSend("analysisQueue", new AnalysisQueueMessage(tuple2.getT2(), imageId));
+          // LOGGER.debug("Sending to queue: {}", imageId);
+          // jmsTemplate
+          //     .convertAndSend("analysisQueue",
+          // new AnalysisQueueMessage(tuple2.getT2(), imageId));
           return ServerResponse.accepted().build();
         })
         .onErrorResume(RouterUtil::handleErrors);
