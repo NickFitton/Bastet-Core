@@ -31,7 +31,7 @@ public class UserUtil {
    * Returns a request to create a user given the client and user to save.
    *
    * @param client the client to make the request on
-   * @param user the user to save
+   * @param user   the user to save
    * @return the response from the server
    */
   public static ClientResponse createUser(WebClient client, UserV1 user) {
@@ -59,9 +59,9 @@ public class UserUtil {
   /**
    * Returns a request to receive a specific user by their userId.
    *
-   * @param client the client to make the request on
+   * @param client       the client to make the request on
    * @param sessionToken the session token of the user making the request
-   * @param userId the {@link UUID} to get the user by
+   * @param userId       the {@link UUID} to get the user by
    * @return the response from the server
    */
   public static ClientResponse getUser(WebClient client, String sessionToken, UUID userId) {
@@ -75,9 +75,9 @@ public class UserUtil {
   /**
    * Returns a request to delete a specific user by their userId.
    *
-   * @param client the client to make the request on
+   * @param client       the client to make the request on
    * @param sessionToken the session token of the user making the request
-   * @param userId the {@link UUID} to identify the user by
+   * @param userId       the {@link UUID} to identify the user by
    * @return the response from the server
    */
   public static ClientResponse deleteUser(WebClient client, String sessionToken, UUID userId) {

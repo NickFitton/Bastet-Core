@@ -45,7 +45,7 @@ public class ImageMetadataMapper {
 
   private static ImageEntityV1 toV1(ImageEntity entity) {
     return new ImageEntityV1(entity.getX(), entity.getY(), entity.getWidth(), entity.getHeight(),
-                             entity.getType());
+        entity.getType());
   }
 
   public static TallyPointV1 toV1(TallyPoint point) {

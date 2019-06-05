@@ -21,7 +21,7 @@ public class GroupUtil {
    * Creates a group for the session user, creates users and adds them to the group then returns the
    * populated group.
    *
-   * @param client the web client to interact with the server with
+   * @param client       the web client to interact with the server with
    * @param sessionToken the session token of the logged in user
    * @param objectMapper the mapper for converting outgoing data beans
    * @param extraMembers how many extra members in the group there should be

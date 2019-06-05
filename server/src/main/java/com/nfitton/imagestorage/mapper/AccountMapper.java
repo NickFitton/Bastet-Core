@@ -15,8 +15,8 @@ public class AccountMapper {
    * Creates a new user from a given UserV1 validates it with the given validator and encodes the
    * password with the given encoder.
    *
-   * @param v1 the user to convert
-   * @param encoder encoder for the password
+   * @param v1        the user to convert
+   * @param encoder   encoder for the password
    * @param validator validator for the UserV1 bean
    * @return a {@link User} entity to save
    */

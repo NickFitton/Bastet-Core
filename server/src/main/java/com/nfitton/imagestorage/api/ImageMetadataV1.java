@@ -101,6 +101,6 @@ public class ImageMetadataV1 {
   public int hashCode() {
     return Objects
         .hash(getId(), getCameraId(), getEntryTime(), getExitTime(), getImageTime(), getCreatedAt(),
-              getUpdatedAt(), isFileExists(), getImageEntities());
+            getUpdatedAt(), isFileExists(), getImageEntities());
   }
 }

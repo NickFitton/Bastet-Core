@@ -65,7 +65,6 @@ public class LoginHandlerV1 {
    *
    * @param request contains the session token of the requester to find data on.
    * @return HttpStatus.OK and a {@link com.nfitton.imagestorage.api.UserV1} related to the session
-   *     token
    */
   public Mono<ServerResponse> getSelf(ServerRequest request) {
     return RouterUtil.parseAuthenticationToken(request, authenticationService)

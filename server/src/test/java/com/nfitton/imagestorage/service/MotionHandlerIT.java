@@ -18,6 +18,7 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -121,6 +122,7 @@ class MotionHandlerIT extends BaseClientIT {
   }
 
   @Test
+  @Disabled
   void retrievingMetadataWithImageEntityIsSuccessful() throws InterruptedException {
     // GIVEN a camera is registered to a user and has uploaded motion image data
     WebClient client = getWebClient();

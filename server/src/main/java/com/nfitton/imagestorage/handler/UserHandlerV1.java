@@ -79,7 +79,7 @@ public class UserHandlerV1 {
    * Returns a user by the given userId.
    *
    * @param request the {@link ServerRequest} containing the userId and requesting users
-   *     credentials
+   *                credentials
    * @return HttpStatus.OK and {@link UserV1} related to the given userId
    */
   public Mono<ServerResponse> getUser(ServerRequest request) {
@@ -114,7 +114,7 @@ public class UserHandlerV1 {
    * Updates a users key information including name and email address.
    *
    * @param request the {@link ServerRequest} containing the userId and requesting users
-   *     credentials
+   *                credentials
    * @return HttpStatus.ACCEPTED on success
    */
   public Mono<ServerResponse> updateUser(ServerRequest request) {
@@ -148,7 +148,7 @@ public class UserHandlerV1 {
    * Updates a users password once the current password is validated.
    *
    * @param request the {@link ServerRequest} containing the userId and requesting users
-   *     credentials
+   *                credentials
    * @return HttpStatus.ACCEPTED on success
    */
   public Mono<ServerResponse> updateUserPassword(ServerRequest request) {
@@ -180,7 +180,7 @@ public class UserHandlerV1 {
    * Removes a user from the platform if the user to delete is the requester.
    *
    * @param request the {@link ServerRequest} containing the userId and requesting users
-   *     credentials
+   *                credentials
    * @return HttpStatus.NO_CONTENT on success
    */
   public Mono<ServerResponse> deleteUser(ServerRequest request) {
@@ -212,7 +212,7 @@ public class UserHandlerV1 {
    * Returns a list of groups the given user is associated with.
    *
    * @param request the {@link ServerRequest} containing the userId and requesting users
-   *     credentials
+   *                credentials
    * @return a Flux stream of {@link GroupV1} related to the given userId
    */
   public Mono<ServerResponse> getGroupsForUser(ServerRequest request) {
@@ -248,7 +248,7 @@ public class UserHandlerV1 {
             return userService.findById(userId);
           } else {
             LOGGER.debug("User {} not verified to update {}'s information",
-                         authorizedUserId, userId);
+                authorizedUserId, userId);
             return Mono.error(
                 new VerificationException("Must be authorized to perform this request"));
           }

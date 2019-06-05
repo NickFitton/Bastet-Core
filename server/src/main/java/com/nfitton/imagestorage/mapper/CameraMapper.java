@@ -12,8 +12,8 @@ public class CameraMapper {
    * Creates a new camera from a given CameraV1 validates it with the given validator and encodes
    * the password with the given encoder.
    *
-   * @param v1 the camera to convert
-   * @param encoder encoder for the password
+   * @param v1        the camera to convert
+   * @param encoder   encoder for the password
    * @param validator validator for the UserV1 bean
    * @return a {@link Camera} entity to save
    */

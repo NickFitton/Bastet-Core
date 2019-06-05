@@ -77,7 +77,7 @@ public class ImageMetadata extends BaseEntity {
   public int hashCode() {
     return Objects
         .hash(super.hashCode(), getCameraId(), getEntryTime(), getExitTime(), getImageTime(),
-              fileExists);
+            fileExists);
   }
 
   public static final class Builder {

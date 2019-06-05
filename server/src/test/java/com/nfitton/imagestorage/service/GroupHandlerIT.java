@@ -232,7 +232,7 @@ class GroupHandlerIT extends BaseClientIT {
         .parseData(new TypeReference<List<CameraV1>>() {
         }, objectMapper);
     assertTrue(groupCameras.stream()
-                   .anyMatch(cameraV1 -> cameraV1.getId().equals(standardCamera.getId())));
+        .anyMatch(cameraV1 -> cameraV1.getId().equals(standardCamera.getId())));
   }
 
   @Test

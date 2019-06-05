@@ -8,7 +8,6 @@ import com.nfitton.imagestorage.entity.ImageEntity;
 import com.nfitton.imagestorage.exception.BadRequestException;
 import com.nfitton.imagestorage.exception.NotFoundException;
 import com.nfitton.imagestorage.mapper.ImageMetadataMapper;
-import com.nfitton.imagestorage.model.AnalysisQueueMessage;
 import com.nfitton.imagestorage.service.AuthenticationService;
 import com.nfitton.imagestorage.service.CameraService;
 import com.nfitton.imagestorage.service.FileMetadataService;
@@ -66,6 +65,22 @@ public class MotionHandlerV1 {
     this.jmsTemplate = jmsTemplate;
   }
 
+  private static Stream<UUID> getCamerasParam(ServerRequest request) {
+    return request.queryParam("cameras")
+        .map(param -> Arrays.asList(param.split(",")))
+        .orElse(Collections.emptyList())
+        .stream()
+        .map(UUID::fromString);
+  }
+
+  private static List<String> getQueryTags(ServerRequest request) {
+    return request
+        .queryParam("tags")
+        .map(tags -> tags.split(","))
+        .map(Arrays::asList)
+        .orElseGet(LinkedList::new);
+  }
+
   public Mono<ServerResponse> postMotion(ServerRequest request) {
     return Mono
         .zip(
@@ -83,7 +98,7 @@ public class MotionHandlerV1 {
    * Attaches an image to a motion object for the server to analyse.
    *
    * @param request the {@link ServerRequest} containing the image, motion id and camera
-   *     credentials
+   *                credentials
    * @return HttpStatus.ACCEPTED on success
    */
   public Mono<ServerResponse> patchMotionPicture(ServerRequest request) {
@@ -205,21 +220,5 @@ public class MotionHandlerV1 {
         });
     return ServerResponse.ok().contentType(MediaType.IMAGE_JPEG).body(image, byte[].class)
         .onErrorResume(RouterUtil::handleErrors);
-  }
-
-  private static Stream<UUID> getCamerasParam(ServerRequest request) {
-    return request.queryParam("cameras")
-        .map(param -> Arrays.asList(param.split(",")))
-        .orElse(Collections.emptyList())
-        .stream()
-        .map(UUID::fromString);
-  }
-
-  private static List<String> getQueryTags(ServerRequest request) {
-    return request
-        .queryParam("tags")
-        .map(tags -> tags.split(","))
-        .map(Arrays::asList)
-        .orElseGet(LinkedList::new);
   }
 }

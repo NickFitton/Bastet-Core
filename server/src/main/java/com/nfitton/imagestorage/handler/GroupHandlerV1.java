@@ -91,7 +91,7 @@ public class GroupHandlerV1 {
    * Returns information about the group if the requester is a member of the group.
    *
    * @param request a {@link ServerRequest} holding the requester data and the id of the user to
-   *     remove
+   *                remove
    * @return HttpStatus.OK and a {@link GroupV1} on success
    */
   public Mono<ServerResponse> getGroupById(ServerRequest request) {
@@ -117,7 +117,7 @@ public class GroupHandlerV1 {
    * admin of the group.
    *
    * @param request a {@link ServerRequest} holding the requester data and the id of the user to
-   *     remove
+   *                remove
    * @return HttpStatus.ACCEPTED on success
    */
   public Mono<ServerResponse> removeUserFromGroup(ServerRequest request) {
@@ -238,7 +238,7 @@ public class GroupHandlerV1 {
    * the group, then the camera is unshared from the group.
    *
    * @param request a {@link ServerRequest} holding the requester data and group id to get
-   *     cameras by
+   *                cameras by
    * @return HttpStatus.ACCEPTED on success
    */
   public Mono<ServerResponse> removeCameraFromGroup(ServerRequest request) {
@@ -271,7 +271,7 @@ public class GroupHandlerV1 {
    * are returned.
    *
    * @param request a {@link ServerRequest} holding the requester data and group id to get
-   *     cameras by
+   *                cameras by
    * @return HttpStatus.OK on success with a list of {@link com.nfitton.imagestorage.api.CameraV1}
    */
   public Mono<ServerResponse> getGroupCameras(ServerRequest request) {
@@ -303,7 +303,7 @@ public class GroupHandlerV1 {
    * Removes a group from the platform if the requesting user is the owner of the group.
    *
    * @param request a {@link ServerRequest} holding the requester data and group id to delete
-   *     by
+   *                by
    * @return HttpStatus.ACCEPTED on success, otherwise a Verification or other exception
    */
   public Mono<ServerResponse> deleteGroup(ServerRequest request) {

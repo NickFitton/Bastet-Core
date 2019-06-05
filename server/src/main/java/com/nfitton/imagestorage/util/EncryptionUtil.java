@@ -1,7 +1,6 @@
 package com.nfitton.imagestorage.util;
 
 import com.nfitton.imagestorage.exception.EncryptionException;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -58,7 +57,7 @@ public class EncryptionUtil {
   private static void processFile(Cipher ci, String inFile, String outFile)
       throws IllegalBlockSizeException, BadPaddingException, IOException {
     try (FileInputStream in = new FileInputStream(inFile);
-        FileOutputStream out = new FileOutputStream(outFile)) {
+         FileOutputStream out = new FileOutputStream(outFile)) {
       processFile(ci, in, out);
     }
   }

@@ -42,9 +42,9 @@ public class CameraUtil {
   /**
    * Returns a request to get the camera data related to the given cameraId.
    *
-   * @param client the client to make the request on
+   * @param client       the client to make the request on
    * @param sessionToken the session token of the requesting user
-   * @param cameraId the camera id to get data by
+   * @param cameraId     the camera id to get data by
    * @return the response from the server
    */
   public static ClientResponse getCamera(WebClient client, String sessionToken, UUID cameraId) {
@@ -66,9 +66,9 @@ public class CameraUtil {
   /**
    * Returns a request to get the camera data related to the given cameraId.
    *
-   * @param client the client to make the request on
+   * @param client       the client to make the request on
    * @param sessionToken the session token of the requesting user
-   * @param cameraId the camera id to get data by
+   * @param cameraId     the camera id to get data by
    * @return the response from the server
    */
   public static ClientResponse claimCamera(
@@ -84,9 +84,9 @@ public class CameraUtil {
   /**
    * Returns a request to delete the camera data related to the given cameraId.
    *
-   * @param client the client to make the request on
+   * @param client       the client to make the request on
    * @param sessionToken the session token of the requesting user
-   * @param cameraId the camera id to delete by
+   * @param cameraId     the camera id to delete by
    * @return the response from the server
    */
   public static ClientResponse deleteCamera(WebClient client, String sessionToken, UUID cameraId) {
